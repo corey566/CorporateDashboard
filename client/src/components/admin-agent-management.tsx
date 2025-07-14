@@ -17,6 +17,7 @@ import { Plus, Edit, Trash2, Users } from "lucide-react";
 import { z } from "zod";
 
 const agentFormSchema = insertAgentSchema.extend({
+  teamId: z.string().min(1, "Team is required").transform(val => parseInt(val)),
   volumeTarget: z.string().min(1, "Volume target is required").transform(val => parseFloat(val)),
   unitsTarget: z.string().min(1, "Units target is required").transform(val => parseInt(val)),
   username: z.string().optional(),
@@ -59,9 +60,6 @@ export default function AdminAgentManagement() {
     mutationFn: async (data: AgentFormData) => {
       const agentData = {
         ...data,
-        teamId: parseInt(data.teamId),
-        volumeTarget: data.volumeTarget,
-        unitsTarget: data.unitsTarget,
         // Only include auth fields if provided
         username: data.username || undefined,
         password: data.password || undefined,
@@ -91,9 +89,6 @@ export default function AdminAgentManagement() {
     mutationFn: async ({ id, data }: { id: number; data: AgentFormData }) => {
       const agentData = {
         ...data,
-        teamId: parseInt(data.teamId),
-        volumeTarget: data.volumeTarget,
-        unitsTarget: data.unitsTarget,
         // Only include auth fields if provided
         username: data.username || undefined,
         password: data.password || undefined,
