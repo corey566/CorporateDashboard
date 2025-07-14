@@ -210,6 +210,37 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.put("/api/media-slides/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      const slideData = insertMediaSlideSchema.parse(req.body);
+      const slide = await storage.updateMediaSlide(id, slideData);
+      
+      broadcastToClients({ type: "media_slide_updated", data: slide });
+      
+      res.json(slide);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid media slide data" });
+    }
+  });
+
+  app.delete("/api/media-slides/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteMediaSlide(id);
+      
+      broadcastToClients({ type: "media_slide_deleted", data: { id } });
+      
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete media slide" });
+    }
+  });
+
   // Announcements endpoints
   app.get("/api/announcements", async (req, res) => {
     try {

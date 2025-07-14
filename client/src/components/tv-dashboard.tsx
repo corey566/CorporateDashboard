@@ -27,7 +27,7 @@ export default function TvDashboard() {
   useEffect(() => {
     const checkForActiveSlides = () => {
       const activeSlides = dashboardData?.mediaSlides?.filter((slide: any) => slide.isActive);
-      if (activeSlides && activeSlides.length > 0) {
+      if (activeSlides && activeSlides.length > 0 && !showCompanySlides) {
         setShowCompanySlides(true);
       }
     };
@@ -37,7 +37,7 @@ export default function TvDashboard() {
       const interval = setInterval(checkForActiveSlides, 30000);
       return () => clearInterval(interval);
     }
-  }, [dashboardData?.mediaSlides]);
+  }, [dashboardData?.mediaSlides, showCompanySlides]);
 
   // Update last updated timestamp
   useEffect(() => {

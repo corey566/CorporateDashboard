@@ -24,6 +24,13 @@ export default function CompanySlidesOverlay({ isVisible, onClose }: CompanySlid
 
   const activeSlides = slides?.filter((slide: any) => slide.isActive) || [];
 
+  // Reset slide index when overlay opens
+  useEffect(() => {
+    if (isVisible) {
+      setCurrentSlide(0);
+    }
+  }, [isVisible]);
+
   useEffect(() => {
     if (!isVisible || activeSlides.length === 0) return;
 
@@ -33,23 +40,25 @@ export default function CompanySlidesOverlay({ isVisible, onClose }: CompanySlid
     setTimeRemaining(duration);
     setSlideTimer(duration);
 
+    const timeout = setTimeout(() => {
+      // Move to next slide or close if last slide
+      if (currentSlide < activeSlides.length - 1) {
+        setCurrentSlide(currentSlide + 1);
+      } else {
+        onClose();
+      }
+    }, duration);
+
+    // Update countdown every 100ms
     const interval = setInterval(() => {
-      setTimeRemaining((prev) => {
-        if (prev <= 100) {
-          // Move to next slide or close if last slide
-          if (currentSlide < activeSlides.length - 1) {
-            setCurrentSlide(currentSlide + 1);
-          } else {
-            onClose();
-          }
-          return 0;
-        }
-        return prev - 100;
-      });
+      setTimeRemaining((prev) => Math.max(0, prev - 100));
     }, 100);
 
-    return () => clearInterval(interval);
-  }, [isVisible, currentSlide, activeSlides, onClose]);
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
+  }, [isVisible, currentSlide, activeSlides.length, onClose]);
 
   const nextSlide = () => {
     if (currentSlide < activeSlides.length - 1) {
