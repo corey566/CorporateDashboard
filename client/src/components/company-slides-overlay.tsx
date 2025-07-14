@@ -49,8 +49,10 @@ export default function CompanySlidesOverlay({ isVisible, onClose }: CompanySlid
     timeoutRef.current = setTimeout(() => {
       // Move to next slide or close if last slide
       if (currentSlide < activeSlides.length - 1) {
+        console.log('Moving to next slide:', currentSlide + 1);
         setCurrentSlide(currentSlide + 1);
       } else {
+        console.log('Closing overlay after last slide');
         onClose();
       }
     }, duration);

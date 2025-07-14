@@ -16,6 +16,7 @@ export default function TvDashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [salePopup, setSalePopup] = useState<any>(null);
   const [showCompanySlides, setShowCompanySlides] = useState(false);
+  const [lastSlidesCheck, setLastSlidesCheck] = useState<Date>(new Date());
   const { isConnected } = useWebSocket();
 
   const { data: dashboardData, isLoading } = useQuery({
@@ -23,12 +24,18 @@ export default function TvDashboard() {
     refetchInterval: 2000,
   });
 
-  // Company slides auto-trigger
+  // Company slides auto-trigger (temporarily disabled for testing)
   useEffect(() => {
     const checkForActiveSlides = () => {
       const activeSlides = dashboardData?.mediaSlides?.filter((slide: any) => slide.isActive);
-      if (activeSlides && activeSlides.length > 0 && !showCompanySlides) {
+      const now = new Date();
+      const timeSinceLastCheck = now.getTime() - lastSlidesCheck.getTime();
+      
+      // Only trigger if there are active slides, overlay isn't already showing, and at least 5 minutes have passed
+      if (activeSlides && activeSlides.length > 0 && !showCompanySlides && timeSinceLastCheck > 300000) {
+        console.log('Auto-triggering company slides overlay');
         setShowCompanySlides(true);
+        setLastSlidesCheck(now);
       }
     };
 
@@ -37,7 +44,7 @@ export default function TvDashboard() {
       const interval = setInterval(checkForActiveSlides, 30000);
       return () => clearInterval(interval);
     }
-  }, [dashboardData?.mediaSlides, showCompanySlides]);
+  }, [dashboardData?.mediaSlides, showCompanySlides, lastSlidesCheck]);
 
   // Update last updated timestamp
   useEffect(() => {
@@ -89,6 +96,14 @@ export default function TvDashboard() {
             </div>
           </div>
           <div className="flex items-center space-x-6">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowCompanySlides(true)}
+              className="bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200"
+            >
+              Test Slides
+            </Button>
             <div className="text-right">
               <p className="text-sm text-corporate-500">Last Updated</p>
               <p className="font-semibold text-corporate-800">
