@@ -29,6 +29,10 @@ export const agents = pgTable("agents", {
   volumeTarget: decimal("volume_target", { precision: 10, scale: 2 }).notNull().default("0"),
   unitsTarget: integer("units_target").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
+  // Mobile auth fields
+  username: text("username").unique(),
+  password: text("password"),
+  canSelfReport: boolean("can_self_report").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -124,6 +128,12 @@ export const insertTeamSchema = createInsertSchema(teams).omit({
 export const insertAgentSchema = createInsertSchema(agents).omit({
   id: true,
   createdAt: true,
+});
+
+// Mobile agent login schema
+export const agentLoginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const insertSaleSchema = createInsertSchema(sales).omit({

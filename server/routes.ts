@@ -3,8 +3,25 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema } from "@shared/schema";
+import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema, agentLoginSchema } from "@shared/schema";
 import { z } from "zod";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
+
+async function comparePasswords(supplied: string, stored: string) {
+  const [hashed, salt] = stored.split(".");
+  const hashedBuf = Buffer.from(hashed, "hex");
+  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+  return timingSafeEqual(hashedBuf, suppliedBuf);
+}
 
 interface WebSocketMessage {
   type: string;
@@ -52,6 +69,12 @@ export function registerRoutes(app: Express): Server {
     
     try {
       const agentData = insertAgentSchema.parse(req.body);
+      
+      // Hash password if provided
+      if (agentData.password) {
+        agentData.password = await hashPassword(agentData.password);
+      }
+      
       const agent = await storage.createAgent(agentData);
       
       // Broadcast update to all connected clients
@@ -288,6 +311,96 @@ export function registerRoutes(app: Express): Server {
       res.status(201).json(ticker);
     } catch (error) {
       res.status(400).json({ error: "Invalid news ticker data" });
+    }
+  });
+
+  // Mobile agent authentication endpoints
+  app.post("/api/mobile/login", async (req, res) => {
+    try {
+      const { username, password } = agentLoginSchema.parse(req.body);
+      
+      const agent = await storage.getAgentByUsername(username);
+      if (!agent || !agent.password || !agent.canSelfReport) {
+        return res.status(401).json({ error: "Invalid credentials or access denied" });
+      }
+      
+      const isValid = await comparePasswords(password, agent.password);
+      if (!isValid) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      // Set mobile session
+      req.session.agentId = agent.id;
+      
+      // Return agent data (excluding password)
+      const { password: _, ...agentData } = agent;
+      res.json(agentData);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid login data" });
+    }
+  });
+
+  app.post("/api/mobile/logout", async (req, res) => {
+    req.session.agentId = null;
+    res.sendStatus(200);
+  });
+
+  app.get("/api/mobile/agent", async (req, res) => {
+    if (!req.session.agentId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    try {
+      const agent = await storage.getAgent(req.session.agentId);
+      if (!agent) {
+        return res.status(404).json({ error: "Agent not found" });
+      }
+      
+      // Return agent data (excluding password)
+      const { password: _, ...agentData } = agent;
+      res.json(agentData);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch agent data" });
+    }
+  });
+
+  app.get("/api/mobile/sales", async (req, res) => {
+    if (!req.session.agentId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    try {
+      const sales = await storage.getSalesByAgent(req.session.agentId);
+      res.json({ sales });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch sales data" });
+    }
+  });
+
+  app.post("/api/mobile/sales", async (req, res) => {
+    if (!req.session.agentId) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    try {
+      const agent = await storage.getAgent(req.session.agentId);
+      if (!agent || !agent.canSelfReport) {
+        return res.status(403).json({ error: "Self-reporting not allowed" });
+      }
+      
+      const saleData = insertSaleSchema.parse({
+        ...req.body,
+        agentId: req.session.agentId
+      });
+      
+      const sale = await storage.createSale(saleData);
+      
+      // Broadcast real-time sale update
+      broadcastToClients({ type: "sale_created", data: sale });
+      
+      res.status(201).json(sale);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid sale data" });
     }
   });
 

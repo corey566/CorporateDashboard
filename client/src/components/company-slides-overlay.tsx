@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,8 @@ export default function CompanySlidesOverlay({ isVisible, onClose }: CompanySlid
   const [currentSlide, setCurrentSlide] = useState(0);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [slideTimer, setSlideTimer] = useState(0);
+  const timeoutRef = useRef<NodeJS.Timeout>();
+  const intervalRef = useRef<NodeJS.Timeout>();
 
   const { data: slides } = useQuery({
     queryKey: ["/api/media-slides"],
@@ -40,7 +42,11 @@ export default function CompanySlidesOverlay({ isVisible, onClose }: CompanySlid
     setTimeRemaining(duration);
     setSlideTimer(duration);
 
-    const timeout = setTimeout(() => {
+    // Clear any existing timers
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+
+    timeoutRef.current = setTimeout(() => {
       // Move to next slide or close if last slide
       if (currentSlide < activeSlides.length - 1) {
         setCurrentSlide(currentSlide + 1);
@@ -50,17 +56,21 @@ export default function CompanySlidesOverlay({ isVisible, onClose }: CompanySlid
     }, duration);
 
     // Update countdown every 100ms
-    const interval = setInterval(() => {
+    intervalRef.current = setInterval(() => {
       setTimeRemaining((prev) => Math.max(0, prev - 100));
     }, 100);
 
     return () => {
-      clearTimeout(timeout);
-      clearInterval(interval);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [isVisible, currentSlide, activeSlides.length, onClose]);
+  }, [isVisible, currentSlide]);
 
   const nextSlide = () => {
+    // Clear timers when manually navigating
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    
     if (currentSlide < activeSlides.length - 1) {
       setCurrentSlide(currentSlide + 1);
     } else {
@@ -69,6 +79,10 @@ export default function CompanySlidesOverlay({ isVisible, onClose }: CompanySlid
   };
 
   const prevSlide = () => {
+    // Clear timers when manually navigating
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    
     if (currentSlide > 0) {
       setCurrentSlide(currentSlide - 1);
     }
@@ -99,7 +113,12 @@ export default function CompanySlidesOverlay({ isVisible, onClose }: CompanySlid
           <Button
             variant="ghost"
             size="sm"
-            onClick={onClose}
+            onClick={() => {
+              // Clear timers when closing
+              if (timeoutRef.current) clearTimeout(timeoutRef.current);
+              if (intervalRef.current) clearInterval(intervalRef.current);
+              onClose();
+            }}
             className="text-white hover:bg-white/10"
           >
             <X className="w-5 h-5" />

@@ -1,7 +1,13 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -47,13 +53,13 @@ export default function AuthPage() {
   });
 
   if (user) {
-    navigate("/admin");
+    navigate("/admin-portal");
     return null;
   }
 
   const handleLogin = async (data: LoginData) => {
     await loginMutation.mutateAsync(data);
-    navigate("/admin");
+    navigate("/admin-portal");
   };
 
   const handleRegister = async (data: RegisterData) => {
@@ -71,36 +77,48 @@ export default function AuthPage() {
               <TrendingUp className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-4xl font-bold text-corporate-800">Sales Leaderboard</h1>
-              <p className="text-xl text-corporate-500">Real-time Performance Dashboard</p>
+              <h1 className="text-4xl font-bold text-corporate-800">
+                Sales Leaderboard
+              </h1>
+              <p className="text-xl text-corporate-500">
+                Real-time Performance Dashboard
+              </p>
             </div>
           </div>
-          
+
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                 <Shield className="w-4 h-4 text-white" />
               </div>
-              <p className="text-corporate-700">Secure admin panel for complete system control</p>
+              <p className="text-corporate-700">
+                Secure admin panel for complete system control
+              </p>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-warning rounded-full flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-white" />
               </div>
-              <p className="text-corporate-700">Real-time sales tracking and team management</p>
+              <p className="text-corporate-700">
+                Real-time sales tracking and team management
+              </p>
             </div>
-            
+
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-white" />
               </div>
-              <p className="text-corporate-700">Interactive TV dashboard for call center display</p>
+              <p className="text-corporate-700">
+                Interactive TV dashboard for call center display
+              </p>
             </div>
           </div>
-          
+
           <div className="p-6 bg-white rounded-xl shadow-lg">
-            <h3 className="text-lg font-semibold text-corporate-800 mb-2">Admin Features</h3>
+            <h3 className="text-lg font-semibold text-corporate-800 mb-2">
+              Admin Features
+            </h3>
             <ul className="space-y-2 text-corporate-600">
               <li>• Agent and team management</li>
               <li>• Sales entry and tracking</li>
@@ -126,9 +144,12 @@ export default function AuthPage() {
                   <TabsTrigger value="login">Login</TabsTrigger>
                   <TabsTrigger value="register">Register</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="login" className="space-y-4">
-                  <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
+                  <form
+                    onSubmit={loginForm.handleSubmit(handleLogin)}
+                    className="space-y-4"
+                  >
                     <div className="space-y-2">
                       <Label htmlFor="login-username">Username</Label>
                       <Input
@@ -142,7 +163,7 @@ export default function AuthPage() {
                         </p>
                       )}
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="login-password">Password</Label>
                       <Input
@@ -157,7 +178,7 @@ export default function AuthPage() {
                         </p>
                       )}
                     </div>
-                    
+
                     <Button
                       type="submit"
                       className="w-full"
@@ -174,9 +195,12 @@ export default function AuthPage() {
                     </Button>
                   </form>
                 </TabsContent>
-                
+
                 <TabsContent value="register" className="space-y-4">
-                  <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
+                  <form
+                    onSubmit={registerForm.handleSubmit(handleRegister)}
+                    className="space-y-4"
+                  >
                     <div className="space-y-2">
                       <Label htmlFor="register-username">Username</Label>
                       <Input
@@ -190,7 +214,7 @@ export default function AuthPage() {
                         </p>
                       )}
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="register-password">Password</Label>
                       <Input
@@ -205,7 +229,7 @@ export default function AuthPage() {
                         </p>
                       )}
                     </div>
-                    
+
                     <Button
                       type="submit"
                       className="w-full"

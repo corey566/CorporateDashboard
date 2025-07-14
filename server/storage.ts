@@ -22,6 +22,7 @@ export interface IStorage {
   // Agent methods
   getAgents(): Promise<Agent[]>;
   getAgent(id: number): Promise<Agent | undefined>;
+  getAgentByUsername(username: string): Promise<Agent | undefined>;
   createAgent(agent: InsertAgent): Promise<Agent>;
   updateAgent(id: number, agent: Partial<InsertAgent>): Promise<Agent>;
   deleteAgent(id: number): Promise<void>;
@@ -96,6 +97,11 @@ export class DatabaseStorage implements IStorage {
   
   async getAgent(id: number): Promise<Agent | undefined> {
     const [agent] = await db.select().from(agents).where(eq(agents.id, id));
+    return agent || undefined;
+  }
+
+  async getAgentByUsername(username: string): Promise<Agent | undefined> {
+    const [agent] = await db.select().from(agents).where(eq(agents.username, username));
     return agent || undefined;
   }
   

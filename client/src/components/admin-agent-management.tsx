@@ -19,6 +19,9 @@ import { z } from "zod";
 const agentFormSchema = insertAgentSchema.extend({
   volumeTarget: z.string().min(1, "Volume target is required").transform(val => parseFloat(val)),
   unitsTarget: z.string().min(1, "Units target is required").transform(val => parseInt(val)),
+  username: z.string().optional(),
+  password: z.string().optional(),
+  canSelfReport: z.boolean().default(false),
 });
 
 type AgentFormData = z.infer<typeof agentFormSchema>;
@@ -46,6 +49,9 @@ export default function AdminAgentManagement() {
       category: "",
       volumeTarget: "",
       unitsTarget: "",
+      username: "",
+      password: "",
+      canSelfReport: false,
     },
   });
 
@@ -56,6 +62,9 @@ export default function AdminAgentManagement() {
         teamId: parseInt(data.teamId),
         volumeTarget: data.volumeTarget,
         unitsTarget: data.unitsTarget,
+        // Only include auth fields if provided
+        username: data.username || undefined,
+        password: data.password || undefined,
       };
       return apiRequest("POST", "/api/agents", agentData);
     },
@@ -85,6 +94,9 @@ export default function AdminAgentManagement() {
         teamId: parseInt(data.teamId),
         volumeTarget: data.volumeTarget,
         unitsTarget: data.unitsTarget,
+        // Only include auth fields if provided
+        username: data.username || undefined,
+        password: data.password || undefined,
       };
       return apiRequest("PUT", `/api/agents/${id}`, agentData);
     },
@@ -138,6 +150,9 @@ export default function AdminAgentManagement() {
       category: agent.category,
       volumeTarget: agent.volumeTarget.toString(),
       unitsTarget: agent.unitsTarget.toString(),
+      username: agent.username || "",
+      password: "",
+      canSelfReport: agent.canSelfReport || false,
     });
     setIsDialogOpen(true);
   };
@@ -290,6 +305,63 @@ export default function AdminAgentManagement() {
                         {form.formState.errors.unitsTarget.message}
                       </p>
                     )}
+                  </div>
+                </div>
+                
+                {/* Mobile Authentication Section */}
+                <div className="border-t pt-4">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Mobile App Access</h3>
+                    <p className="text-sm text-gray-600">Configure mobile app login credentials for this agent</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="username">Username (Optional)</Label>
+                      <Input
+                        id="username"
+                        {...form.register("username")}
+                        placeholder="mobile_username"
+                      />
+                      {form.formState.errors.username && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.username.message}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="password">Password (Optional)</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        {...form.register("password")}
+                        placeholder="Enter password"
+                      />
+                      {form.formState.errors.password && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.password.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        id="canSelfReport"
+                        type="checkbox"
+                        checked={form.watch("canSelfReport")}
+                        onChange={(e) => form.setValue("canSelfReport", e.target.checked)}
+                        className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      />
+                      <Label htmlFor="canSelfReport" className="text-sm font-medium text-gray-700">
+                        Allow self-reporting sales via mobile app
+                      </Label>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Agent can record their own sales through the mobile app
+                    </p>
                   </div>
                 </div>
                 
