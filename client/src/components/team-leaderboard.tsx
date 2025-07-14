@@ -62,34 +62,34 @@ export default function TeamLeaderboard({ teams, agents }: TeamLeaderboardProps)
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="h-full">
+      <CardHeader className="pb-3 flex-shrink-0">
         <CardTitle className="text-lg flex items-center">
           <Users className="w-5 h-5 text-primary mr-2" />
           Team Rankings
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-4">
-        <div className="space-y-3">
+      <CardContent className="p-4 h-[calc(100%-4rem)] overflow-y-auto">
+        <div className="space-y-2">
           {teamPerformance.map((team, index) => (
             <div
               key={team.id}
-              className={`flex items-center justify-between p-3 bg-gradient-to-r ${getTeamGradient(index + 1)} rounded-lg border`}
+              className={`flex items-center justify-between p-2 bg-gradient-to-r ${getTeamGradient(index + 1)} rounded-lg border`}
             >
-              <div className="flex items-center space-x-3">
-                <Badge className={`${getTeamBadgeColor(index + 1)} w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm`}>
+              <div className="flex items-center space-x-2">
+                <Badge className={`${getTeamBadgeColor(index + 1)} w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs`}>
                   {index + 1}
                 </Badge>
                 <div>
-                  <div className="flex items-center space-x-2">
-                    <h3 className="font-semibold text-corporate-800">{team.name}</h3>
+                  <div className="flex items-center space-x-1">
+                    <h3 className="font-semibold text-corporate-800 text-sm">{team.name}</h3>
                     {getTeamIcon(index + 1)}
                   </div>
                   <p className="text-xs text-corporate-500">{team.memberCount} members</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className={`font-bold ${index === 0 ? 'text-primary' : index === 1 ? 'text-accent' : 'text-purple-500'}`}>
+                <p className={`font-bold text-sm ${index === 0 ? 'text-primary' : index === 1 ? 'text-accent' : 'text-purple-500'}`}>
                   ${team.totalSales.toLocaleString()}
                 </p>
                 <p className="text-xs text-corporate-500">

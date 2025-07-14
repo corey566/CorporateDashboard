@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Users, Wifi, TrendingUp, Settings } from "lucide-react";
 import AgentCard from "./agent-card";
 import TeamLeaderboard from "./team-leaderboard";
-import MediaSlides from "./media-slides";
 import NewsTicker from "./news-ticker";
 import SalePopup from "./sale-popup";
 import CompanySlidesOverlay from "./company-slides-overlay";
@@ -16,7 +15,6 @@ export default function TvDashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [salePopup, setSalePopup] = useState<any>(null);
   const [showCompanySlides, setShowCompanySlides] = useState(false);
-  const [lastSlidesCheck, setLastSlidesCheck] = useState<Date>(new Date());
   const { isConnected } = useWebSocket();
 
   const { data: dashboardData, isLoading } = useQuery({
@@ -24,27 +22,7 @@ export default function TvDashboard() {
     refetchInterval: 2000,
   });
 
-  // Company slides auto-trigger (temporarily disabled for testing)
-  useEffect(() => {
-    const checkForActiveSlides = () => {
-      const activeSlides = dashboardData?.mediaSlides?.filter((slide: any) => slide.isActive);
-      const now = new Date();
-      const timeSinceLastCheck = now.getTime() - lastSlidesCheck.getTime();
-      
-      // Only trigger if there are active slides, overlay isn't already showing, and at least 30 seconds have passed
-      if (activeSlides && activeSlides.length > 0 && !showCompanySlides && timeSinceLastCheck > 30000) {
-        console.log('Auto-triggering company slides overlay');
-        setShowCompanySlides(true);
-        setLastSlidesCheck(now);
-      }
-    };
 
-    if (dashboardData?.mediaSlides) {
-      // Check every 30 seconds for company slides
-      const interval = setInterval(checkForActiveSlides, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [dashboardData?.mediaSlides, showCompanySlides, lastSlidesCheck]);
 
   // Update last updated timestamp
   useEffect(() => {
@@ -78,7 +56,6 @@ export default function TvDashboard() {
   const agents = dashboardData?.agents || [];
   const teams = dashboardData?.teams || [];
   const cashOffers = dashboardData?.cashOffers || [];
-  const mediaSlides = dashboardData?.mediaSlides || [];
   const recentSales = dashboardData?.sales?.slice(0, 5) || [];
 
   return (
@@ -114,105 +91,113 @@ export default function TvDashboard() {
       {/* Main Content Grid */}
       <div className="grid grid-cols-12 gap-4 p-4 h-[calc(100vh-120px)] overflow-hidden">
         {/* Left Side - Agent Leaderboard */}
-        <div className="col-span-8 space-y-4 h-full overflow-y-auto">
+        <div className="col-span-8 h-full overflow-hidden flex flex-col">
           {/* Individual Agent Cards */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-xl">Sales Agents</CardTitle>
-                <Badge variant="secondary" className="bg-accent text-white">
-                  <Users className="w-4 h-4 mr-1" />
-                  {agents.length} Active
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {agents.map((agent: any) => (
-                  <AgentCard key={agent.id} agent={agent} />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Cash Offers Section */}
-          {cashOffers.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center">
-                  <div className="w-6 h-6 bg-warning rounded-full flex items-center justify-center mr-2">
-                    <span className="text-white text-sm">$</span>
-                  </div>
-                  Active Cash Offers
-                </CardTitle>
+          <div className="flex-1 min-h-0">
+            <Card className="h-full">
+              <CardHeader className="pb-3 flex-shrink-0">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-xl">Sales Agents</CardTitle>
+                  <Badge variant="secondary" className="bg-accent text-white">
+                    <Users className="w-4 h-4 mr-1" />
+                    {agents.length} Active
+                  </Badge>
+                </div>
               </CardHeader>
-              <CardContent className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {cashOffers.map((offer: any) => (
-                    <div
-                      key={offer.id}
-                      className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-3 border border-yellow-200"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <h3 className="font-semibold text-corporate-800 text-sm">{offer.title}</h3>
-                        <Badge variant="secondary" className="bg-warning text-white text-xs">
-                          ${offer.reward}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-corporate-600 mb-2">{offer.description}</p>
-                      <div className="w-full bg-yellow-200 rounded-full h-1.5">
-                        <div className="bg-warning h-1.5 rounded-full" style={{ width: "35%" }}></div>
-                      </div>
-                    </div>
+              <CardContent className="p-4 h-[calc(100%-5rem)] overflow-y-auto">
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                  {agents.map((agent: any) => (
+                    <AgentCard key={agent.id} agent={agent} />
                   ))}
                 </div>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Cash Offers Section */}
+          {cashOffers.length > 0 && (
+            <div className="mt-4 flex-shrink-0">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center">
+                    <div className="w-6 h-6 bg-warning rounded-full flex items-center justify-center mr-2">
+                      <span className="text-white text-sm">$</span>
+                    </div>
+                    Active Cash Offers
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {cashOffers.map((offer: any) => (
+                      <div
+                        key={offer.id}
+                        className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-3 border border-yellow-200"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-corporate-800 text-sm">{offer.title}</h3>
+                          <Badge variant="secondary" className="bg-warning text-white text-xs">
+                            ${offer.reward}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-corporate-600 mb-2">{offer.description}</p>
+                        <div className="w-full bg-yellow-200 rounded-full h-1.5">
+                          <div className="bg-warning h-1.5 rounded-full" style={{ width: "35%" }}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
         </div>
 
-        {/* Right Side - Team Leaderboard & Media */}
-        <div className="col-span-4 space-y-4 h-full overflow-y-auto">
-          <TeamLeaderboard teams={teams} agents={agents} />
-          <MediaSlides slides={mediaSlides} />
+        {/* Right Side - Team Leaderboard & Recent Sales */}
+        <div className="col-span-4 space-y-4 h-full overflow-hidden flex flex-col">
+          {/* Team Leaderboard - Fixed height */}
+          <div className="flex-1 min-h-0">
+            <TeamLeaderboard teams={teams} agents={agents} />
+          </div>
           
-          {/* Recent Sales */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center">
-                <div className="w-6 h-6 bg-warning rounded-full flex items-center justify-center mr-2">
-                  <span className="text-white text-sm">!</span>
-                </div>
-                Recent Sales
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <div className="space-y-2">
-                {recentSales.map((sale: any, index: number) => {
-                  const agent = agents.find((a: any) => a.id === sale.agentId);
-                  const bgColors = ['bg-green-50', 'bg-blue-50', 'bg-purple-50'];
-                  const textColors = ['text-green-600', 'text-blue-600', 'text-purple-600'];
-                  
-                  return (
-                    <div
-                      key={sale.id}
-                      className={`flex items-center space-x-3 p-2 rounded-lg ${bgColors[index % 3]}`}
-                    >
-                      <div className={`w-2 h-2 rounded-full ${textColors[index % 3].replace('text-', 'bg-')}`} />
-                      <div>
-                        <p className="text-xs font-medium text-corporate-800">
-                          {agent?.name} closed ${parseFloat(sale.amount).toLocaleString()} deal
-                        </p>
-                        <p className="text-xs text-corporate-500">
-                          {new Date(sale.createdAt).toLocaleTimeString()}
-                        </p>
+          {/* Recent Sales - Fixed height */}
+          <div className="flex-1 min-h-0">
+            <Card className="h-full">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-6 h-6 bg-warning rounded-full flex items-center justify-center mr-2">
+                    <span className="text-white text-sm">!</span>
+                  </div>
+                  Recent Sales
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 h-[calc(100%-4rem)] overflow-y-auto">
+                <div className="space-y-2">
+                  {recentSales.map((sale: any, index: number) => {
+                    const agent = agents.find((a: any) => a.id === sale.agentId);
+                    const bgColors = ['bg-green-50', 'bg-blue-50', 'bg-purple-50'];
+                    const textColors = ['text-green-600', 'text-blue-600', 'text-purple-600'];
+                    
+                    return (
+                      <div
+                        key={sale.id}
+                        className={`flex items-center space-x-3 p-2 rounded-lg ${bgColors[index % 3]}`}
+                      >
+                        <div className={`w-2 h-2 rounded-full ${textColors[index % 3].replace('text-', 'bg-')}`} />
+                        <div>
+                          <p className="text-xs font-medium text-corporate-800">
+                            {agent?.name} closed ${parseFloat(sale.amount).toLocaleString()} deal
+                          </p>
+                          <p className="text-xs text-corporate-500">
+                            {new Date(sale.createdAt).toLocaleTimeString()}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
