@@ -34,6 +34,7 @@ Preferred communication style: Simple, everyday language.
    - Main display component optimized for large screens
    - Shows agent cards, team leaderboard, and media slides
    - Handles real-time updates and sale popups
+   - Company slides overlay with auto-trigger functionality
 
 2. **Agent Cards** (`client/src/components/agent-card.tsx`)
    - Individual agent performance display
@@ -50,12 +51,22 @@ Preferred communication style: Simple, everyday language.
    - Displays when sales are recorded
    - Auto-dismisses after 5 seconds
 
+5. **Company Slides Overlay** (`client/src/components/company-slides-overlay.tsx`)
+   - Full-screen overlay that temporarily replaces dashboard
+   - Configurable duration timers for each slide
+   - Auto-advance and manual navigation
+
 ### Admin Panel Components
-1. **Agent Management** - CRUD operations for sales agents
-2. **Sales Entry** - Manual sales recording interface
-3. **Cash Offers** - Promotional offers management
-4. **Media Management** - Company slides and updates
-5. **Announcements** - System notifications and news ticker
+**Access Route: `/admin-portal`** (Protected route requiring authentication)
+**Note: Admin panel button removed from dashboard - access via direct URL only**
+
+1. **Team Management** - First priority in workflow, create teams before agents
+2. **Agent Management** - CRUD operations for sales agents
+3. **Sales Entry** - Manual sales recording interface
+4. **Cash Offers** - Promotional offers management
+5. **Media Management** - Company slides with duration controls (5-60 seconds)
+6. **Announcements** - System notifications and news ticker
+7. **UI Customization** - Theme colors, typography, accessibility options
 
 ### Database Schema
 - **users**: Admin authentication

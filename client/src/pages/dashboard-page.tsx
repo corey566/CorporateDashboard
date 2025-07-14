@@ -1,26 +1,12 @@
-import { useState } from "react";
-import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Settings, UserCog } from "lucide-react";
 import TvDashboard from "@/components/tv-dashboard";
 import { useWebSocket } from "@/hooks/use-websocket";
 
 export default function DashboardPage() {
-  const [, navigate] = useLocation();
   const { isConnected } = useWebSocket();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-corporate-50 to-blue-50">
-      {/* Admin Panel Toggle */}
-      <div className="fixed top-4 right-4 z-50">
-        <Button
-          onClick={() => navigate("/admin")}
-          className="bg-corporate-800 hover:bg-corporate-700 text-white shadow-lg"
-        >
-          <Settings className="w-4 h-4 mr-2" />
-          Admin Panel
-        </Button>
-      </div>
+
 
       {/* Connection Status */}
       <div className="fixed top-4 left-4 z-50">
