@@ -1,0 +1,169 @@
+📋 Project Prompt: Real-Time Sales Leaderboard & Admin Panel for Call Center Platform
+🎯 Project Goal:
+Build a real-time, interactive Sales Leaderboard Dashboard System optimized for call centers. The system must display sales agent progress, team performance, live announcements, and reward offers on a TV screen accessed via URL. The system must also include a backend admin panel for full control over agent data, sales entries, media slides, and custom announcements.
+
+🧱 Tech Stack Requirements
+Backend Language: PHP
+
+Database: MySQL
+
+Frontend Framework: Any PHP-supported frontend stack (e.g., Laravel Blade, Vue.js with Laravel, or pure PHP)
+
+Real-time Communication: Pusher, Laravel Echo, or WebSocket (based on what fits with PHP backend)
+
+Media Management: Local file system or cloud storage (e.g., Cloudinary or AWS S3)
+
+Deployment Target: Web-accessible system suitable for displaying on a large screen or smart TV via URL
+
+📺 TV Dashboard Functionality
+Show individual sales agents with:
+
+Photo
+
+Name
+
+Multiple sales targets:
+
+Sales Volume (currency-based)
+
+Sales Quantity (units)
+
+Real-time progress updates
+
+Category labels (e.g., Software, Hardware)
+
+Progress shown using progress bars or cricket scoreboard-style layout
+
+Team Leaderboard on the right side:
+
+All agents must be assigned to a team
+
+Team rankings based on combined performance of agents
+
+Rankings auto-update in real-time
+
+Congratulatory popup + sound when a team hits target
+
+Sales Popups (Real-Time):
+
+When a sale is made, popup appears on dashboard:
+
+Agent photo + name + message like: “John closed a deal!”
+
+Plays applause or celebration sound
+
+Cash Offers Section (Bounty Equivalent):
+
+Time-limited or date-bound reward offers
+
+Based on volume or quantity
+
+Countdown or duration-based visibility
+
+Rotating Slide Viewer:
+
+Displays media (images, text, video)
+
+Controlled from backend
+
+Similar to WhatsApp status or billboard slides
+
+Live News Ticker (Bottom):
+
+Displays scrolling news/updates
+
+Real-time from admin input
+
+Admin-triggered Popups:
+
+For birthday wishes, emergencies, alerts
+
+Custom text + optional sound (upload/link/local inventory)
+
+Works like the congratulatory popup
+
+🛠️ Admin Panel Functionality
+Agent Management:
+
+Add/edit agent info
+
+Upload agent photo
+
+Assign team (required)
+
+Set multiple targets per agent (volume + quantity)
+
+Assign categories (e.g., Software, Hardware)
+
+Team Management:
+
+Create/edit teams
+
+View team progress (calculated from agent contributions)
+
+Assign team targets
+
+Sales Entry:
+
+Input new sales:
+
+Agent
+
+Sale amount (currency)
+
+Quantity (units)
+
+Category/product name
+
+Client name
+
+Sale description
+
+Subscription period (optional)
+
+Date/time
+
+Cash Offer Configuration:
+
+Add/edit offers
+
+Choose volume or quantity
+
+Set timer, duration, or specific dates
+
+Media/Slide Management:
+
+Upload images/videos/text
+
+Schedule or reorder slides
+
+News Feed Control:
+
+Add scrolling news/messages
+
+Live updates to the TV display
+
+Announcements Manager:
+
+Trigger alerts, birthdays, emergency popups
+
+Attach custom sound:
+
+Upload
+
+Select from library
+
+Provide direct URL
+
+Reports & Exports:
+
+Export sales reports by:
+
+Agent
+
+Team
+
+Product/category
+
+Subscription plan
+
