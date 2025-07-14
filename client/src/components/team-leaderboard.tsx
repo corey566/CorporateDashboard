@@ -63,14 +63,14 @@ export default function TeamLeaderboard({ teams, agents }: TeamLeaderboardProps)
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center">
           <Users className="w-5 h-5 text-primary mr-2" />
           Team Rankings
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
+      <CardContent className="p-4">
+        <div className="space-y-3">
           {teamPerformance.map((team, index) => (
             <div
               key={team.id}

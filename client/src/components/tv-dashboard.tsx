@@ -33,7 +33,6 @@ export default function TvDashboard() {
       
       // Only trigger if there are active slides, overlay isn't already showing, and at least 5 minutes have passed
       if (activeSlides && activeSlides.length > 0 && !showCompanySlides && timeSinceLastCheck > 300000) {
-        console.log('Auto-triggering company slides overlay');
         setShowCompanySlides(true);
         setLastSlidesCheck(now);
       }
@@ -84,7 +83,7 @@ export default function TvDashboard() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-corporate-100 px-8 py-4">
+      <header className="bg-white shadow-sm border-b border-corporate-100 px-4 py-2 flex-shrink-0">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
@@ -96,14 +95,6 @@ export default function TvDashboard() {
             </div>
           </div>
           <div className="flex items-center space-x-6">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => setShowCompanySlides(true)}
-              className="bg-blue-50 hover:bg-blue-100 text-blue-600 border-blue-200"
-            >
-              Test Slides
-            </Button>
             <div className="text-right">
               <p className="text-sm text-corporate-500">Last Updated</p>
               <p className="font-semibold text-corporate-800">
@@ -120,9 +111,9 @@ export default function TvDashboard() {
       </header>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-12 gap-6 p-8 min-h-[calc(100vh-120px)]">
+      <div className="grid grid-cols-12 gap-4 p-4 h-[calc(100vh-120px)] overflow-hidden">
         {/* Left Side - Agent Leaderboard */}
-        <div className="col-span-8 space-y-6">
+        <div className="col-span-8 space-y-4 h-full overflow-y-auto">
           {/* Individual Agent Cards */}
           <Card>
             <CardHeader>
@@ -134,8 +125,8 @@ export default function TvDashboard() {
                 </Badge>
               </div>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <CardContent className="p-4">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
                 {agents.map((agent: any) => (
                   <AgentCard key={agent.id} agent={agent} />
                 ))}
@@ -146,30 +137,30 @@ export default function TvDashboard() {
           {/* Cash Offers Section */}
           {cashOffers.length > 0 && (
             <Card>
-              <CardHeader>
-                <CardTitle className="text-xl flex items-center">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center">
                   <div className="w-6 h-6 bg-warning rounded-full flex items-center justify-center mr-2">
                     <span className="text-white text-sm">$</span>
                   </div>
                   Active Cash Offers
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <CardContent className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {cashOffers.map((offer: any) => (
                     <div
                       key={offer.id}
-                      className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-4 border border-yellow-200"
+                      className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-3 border border-yellow-200"
                     >
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold text-corporate-800">{offer.title}</h3>
+                      <div className="flex items-center justify-between mb-2">
+                        <h3 className="font-semibold text-corporate-800 text-sm">{offer.title}</h3>
                         <Badge variant="secondary" className="bg-warning text-white text-xs">
                           ${offer.reward}
                         </Badge>
                       </div>
-                      <p className="text-sm text-corporate-600 mb-2">{offer.description}</p>
-                      <div className="w-full bg-yellow-200 rounded-full h-2">
-                        <div className="bg-warning h-2 rounded-full" style={{ width: "35%" }}></div>
+                      <p className="text-xs text-corporate-600 mb-2">{offer.description}</p>
+                      <div className="w-full bg-yellow-200 rounded-full h-1.5">
+                        <div className="bg-warning h-1.5 rounded-full" style={{ width: "35%" }}></div>
                       </div>
                     </div>
                   ))}
@@ -180,13 +171,13 @@ export default function TvDashboard() {
         </div>
 
         {/* Right Side - Team Leaderboard & Media */}
-        <div className="col-span-4 space-y-6">
+        <div className="col-span-4 space-y-4 h-full overflow-y-auto">
           <TeamLeaderboard teams={teams} agents={agents} />
           <MediaSlides slides={mediaSlides} />
           
           {/* Recent Sales */}
           <Card>
-            <CardHeader>
+            <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center">
                 <div className="w-6 h-6 bg-warning rounded-full flex items-center justify-center mr-2">
                   <span className="text-white text-sm">!</span>
@@ -194,8 +185,8 @@ export default function TvDashboard() {
                 Recent Sales
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
+            <CardContent className="p-4">
+              <div className="space-y-2">
                 {recentSales.map((sale: any, index: number) => {
                   const agent = agents.find((a: any) => a.id === sale.agentId);
                   const bgColors = ['bg-green-50', 'bg-blue-50', 'bg-purple-50'];
@@ -208,7 +199,7 @@ export default function TvDashboard() {
                     >
                       <div className={`w-2 h-2 rounded-full ${textColors[index % 3].replace('text-', 'bg-')}`} />
                       <div>
-                        <p className="text-sm font-medium text-corporate-800">
+                        <p className="text-xs font-medium text-corporate-800">
                           {agent?.name} closed ${parseFloat(sale.amount).toLocaleString()} deal
                         </p>
                         <p className="text-xs text-corporate-500">
@@ -225,7 +216,9 @@ export default function TvDashboard() {
       </div>
 
       {/* Bottom News Ticker */}
-      <NewsTicker />
+      <div className="fixed bottom-0 left-0 right-0 z-10">
+        <NewsTicker />
+      </div>
       
       {/* Sale Popup */}
       {salePopup && (

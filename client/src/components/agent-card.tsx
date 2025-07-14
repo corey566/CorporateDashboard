@@ -26,21 +26,21 @@ export default function AgentCard({ agent }: AgentCardProps) {
   };
 
   return (
-    <div className={`bg-gradient-to-r ${getCardGradient(agent.id)} rounded-lg p-4 border`}>
-      <div className="flex items-center space-x-4 mb-4">
+    <div className={`bg-gradient-to-r ${getCardGradient(agent.id)} rounded-lg p-3 border`}>
+      <div className="flex items-center space-x-3 mb-3">
         <div className="relative">
           <img
             src={agent.photo || `https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=150&h=150`}
             alt={agent.name}
-            className="w-16 h-16 rounded-full object-cover border-2 border-primary"
+            className="w-12 h-12 rounded-full object-cover border-2 border-primary"
           />
-          <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-            <div className="w-2 h-2 bg-white rounded-full"></div>
+          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
           </div>
         </div>
         <div>
-          <h3 className="font-semibold text-corporate-800">{agent.name}</h3>
-          <Badge variant="secondary" className={`${getTeamColor(agent.teamId)} text-sm font-medium`}>
+          <h3 className="font-semibold text-corporate-800 text-sm">{agent.name}</h3>
+          <Badge variant="secondary" className={`${getTeamColor(agent.teamId)} text-xs font-medium`}>
             {agent.team?.name || 'Team'}
           </Badge>
           <p className="text-xs text-corporate-500">{agent.category}</p>
@@ -48,25 +48,25 @@ export default function AgentCard({ agent }: AgentCardProps) {
       </div>
 
       {/* Sales Volume Progress */}
-      <div className="mb-3">
+      <div className="mb-2">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-sm font-medium text-corporate-700">Volume Target</span>
-          <span className="text-sm font-bold text-primary">
+          <span className="text-xs font-medium text-corporate-700">Volume Target</span>
+          <span className="text-xs font-bold text-primary">
             ${parseFloat(agent.currentVolume || 0).toLocaleString()} / ${parseFloat(agent.volumeTarget).toLocaleString()}
           </span>
         </div>
-        <Progress value={volumeProgress} className="h-2" />
+        <Progress value={volumeProgress} className="h-1.5" />
       </div>
 
       {/* Sales Quantity Progress */}
-      <div className="mb-3">
+      <div className="mb-2">
         <div className="flex justify-between items-center mb-1">
-          <span className="text-sm font-medium text-corporate-700">Units Target</span>
-          <span className="text-sm font-bold text-accent">
+          <span className="text-xs font-medium text-corporate-700">Units Target</span>
+          <span className="text-xs font-bold text-accent">
             {agent.currentUnits || 0} / {agent.unitsTarget}
           </span>
         </div>
-        <Progress value={unitsProgress} className="h-2" />
+        <Progress value={unitsProgress} className="h-1.5" />
       </div>
 
       <div className="flex items-center justify-between text-xs text-corporate-500">

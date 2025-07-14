@@ -43,32 +43,32 @@ export default function MediaSlides({ slides }: MediaSlidesProps) {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center">
           <Images className="w-5 h-5 text-accent mr-2" />
           Company Updates
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4">
         <div className="relative">
           {slide.type === 'image' && slide.url ? (
             <img
               src={slide.url}
               alt={slide.title}
-              className="w-full h-48 object-cover rounded-lg"
+              className="w-full h-32 object-cover rounded-lg"
             />
           ) : slide.type === 'text' ? (
-            <div className="w-full h-48 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center p-6">
+            <div className="w-full h-32 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg flex items-center justify-center p-4">
               <div className="text-center">
-                <h3 className="text-xl font-semibold text-corporate-800 mb-2">{slide.title}</h3>
-                <p className="text-corporate-600">{slide.content}</p>
+                <h3 className="text-lg font-semibold text-corporate-800 mb-1">{slide.title}</h3>
+                <p className="text-sm text-corporate-600">{slide.content}</p>
               </div>
             </div>
           ) : (
-            <div className="w-full h-48 bg-gradient-to-r from-corporate-50 to-blue-50 rounded-lg flex items-center justify-center">
+            <div className="w-full h-32 bg-gradient-to-r from-corporate-50 to-blue-50 rounded-lg flex items-center justify-center">
               <div className="text-center">
-                <Images className="w-16 h-16 text-corporate-400 mx-auto mb-4" />
-                <p className="text-corporate-500">{slide.title}</p>
+                <Images className="w-12 h-12 text-corporate-400 mx-auto mb-2" />
+                <p className="text-sm text-corporate-500">{slide.title}</p>
               </div>
             </div>
           )}
