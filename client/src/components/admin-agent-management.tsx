@@ -16,7 +16,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Users } from "lucide-react";
 import { z } from "zod";
 
-const agentFormSchema = insertAgentSchema.extend({
+const agentFormSchema = insertAgentSchema.omit({
+  teamId: true,
+  volumeTarget: true,
+  unitsTarget: true,
+}).extend({
   teamId: z.string().min(1, "Team is required").transform(val => parseInt(val)),
   volumeTarget: z.string().min(1, "Volume target is required").transform(val => parseFloat(val)),
   unitsTarget: z.string().min(1, "Units target is required").transform(val => parseInt(val)),
