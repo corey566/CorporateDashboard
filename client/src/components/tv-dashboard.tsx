@@ -31,8 +31,9 @@ export default function TvDashboard() {
       const now = new Date();
       const timeSinceLastCheck = now.getTime() - lastSlidesCheck.getTime();
       
-      // Only trigger if there are active slides, overlay isn't already showing, and at least 5 minutes have passed
-      if (activeSlides && activeSlides.length > 0 && !showCompanySlides && timeSinceLastCheck > 300000) {
+      // Only trigger if there are active slides, overlay isn't already showing, and at least 30 seconds have passed
+      if (activeSlides && activeSlides.length > 0 && !showCompanySlides && timeSinceLastCheck > 30000) {
+        console.log('Auto-triggering company slides overlay');
         setShowCompanySlides(true);
         setLastSlidesCheck(now);
       }

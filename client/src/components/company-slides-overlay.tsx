@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,10 +21,10 @@ export default function CompanySlidesOverlay({ isVisible, onClose }: CompanySlid
   const { data: slides } = useQuery({
     queryKey: ["/api/media-slides"],
     enabled: isVisible,
-    refetchInterval: 5000,
+    refetchInterval: 30000, // Only refetch every 30 seconds to avoid timer interruption
   });
 
-  const activeSlides = slides?.filter((slide: any) => slide.isActive) || [];
+  const activeSlides = useMemo(() => slides?.filter((slide: any) => slide.isActive) || [], [slides]);
 
   // Reset slide index when overlay opens
   useEffect(() => {
@@ -37,7 +37,11 @@ export default function CompanySlidesOverlay({ isVisible, onClose }: CompanySlid
     if (!isVisible || activeSlides.length === 0) return;
 
     const currentSlideData = activeSlides[currentSlide];
-    const duration = (currentSlideData?.duration || 10) * 1000; // Convert to milliseconds
+    if (!currentSlideData) return;
+
+    const duration = (currentSlideData.duration || 10) * 1000; // Convert to milliseconds
+    
+    console.log(`Setting timer for slide ${currentSlide + 1} of ${activeSlides.length} for ${duration}ms`);
     
     setTimeRemaining(duration);
     setSlideTimer(duration);
@@ -46,11 +50,16 @@ export default function CompanySlidesOverlay({ isVisible, onClose }: CompanySlid
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (intervalRef.current) clearInterval(intervalRef.current);
 
+    // Use a stable reference to activeSlides and onClose
+    const slidesLength = activeSlides.length;
+    const currentSlideIndex = currentSlide;
+    
     timeoutRef.current = setTimeout(() => {
       // Move to next slide or close if last slide
-      if (currentSlide < activeSlides.length - 1) {
-        setCurrentSlide(currentSlide + 1);
+      if (currentSlideIndex < slidesLength - 1) {
+        setCurrentSlide(currentSlideIndex + 1);
       } else {
+        console.log('Closing overlay after last slide');
         onClose();
       }
     }, duration);
