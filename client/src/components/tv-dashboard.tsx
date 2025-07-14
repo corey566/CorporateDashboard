@@ -1,24 +1,43 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Wifi, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Users, Wifi, TrendingUp, Settings, Presentation } from "lucide-react";
 import AgentCard from "./agent-card";
 import TeamLeaderboard from "./team-leaderboard";
 import MediaSlides from "./media-slides";
 import NewsTicker from "./news-ticker";
 import SalePopup from "./sale-popup";
+import CompanySlidesOverlay from "./company-slides-overlay";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useState, useEffect } from "react";
 
 export default function TvDashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [salePopup, setSalePopup] = useState<any>(null);
+  const [showCompanySlides, setShowCompanySlides] = useState(false);
   const { isConnected } = useWebSocket();
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["/api/dashboard"],
     refetchInterval: 2000,
   });
+
+  // Company slides auto-trigger
+  useEffect(() => {
+    const checkForActiveSlides = () => {
+      const activeSlides = dashboardData?.mediaSlides?.filter((slide: any) => slide.isActive);
+      if (activeSlides && activeSlides.length > 0) {
+        setShowCompanySlides(true);
+      }
+    };
+
+    if (dashboardData?.mediaSlides) {
+      // Check every 30 seconds for company slides
+      const interval = setInterval(checkForActiveSlides, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [dashboardData?.mediaSlides]);
 
   // Update last updated timestamp
   useEffect(() => {
@@ -70,6 +89,15 @@ export default function TvDashboard() {
             </div>
           </div>
           <div className="flex items-center space-x-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowCompanySlides(true)}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-none hover:from-blue-700 hover:to-purple-700"
+            >
+              <Presentation className="w-4 h-4 mr-2" />
+              Company Updates
+            </Button>
             <div className="text-right">
               <p className="text-sm text-corporate-500">Last Updated</p>
               <p className="font-semibold text-corporate-800">
@@ -200,6 +228,12 @@ export default function TvDashboard() {
           onClose={() => setSalePopup(null)}
         />
       )}
+
+      {/* Company Slides Overlay */}
+      <CompanySlidesOverlay
+        isVisible={showCompanySlides}
+        onClose={() => setShowCompanySlides(false)}
+      />
     </div>
   );
 }

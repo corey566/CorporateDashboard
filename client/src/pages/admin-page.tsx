@@ -4,12 +4,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Monitor, Users, TrendingUp, Gift, LogOut, ShieldQuestion } from "lucide-react";
+import { Monitor, Users, TrendingUp, Gift, LogOut, ShieldQuestion, UsersIcon, UserPlus, Megaphone, Image } from "lucide-react";
+import AdminTeamManagement from "@/components/admin-team-management";
 import AdminAgentManagement from "@/components/admin-agent-management";
 import AdminSalesEntry from "@/components/admin-sales-entry";
 import AdminCashOffers from "@/components/admin-cash-offers";
 import AdminAnnouncements from "@/components/admin-announcements";
 import AdminMedia from "@/components/admin-media";
+import UICustomization from "@/components/ui-customization";
 import { useQuery } from "@tanstack/react-query";
 import { useWebSocket } from "@/hooks/use-websocket";
 
@@ -160,14 +162,20 @@ export default function AdminPage() {
         </div>
 
         {/* Main Tabs */}
-        <Tabs defaultValue="agents" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+        <Tabs defaultValue="teams" className="w-full">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="teams">Teams</TabsTrigger>
             <TabsTrigger value="agents">Agents</TabsTrigger>
             <TabsTrigger value="sales">Sales Entry</TabsTrigger>
             <TabsTrigger value="offers">Cash Offers</TabsTrigger>
             <TabsTrigger value="announcements">Announcements</TabsTrigger>
             <TabsTrigger value="media">Media</TabsTrigger>
+            <TabsTrigger value="customization">UI</TabsTrigger>
           </TabsList>
+          
+          <TabsContent value="teams" className="space-y-6">
+            <AdminTeamManagement />
+          </TabsContent>
           
           <TabsContent value="agents" className="space-y-6">
             <AdminAgentManagement />
@@ -187,6 +195,10 @@ export default function AdminPage() {
           
           <TabsContent value="media" className="space-y-6">
             <AdminMedia />
+          </TabsContent>
+          
+          <TabsContent value="customization" className="space-y-6">
+            <UICustomization />
           </TabsContent>
         </Tabs>
       </div>

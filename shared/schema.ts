@@ -65,6 +65,7 @@ export const mediaSlides = pgTable("media_slides", {
   type: text("type").notNull(), // 'image', 'video', 'text'
   url: text("url"),
   content: text("content"),
+  duration: integer("duration").notNull().default(10), // Duration in seconds
   order: integer("order").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -138,6 +139,8 @@ export const insertCashOfferSchema = createInsertSchema(cashOffers).omit({
 export const insertMediaSlideSchema = createInsertSchema(mediaSlides).omit({
   id: true,
   createdAt: true,
+}).extend({
+  duration: z.number().min(5).max(60).default(10), // 5-60 seconds
 });
 
 export const insertAnnouncementSchema = createInsertSchema(announcements).omit({

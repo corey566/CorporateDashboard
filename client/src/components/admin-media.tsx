@@ -31,6 +31,7 @@ import { z } from "zod";
 
 const mediaSlideFormSchema = insertMediaSlideSchema.extend({
   order: z.string().min(1, "Order is required"),
+  duration: z.string().min(1, "Duration is required"),
 });
 
 type MediaSlideFormData = z.infer<typeof mediaSlideFormSchema>;
@@ -53,7 +54,9 @@ export default function AdminMedia() {
       type: "",
       url: "",
       content: "",
+      duration: "10",
       order: "",
+      isActive: true,
     },
   });
 
@@ -62,6 +65,7 @@ export default function AdminMedia() {
       const slideData = {
         ...data,
         order: parseInt(data.order),
+        duration: parseInt(data.duration),
       };
       return apiRequest("POST", "/api/media-slides", slideData);
     },
@@ -89,6 +93,7 @@ export default function AdminMedia() {
       const slideData = {
         ...data,
         order: parseInt(data.order),
+        duration: parseInt(data.duration),
       };
       return apiRequest("PUT", `/api/media-slides/${id}`, slideData);
     },
@@ -140,7 +145,9 @@ export default function AdminMedia() {
       type: slide.type,
       url: slide.url || "",
       content: slide.content || "",
+      duration: slide.duration ? slide.duration.toString() : "10",
       order: slide.order.toString(),
+      isActive: slide.isActive,
     });
     setIsDialogOpen(true);
   };
@@ -326,19 +333,38 @@ export default function AdminMedia() {
                       />
                     </div>
                     
-                    <div>
-                      <Label htmlFor="order">Display Order</Label>
-                      <Input
-                        id="order"
-                        type="number"
-                        {...form.register("order")}
-                        placeholder="1"
-                      />
-                      {form.formState.errors.order && (
-                        <p className="text-sm text-destructive">
-                          {form.formState.errors.order.message}
-                        </p>
-                      )}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="duration">Duration (seconds)</Label>
+                        <Input
+                          id="duration"
+                          type="number"
+                          {...form.register("duration")}
+                          placeholder="10"
+                          min="5"
+                          max="60"
+                        />
+                        {form.formState.errors.duration && (
+                          <p className="text-sm text-destructive">
+                            {form.formState.errors.duration.message}
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="order">Display Order</Label>
+                        <Input
+                          id="order"
+                          type="number"
+                          {...form.register("order")}
+                          placeholder="1"
+                        />
+                        {form.formState.errors.order && (
+                          <p className="text-sm text-destructive">
+                            {form.formState.errors.order.message}
+                          </p>
+                        )}
+                      </div>
                     </div>
                     
                     <div className="flex justify-end space-x-2">
