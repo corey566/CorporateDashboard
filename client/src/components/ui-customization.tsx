@@ -72,12 +72,16 @@ export default function UICustomization() {
   const handleSubmit = (data: UICustomizationData) => {
     // Apply CSS custom properties
     const root = document.documentElement;
-    root.style.setProperty('--primary-color', data.primaryColor);
-    root.style.setProperty('--secondary-color', data.secondaryColor);
-    root.style.setProperty('--accent-color', data.accentColor);
-    root.style.setProperty('--font-size', `${data.fontSize}px`);
-    root.style.setProperty('--font-family', data.fontFamily);
-    root.style.setProperty('--animation-speed', `${data.animationSpeed}s`);
+    root.style.setProperty('--custom-primary', data.primaryColor);
+    root.style.setProperty('--custom-secondary', data.secondaryColor);
+    root.style.setProperty('--custom-accent', data.accentColor);
+    root.style.setProperty('--custom-font-size', `${data.fontSize}px`);
+    root.style.setProperty('--custom-font-family', data.fontFamily);
+    root.style.setProperty('--custom-animation-speed', `${data.animationSpeed}s`);
+    
+    // Also update the main color variables
+    root.style.setProperty('--primary', `${data.primaryColor}`);
+    root.style.setProperty('--accent', `${data.accentColor}`);
     
     // Apply accessibility settings
     if (data.highContrast) {

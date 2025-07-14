@@ -17,8 +17,8 @@ import { Plus, Gift, Trash2, Clock, DollarSign } from "lucide-react";
 import { z } from "zod";
 
 const cashOfferFormSchema = insertCashOfferSchema.extend({
-  reward: z.string().min(1, "Reward is required"),
-  target: z.string().min(1, "Target is required"),
+  reward: z.string().min(1, "Reward is required").transform(val => parseFloat(val)),
+  target: z.string().min(1, "Target is required").transform(val => parseFloat(val)),
   expiresAt: z.string().min(1, "Expiry date is required"),
 });
 

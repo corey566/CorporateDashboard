@@ -37,6 +37,14 @@
   --corporate-700: hsl(209, 18%, 30%);
   --corporate-800: hsl(210, 20%, 25%);
   --corporate-900: hsl(210, 24%, 16%);
+
+  /* UI customization variables */
+  --custom-primary: #1e40af;
+  --custom-secondary: #64748b;
+  --custom-accent: #10b981;
+  --custom-font-size: 16px;
+  --custom-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --custom-animation-speed: 1s;
 }
 
 .dark {
@@ -73,6 +81,25 @@
   --corporate-600: hsl(212, 23%, 69%);
   --corporate-700: hsl(213, 27%, 84%);
   --corporate-800: hsl(214, 32%, 91%);
+}
+
+/* UI Customization Classes */
+.high-contrast {
+  --background: hsl(0, 0%, 100%);
+  --foreground: hsl(0, 0%, 0%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(0, 0%, 0%);
+  --border: hsl(0, 0%, 0%);
+}
+
+.large-text {
+  font-size: 1.2em;
+}
+
+.reduced-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
   --corporate-900: hsl(210, 40%, 98%);
 }
 

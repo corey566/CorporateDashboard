@@ -17,8 +17,8 @@ import { Plus, Edit, Trash2, Users } from "lucide-react";
 import { z } from "zod";
 
 const agentFormSchema = insertAgentSchema.extend({
-  volumeTarget: z.string().min(1, "Volume target is required"),
-  unitsTarget: z.string().min(1, "Units target is required"),
+  volumeTarget: z.string().min(1, "Volume target is required").transform(val => parseFloat(val)),
+  unitsTarget: z.string().min(1, "Units target is required").transform(val => parseInt(val)),
 });
 
 type AgentFormData = z.infer<typeof agentFormSchema>;
@@ -55,7 +55,7 @@ export default function AdminAgentManagement() {
         ...data,
         teamId: parseInt(data.teamId),
         volumeTarget: data.volumeTarget,
-        unitsTarget: parseInt(data.unitsTarget),
+        unitsTarget: data.unitsTarget,
       };
       return apiRequest("POST", "/api/agents", agentData);
     },
@@ -84,7 +84,7 @@ export default function AdminAgentManagement() {
         ...data,
         teamId: parseInt(data.teamId),
         volumeTarget: data.volumeTarget,
-        unitsTarget: parseInt(data.unitsTarget),
+        unitsTarget: data.unitsTarget,
       };
       return apiRequest("PUT", `/api/agents/${id}`, agentData);
     },

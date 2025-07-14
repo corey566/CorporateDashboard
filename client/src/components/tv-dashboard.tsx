@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, Wifi, TrendingUp, Settings, Presentation } from "lucide-react";
+import { Users, Wifi, TrendingUp, Settings } from "lucide-react";
 import AgentCard from "./agent-card";
 import TeamLeaderboard from "./team-leaderboard";
 import MediaSlides from "./media-slides";
@@ -89,15 +89,6 @@ export default function TvDashboard() {
             </div>
           </div>
           <div className="flex items-center space-x-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowCompanySlides(true)}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 text-white border-none hover:from-blue-700 hover:to-purple-700"
-            >
-              <Presentation className="w-4 h-4 mr-2" />
-              Company Updates
-            </Button>
             <div className="text-right">
               <p className="text-sm text-corporate-500">Last Updated</p>
               <p className="font-semibold text-corporate-800">

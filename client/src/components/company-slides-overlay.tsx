@@ -39,11 +39,10 @@ export default function CompanySlidesOverlay({ isVisible, onClose }: CompanySlid
           // Move to next slide or close if last slide
           if (currentSlide < activeSlides.length - 1) {
             setCurrentSlide(currentSlide + 1);
-            return (activeSlides[currentSlide + 1]?.duration || 10) * 1000;
           } else {
             onClose();
-            return 0;
           }
+          return 0;
         }
         return prev - 100;
       });
