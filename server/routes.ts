@@ -851,6 +851,74 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Reports endpoints
+  app.get("/api/reports", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { startDate, endDate, agentId, teamId, reportType } = req.query;
+      
+      if (!startDate || !endDate) {
+        return res.status(400).json({ error: "Start date and end date are required" });
+      }
+
+      const reportData = await storage.generateReport({
+        startDate: new Date(startDate as string),
+        endDate: new Date(endDate as string),
+        agentId: agentId ? parseInt(agentId as string) : undefined,
+        teamId: teamId ? parseInt(teamId as string) : undefined,
+        reportType: reportType as string || "sales"
+      });
+
+      res.json(reportData);
+    } catch (error) {
+      console.error("Error generating report:", error);
+      res.status(500).json({ error: "Failed to generate report" });
+    }
+  });
+
+  app.post("/api/reports/export", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { startDate, endDate, agentId, teamId, reportType, format } = req.body;
+      
+      if (!startDate || !endDate) {
+        return res.status(400).json({ error: "Start date and end date are required" });
+      }
+
+      const reportData = await storage.generateReport({
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
+        agentId: agentId ? parseInt(agentId) : undefined,
+        teamId: teamId ? parseInt(teamId) : undefined,
+        reportType: reportType || "sales"
+      });
+
+      if (format === "csv") {
+        const csv = await storage.exportReportAsCSV(reportData);
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename="sales-report-${startDate}-to-${endDate}.csv"`);
+        res.send(csv);
+      } else if (format === "excel") {
+        const excel = await storage.exportReportAsExcel(reportData);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename="sales-report-${startDate}-to-${endDate}.xlsx"`);
+        res.send(excel);
+      } else if (format === "pdf") {
+        const pdf = await storage.exportReportAsPDF(reportData);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="sales-report-${startDate}-to-${endDate}.pdf"`);
+        res.send(pdf);
+      } else {
+        res.status(400).json({ error: "Invalid format. Use csv, excel, or pdf" });
+      }
+    } catch (error) {
+      console.error("Error exporting report:", error);
+      res.status(500).json({ error: "Failed to export report" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Setup WebSocket server

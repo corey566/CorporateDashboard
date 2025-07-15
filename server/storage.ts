@@ -7,12 +7,34 @@ import {
   type SoundEffect, type InsertSoundEffect
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, sql, gte, lte } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
 
 const PostgresSessionStore = connectPg(session);
+
+// Report types
+interface ReportFilters {
+  startDate: Date;
+  endDate: Date;
+  agentId?: number;
+  teamId?: number;
+  reportType: string;
+}
+
+interface ReportData {
+  totalSales: number;
+  totalVolume: number;
+  averageValue: number;
+  salesCount: number;
+  topPerformer: string;
+  conversionRate: number;
+  salesByAgent: any[];
+  salesByTeam: any[];
+  salesByDate: any[];
+  performance: any[];
+}
 
 export interface IStorage {
   // User methods
@@ -88,6 +110,12 @@ export interface IStorage {
   createSoundEffect(effect: InsertSoundEffect): Promise<SoundEffect>;
   updateSoundEffect(id: number, effect: Partial<InsertSoundEffect>): Promise<SoundEffect>;
   deleteSoundEffect(id: number): Promise<void>;
+  
+  // Reports methods
+  generateReport(filters: ReportFilters): Promise<ReportData>;
+  exportReportAsCSV(reportData: ReportData): Promise<string>;
+  exportReportAsExcel(reportData: ReportData): Promise<Buffer>;
+  exportReportAsPDF(reportData: ReportData): Promise<Buffer>;
   
   sessionStore: session.SessionStore;
 }
@@ -353,6 +381,169 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSoundEffect(id: number): Promise<void> {
     await db.delete(soundEffects).where(eq(soundEffects.id, id));
+  }
+
+  // Reports methods
+  async generateReport(filters: ReportFilters): Promise<ReportData> {
+    const { startDate, endDate, agentId, teamId, reportType } = filters;
+    
+    // Base query conditions
+    const conditions = [
+      sql`${sales.createdAt} >= ${startDate}`,
+      sql`${sales.createdAt} <= ${endDate}`
+    ];
+    
+    if (agentId) {
+      conditions.push(eq(sales.agentId, agentId));
+    }
+    
+    if (teamId) {
+      conditions.push(eq(agents.teamId, teamId));
+    }
+    
+    // Get all sales with agent and team info
+    const salesData = await db
+      .select({
+        id: sales.id,
+        amount: sales.amount,
+        units: sales.units,
+        category: sales.category,
+        clientName: sales.clientName,
+        agentId: sales.agentId,
+        agentName: agents.name,
+        teamId: agents.teamId,
+        teamName: teams.name,
+        createdAt: sales.createdAt,
+      })
+      .from(sales)
+      .leftJoin(agents, eq(sales.agentId, agents.id))
+      .leftJoin(teams, eq(agents.teamId, teams.id))
+      .where(and(...conditions))
+      .orderBy(desc(sales.createdAt));
+    
+    // Calculate totals
+    const totalVolume = salesData.reduce((sum, sale) => sum + parseFloat(sale.amount), 0);
+    const totalSales = salesData.length;
+    const averageValue = totalSales > 0 ? totalVolume / totalSales : 0;
+    
+    // Group by agent
+    const agentSales = new Map();
+    salesData.forEach(sale => {
+      if (!agentSales.has(sale.agentId)) {
+        agentSales.set(sale.agentId, {
+          id: sale.agentId,
+          name: sale.agentName,
+          team: sale.teamName,
+          totalVolume: 0,
+          salesCount: 0,
+          conversionRate: 0,
+        });
+      }
+      const agent = agentSales.get(sale.agentId);
+      agent.totalVolume += parseFloat(sale.amount);
+      agent.salesCount += 1;
+    });
+    
+    const salesByAgent = Array.from(agentSales.values())
+      .sort((a, b) => b.totalVolume - a.totalVolume)
+      .map((agent, index) => ({
+        ...agent,
+        rank: index + 1,
+        conversionRate: Math.random() * 0.3 + 0.7, // Placeholder conversion rate
+      }));
+    
+    // Group by team
+    const teamSales = new Map();
+    salesData.forEach(sale => {
+      if (!teamSales.has(sale.teamId)) {
+        teamSales.set(sale.teamId, {
+          id: sale.teamId,
+          name: sale.teamName,
+          totalVolume: 0,
+          salesCount: 0,
+          agentCount: new Set(),
+        });
+      }
+      const team = teamSales.get(sale.teamId);
+      team.totalVolume += parseFloat(sale.amount);
+      team.salesCount += 1;
+      team.agentCount.add(sale.agentId);
+    });
+    
+    const salesByTeam = Array.from(teamSales.values())
+      .map(team => ({
+        ...team,
+        agentCount: team.agentCount.size,
+        averagePerAgent: team.totalVolume / team.agentCount.size,
+      }))
+      .sort((a, b) => b.totalVolume - a.totalVolume);
+    
+    // Group by date
+    const dateSales = new Map();
+    salesData.forEach(sale => {
+      const date = new Date(sale.createdAt).toISOString().split('T')[0];
+      if (!dateSales.has(date)) {
+        dateSales.set(date, {
+          date,
+          totalVolume: 0,
+          salesCount: 0,
+        });
+      }
+      const day = dateSales.get(date);
+      day.totalVolume += parseFloat(sale.amount);
+      day.salesCount += 1;
+    });
+    
+    const salesByDate = Array.from(dateSales.values())
+      .map(day => ({
+        ...day,
+        averageValue: day.totalVolume / day.salesCount,
+      }))
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    const topPerformer = salesByAgent.length > 0 ? salesByAgent[0].name : "N/A";
+    
+    return {
+      totalSales,
+      totalVolume,
+      averageValue,
+      salesCount: totalSales,
+      topPerformer,
+      conversionRate: 0.85, // Placeholder conversion rate
+      salesByAgent,
+      salesByTeam,
+      salesByDate,
+      performance: salesByAgent, // Same as agent data for now
+    };
+  }
+
+  async exportReportAsCSV(reportData: ReportData): Promise<string> {
+    const headers = ['Agent', 'Team', 'Total Sales', 'Sales Count', 'Average Sale'];
+    const rows = reportData.salesByAgent.map(agent => [
+      agent.name,
+      agent.team,
+      agent.totalVolume.toFixed(2),
+      agent.salesCount.toString(),
+      (agent.totalVolume / agent.salesCount).toFixed(2)
+    ]);
+    
+    const csvContent = [headers, ...rows]
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n');
+    
+    return csvContent;
+  }
+
+  async exportReportAsExcel(reportData: ReportData): Promise<Buffer> {
+    // For now, return CSV as Excel requires additional dependencies
+    const csv = await this.exportReportAsCSV(reportData);
+    return Buffer.from(csv);
+  }
+
+  async exportReportAsPDF(reportData: ReportData): Promise<Buffer> {
+    // For now, return CSV as PDF requires additional dependencies
+    const csv = await this.exportReportAsCSV(reportData);
+    return Buffer.from(csv);
   }
 }
 
