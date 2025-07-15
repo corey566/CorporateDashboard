@@ -79,22 +79,23 @@ export default function SalePopup({ sale, onClose }: SalePopupProps) {
   };
 
   useEffect(() => {
-    // Trigger confetti and applause immediately
+    // Trigger confetti and applause immediately (only once)
     fireConfetti();
     playApplause();
     
-    // Trigger applause effect multiple times
+    // Trigger applause effect multiple times (visual only)
     const applauseInterval = setInterval(createApplause, 400);
-    setTimeout(() => clearInterval(applauseInterval), 2000);
+    const applauseTimer = setTimeout(() => clearInterval(applauseInterval), 2000);
     
     // Auto-close after 5 seconds
-    const timer = setTimeout(() => {
+    const autoCloseTimer = setTimeout(() => {
       setIsVisible(false);
       setTimeout(onClose, 500);
     }, 5000);
 
     return () => {
-      clearTimeout(timer);
+      clearTimeout(autoCloseTimer);
+      clearTimeout(applauseTimer);
       clearInterval(applauseInterval);
       // Clean up audio on unmount
       if (audioRef.current) {
