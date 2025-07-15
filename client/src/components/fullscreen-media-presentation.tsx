@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, ArrowLeft, ArrowRight } from "lucide-react";
@@ -16,51 +16,61 @@ export default function FullscreenMediaPresentation({
 }: FullscreenMediaPresentationProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear timer helper
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  // Start timer helper
+  const startTimer = (duration: number) => {
+    clearTimer();
+    setTimeLeft(duration);
+    
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearTimer();
+          
+          // Move to next slide or complete
+          setCurrentSlide(current => {
+            if (current < slides.length - 1) {
+              const nextSlide = current + 1;
+              const nextDuration = slides[nextSlide]?.duration || 10;
+              startTimer(nextDuration);
+              return nextSlide;
+            } else {
+              onComplete();
+              return current;
+            }
+          });
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
 
   // Reset when presentation starts
   useEffect(() => {
     if (isVisible && slides && slides.length > 0) {
       setCurrentSlide(0);
-      setTimeLeft(slides[0]?.duration || 10);
+      startTimer(slides[0]?.duration || 10);
+    } else if (!isVisible) {
+      clearTimer();
     }
+    
+    return () => clearTimer();
   }, [isVisible, slides]);
-
-  // Single timer that handles everything
-  useEffect(() => {
-    if (!isVisible || !slides || slides.length === 0) {
-      return;
-    }
-
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          // Check if we need to move to next slide or complete
-          setCurrentSlide(current => {
-            if (current < slides.length - 1) {
-              // Move to next slide
-              const nextSlide = current + 1;
-              const nextDuration = slides[nextSlide]?.duration || 10;
-              setTimeLeft(nextDuration);
-              return nextSlide;
-            } else {
-              // Complete presentation
-              onComplete();
-              return current;
-            }
-          });
-          return 0; // Return 0 instead of prev - 1 to prevent double decrement
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [isVisible, slides, onComplete]);
 
   // Handle manual navigation
   const goToSlide = (newSlideIndex: number) => {
     setCurrentSlide(newSlideIndex);
-    setTimeLeft(slides[newSlideIndex]?.duration || 10);
+    startTimer(slides[newSlideIndex]?.duration || 10);
   };
 
   if (!isVisible || !slides || slides.length === 0) {
