@@ -68,7 +68,14 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const agentData = insertAgentSchema.parse(req.body);
+      // Create a server-side schema that handles string-to-number conversion
+      const serverAgentSchema = insertAgentSchema.extend({
+        teamId: z.union([z.number(), z.string().transform(val => parseInt(val))]),
+        volumeTarget: z.union([z.number(), z.string().transform(val => parseFloat(val))]),
+        unitsTarget: z.union([z.number(), z.string().transform(val => parseInt(val))]),
+      });
+      
+      const agentData = serverAgentSchema.parse(req.body);
       
       // Hash password if provided
       if (agentData.password) {
@@ -82,7 +89,11 @@ export function registerRoutes(app: Express): Server {
       
       res.status(201).json(agent);
     } catch (error) {
-      res.status(400).json({ error: "Invalid agent data" });
+      console.error("Agent creation error:", error);
+      res.status(400).json({ 
+        error: "Invalid agent data",
+        details: error instanceof z.ZodError ? error.errors : error.message 
+      });
     }
   });
 
@@ -91,14 +102,32 @@ export function registerRoutes(app: Express): Server {
     
     try {
       const id = parseInt(req.params.id);
-      const agentData = insertAgentSchema.partial().parse(req.body);
+      
+      // Create a server-side schema that handles string-to-number conversion  
+      const serverAgentSchema = insertAgentSchema.extend({
+        teamId: z.union([z.number(), z.string().transform(val => parseInt(val))]),
+        volumeTarget: z.union([z.number(), z.string().transform(val => parseFloat(val))]),
+        unitsTarget: z.union([z.number(), z.string().transform(val => parseInt(val))]),
+      }).partial();
+      
+      const agentData = serverAgentSchema.parse(req.body);
+      
+      // Hash password if provided
+      if (agentData.password) {
+        agentData.password = await hashPassword(agentData.password);
+      }
+      
       const agent = await storage.updateAgent(id, agentData);
       
       broadcastToClients({ type: "agent_updated", data: agent });
       
       res.json(agent);
     } catch (error) {
-      res.status(400).json({ error: "Failed to update agent" });
+      console.error("Agent update error:", error);
+      res.status(400).json({ 
+        error: "Failed to update agent",
+        details: error instanceof z.ZodError ? error.errors : error.message 
+      });
     }
   });
 
