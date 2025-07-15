@@ -242,9 +242,47 @@ export class DatabaseStorage implements IStorage {
       this.getActiveNewsTicker()
     ]);
     
+    // Calculate current sales volume and units for each agent
+    const agentsWithSales = agentsData.map(agent => {
+      const agentSales = salesData.filter(sale => sale.agentId === agent.id);
+      const currentVolume = agentSales.reduce((sum, sale) => sum + parseFloat(sale.amount), 0);
+      const currentUnits = agentSales.reduce((sum, sale) => sum + sale.units, 0);
+      
+      return {
+        ...agent,
+        currentVolume: currentVolume.toFixed(2),
+        currentUnits,
+        team: teamsData.find(team => team.id === agent.teamId)
+      };
+    });
+    
+    // Calculate team scores based on combined agent sales
+    const teamsWithScores = teamsData.map(team => {
+      const teamAgents = agentsWithSales.filter(agent => agent.teamId === team.id);
+      const teamVolume = teamAgents.reduce((sum, agent) => sum + parseFloat(agent.currentVolume), 0);
+      const teamUnits = teamAgents.reduce((sum, agent) => sum + agent.currentUnits, 0);
+      
+      return {
+        ...team,
+        currentVolume: teamVolume.toFixed(2),
+        currentUnits,
+        agentCount: teamAgents.length,
+        agents: teamAgents
+      };
+    });
+    
+    // Sort teams by current volume (highest first)
+    teamsWithScores.sort((a, b) => parseFloat(b.currentVolume) - parseFloat(a.currentVolume));
+    
+    // Sort agents by current volume (highest first) and assign ranks
+    agentsWithSales.sort((a, b) => parseFloat(b.currentVolume) - parseFloat(a.currentVolume));
+    agentsWithSales.forEach((agent, index) => {
+      agent.rank = index + 1;
+    });
+    
     return {
-      agents: agentsData,
-      teams: teamsData,
+      agents: agentsWithSales,
+      teams: teamsWithScores,
       sales: salesData,
       cashOffers: offersData,
       mediaSlides: slidesData,

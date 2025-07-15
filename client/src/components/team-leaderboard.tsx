@@ -8,11 +8,10 @@ interface TeamLeaderboardProps {
 }
 
 export default function TeamLeaderboard({ teams, agents }: TeamLeaderboardProps) {
-  // Calculate team performance
-  const teamPerformance = teams.map(team => {
-    const teamAgents = agents.filter(agent => agent.teamId === team.id);
-    const totalSales = teamAgents.reduce((sum, agent) => sum + parseFloat(agent.currentVolume || 0), 0);
-    const targetSales = teamAgents.reduce((sum, agent) => sum + parseFloat(agent.volumeTarget || 0), 0);
+  // Teams already have calculated scores from the backend
+  const teamPerformance = teams.map((team, index) => {
+    const totalSales = parseFloat(team.currentVolume || 0);
+    const targetSales = parseFloat(team.volumeTarget || 0);
     const percentage = targetSales > 0 ? (totalSales / targetSales) * 100 : 0;
     
     return {
@@ -20,9 +19,10 @@ export default function TeamLeaderboard({ teams, agents }: TeamLeaderboardProps)
       totalSales,
       targetSales,
       percentage,
-      memberCount: teamAgents.length,
+      memberCount: team.agentCount || 0,
+      rank: index + 1
     };
-  }).sort((a, b) => b.percentage - a.percentage);
+  });
 
   const getTeamIcon = (rank: number) => {
     switch (rank) {
@@ -71,25 +71,25 @@ export default function TeamLeaderboard({ teams, agents }: TeamLeaderboardProps)
       </CardHeader>
       <CardContent className="p-4 h-[calc(100%-4rem)] overflow-y-auto">
         <div className="space-y-2">
-          {teamPerformance.map((team, index) => (
+          {teamPerformance.map((team) => (
             <div
               key={team.id}
-              className={`flex items-center justify-between p-2 bg-gradient-to-r ${getTeamGradient(index + 1)} rounded-lg border`}
+              className={`flex items-center justify-between p-2 bg-gradient-to-r ${getTeamGradient(team.rank)} rounded-lg border`}
             >
               <div className="flex items-center space-x-2">
-                <Badge className={`${getTeamBadgeColor(index + 1)} w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs`}>
-                  {index + 1}
+                <Badge className={`${getTeamBadgeColor(team.rank)} w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs`}>
+                  {team.rank}
                 </Badge>
                 <div>
                   <div className="flex items-center space-x-1">
                     <h3 className="font-semibold text-corporate-800 text-sm">{team.name}</h3>
-                    {getTeamIcon(index + 1)}
+                    {getTeamIcon(team.rank)}
                   </div>
                   <p className="text-xs text-corporate-500">{team.memberCount} members</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className={`font-bold text-sm ${index === 0 ? 'text-primary' : index === 1 ? 'text-accent' : 'text-purple-500'}`}>
+                <p className={`font-bold text-sm ${team.rank === 1 ? 'text-primary' : team.rank === 2 ? 'text-accent' : 'text-purple-500'}`}>
                   ${team.totalSales.toLocaleString()}
                 </p>
                 <p className="text-xs text-corporate-500">

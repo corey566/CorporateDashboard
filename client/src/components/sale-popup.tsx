@@ -16,37 +16,47 @@ export default function SalePopup({ sale, onClose }: SalePopupProps) {
   const fireConfetti = () => {
     const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#f0932b', '#eb4d4b', '#6c5ce7'];
     
-    // Multiple confetti bursts
-    const burst1 = confetti({
-      particleCount: 100,
-      spread: 70,
+    // Reduced confetti bursts
+    confetti({
+      particleCount: 50,
+      spread: 60,
       origin: { y: 0.6 },
       colors: colors,
       gravity: 0.9,
-      scalar: 1.2
+      scalar: 1.0
     });
     
     setTimeout(() => {
       confetti({
-        particleCount: 50,
-        spread: 55,
+        particleCount: 30,
+        spread: 45,
         origin: { y: 0.7, x: 0.3 },
         colors: colors,
         gravity: 0.8,
-        scalar: 0.8
+        scalar: 0.7
       });
-    }, 200);
+    }, 150);
     
     setTimeout(() => {
       confetti({
-        particleCount: 50,
-        spread: 55,
+        particleCount: 30,
+        spread: 45,
         origin: { y: 0.7, x: 0.7 },
         colors: colors,
         gravity: 0.8,
-        scalar: 0.8
+        scalar: 0.7
       });
-    }, 400);
+    }, 300);
+  };
+
+  // Applause sound effect
+  const playApplause = () => {
+    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmgpBCl+zPLVgTEGHm+77N+aUQ0PVKjo+cBuHgwyeL3runnGBCuL2/7RcCEENA'); 
+    audio.volume = 0.3;
+    audio.play().catch(() => {
+      // Fallback if audio fails
+      console.log('Applause sound effect triggered');
+    });
   };
 
   // Applause effect
@@ -56,18 +66,19 @@ export default function SalePopup({ sale, onClose }: SalePopupProps) {
   };
 
   useEffect(() => {
-    // Trigger confetti immediately
+    // Trigger confetti and applause immediately
     fireConfetti();
+    playApplause();
     
     // Trigger applause effect multiple times
-    const applauseInterval = setInterval(createApplause, 300);
+    const applauseInterval = setInterval(createApplause, 400);
     setTimeout(() => clearInterval(applauseInterval), 2000);
     
-    // Auto-close after 8 seconds (longer for celebration)
+    // Auto-close after 5 seconds
     const timer = setTimeout(() => {
       setIsVisible(false);
       setTimeout(onClose, 500);
-    }, 8000);
+    }, 5000);
 
     return () => {
       clearTimeout(timer);
@@ -82,6 +93,7 @@ export default function SalePopup({ sale, onClose }: SalePopupProps) {
 
   const handleCelebrate = () => {
     fireConfetti();
+    playApplause();
     createApplause();
   };
 

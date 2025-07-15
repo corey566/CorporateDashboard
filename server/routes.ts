@@ -211,14 +211,24 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const offerData = insertCashOfferSchema.parse(req.body);
+      // Create a server-side schema that handles string-to-number conversion
+      const serverCashOfferSchema = insertCashOfferSchema.extend({
+        amount: z.union([z.number(), z.string().transform(val => parseFloat(val))]),
+        minSalesAmount: z.union([z.number(), z.string().transform(val => parseFloat(val))]).optional(),
+      });
+      
+      const offerData = serverCashOfferSchema.parse(req.body);
       const offer = await storage.createCashOffer(offerData);
       
       broadcastToClients({ type: "cash_offer_created", data: offer });
       
       res.status(201).json(offer);
     } catch (error) {
-      res.status(400).json({ error: "Invalid cash offer data" });
+      console.error("Cash offer creation error:", error);
+      res.status(400).json({ 
+        error: "Invalid cash offer data",
+        details: error instanceof z.ZodError ? error.errors : error.message 
+      });
     }
   });
 
