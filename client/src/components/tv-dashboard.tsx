@@ -7,7 +7,6 @@ import AgentCard from "./agent-card";
 import TeamLeaderboard from "./team-leaderboard";
 import NewsTicker from "./news-ticker";
 import SalePopup from "./sale-popup";
-import CompanySlidesOverlay from "./company-slides-overlay";
 import MediaSlides from "./media-slides";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useState, useEffect } from "react";
@@ -15,7 +14,6 @@ import { useState, useEffect } from "react";
 export default function TvDashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [salePopup, setSalePopup] = useState<any>(null);
-  const [showCompanySlides, setShowCompanySlides] = useState(false);
   const { isConnected, lastMessage } = useWebSocket();
 
   const { data: dashboardData, isLoading } = useQuery({
@@ -236,11 +234,7 @@ export default function TvDashboard() {
         />
       )}
 
-      {/* Company Slides Overlay */}
-      <CompanySlidesOverlay
-        isVisible={showCompanySlides}
-        onClose={() => setShowCompanySlides(false)}
-      />
+
     </div>
   );
 }

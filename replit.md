@@ -8,6 +8,19 @@ This is a full-stack web application built for call centers to display real-time
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (July 15, 2025)
+
+✓ Fixed sale notification auto-close timer to 5 seconds
+✓ Reduced confetti animation amounts for better performance  
+✓ Added applause sound effect for sale notifications
+✓ Fixed cash offer creation validation with string-to-number conversion
+✓ Implemented team scoring based on combined agent sales
+✓ Updated team leaderboard to show calculated team scores and rankings
+✓ Fixed dashboard server errors and data loading issues
+✓ Reduced dashboard refresh interval from 2 seconds to 10 seconds
+✓ Added media slides display to TV dashboard right panel
+✓ Removed company slides overlay - media slides now permanently displayed
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -51,10 +64,11 @@ Preferred communication style: Simple, everyday language.
    - Displays when sales are recorded
    - Auto-dismisses after 5 seconds
 
-5. **Company Slides Overlay** (`client/src/components/company-slides-overlay.tsx`)
-   - Full-screen overlay that temporarily replaces dashboard
-   - Configurable duration timers for each slide
-   - Auto-advance and manual navigation
+5. **Media Slides** (`client/src/components/media-slides.tsx`)
+   - Integrated media slides display in dashboard right panel
+   - Supports both image and text slide types
+   - Auto-advance slideshow with configurable duration
+   - No overlay - permanently displayed on dashboard
 
 ### Admin Panel Components
 **Access Route: `/admin-portal`** (Protected route requiring authentication)

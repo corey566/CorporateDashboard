@@ -26,7 +26,7 @@ export default function MediaSlides({ slides }: MediaSlidesProps) {
         <CardHeader>
           <CardTitle className="text-lg flex items-center">
             <Images className="w-5 h-5 text-accent mr-2" />
-            Company Updates
+            Media Slides
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -46,7 +46,7 @@ export default function MediaSlides({ slides }: MediaSlidesProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center">
           <Images className="w-5 h-5 text-accent mr-2" />
-          Company Updates
+          Media Slides
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4">
