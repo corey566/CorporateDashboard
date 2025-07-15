@@ -25,7 +25,7 @@ export default function FullscreenMediaPresentation({
     }
   }, [isVisible, slides]);
 
-  // Timer logic
+  // Single timer that handles everything
   useEffect(() => {
     if (!isVisible || !slides || slides.length === 0) {
       return;
@@ -34,19 +34,21 @@ export default function FullscreenMediaPresentation({
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          // Move to next slide or complete presentation
+          // Check if we need to move to next slide or complete
           setCurrentSlide(current => {
             if (current < slides.length - 1) {
+              // Move to next slide
               const nextSlide = current + 1;
-              setTimeLeft(slides[nextSlide]?.duration || 10);
+              const nextDuration = slides[nextSlide]?.duration || 10;
+              setTimeLeft(nextDuration);
               return nextSlide;
             } else {
-              // Complete presentation and reset
+              // Complete presentation
               onComplete();
-              return 0;
+              return current;
             }
           });
-          return 0;
+          return prev - 1;
         }
         return prev - 1;
       });
@@ -55,12 +57,11 @@ export default function FullscreenMediaPresentation({
     return () => clearInterval(timer);
   }, [isVisible, slides, onComplete]);
 
-  // Update time when slide changes manually
-  useEffect(() => {
-    if (isVisible && slides && slides[currentSlide]) {
-      setTimeLeft(slides[currentSlide]?.duration || 10);
-    }
-  }, [currentSlide, isVisible, slides]);
+  // Handle manual navigation
+  const goToSlide = (newSlideIndex: number) => {
+    setCurrentSlide(newSlideIndex);
+    setTimeLeft(slides[newSlideIndex]?.duration || 10);
+  };
 
   if (!isVisible || !slides || slides.length === 0) {
     return null;
@@ -85,7 +86,7 @@ export default function FullscreenMediaPresentation({
       <button
         onClick={() => {
           const newSlide = Math.max(0, currentSlide - 1);
-          setCurrentSlide(newSlide);
+          goToSlide(newSlide);
         }}
         className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white p-2 rounded-full bg-black/30 hover:bg-black/50"
         disabled={currentSlide === 0}
@@ -96,7 +97,7 @@ export default function FullscreenMediaPresentation({
       <button
         onClick={() => {
           const newSlide = Math.min(slides.length - 1, currentSlide + 1);
-          setCurrentSlide(newSlide);
+          goToSlide(newSlide);
         }}
         className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white p-2 rounded-full bg-black/30 hover:bg-black/50"
         disabled={currentSlide === slides.length - 1}
