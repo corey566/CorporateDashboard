@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Users, Wifi, TrendingUp, Settings } from "lucide-react";
+import { Users, Wifi, TrendingUp, Settings, Building } from "lucide-react";
 import AgentCard from "./agent-card";
 import TeamLeaderboard from "./team-leaderboard";
 import NewsTicker from "./news-ticker";
@@ -26,6 +26,11 @@ export default function TvDashboard() {
     refetchInterval: 10000, // Reduced from 2 seconds to 10 seconds
   });
 
+  const { data: systemSettings } = useQuery({
+    queryKey: ["/api/system-settings"],
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+
   // Extract data from query result
   const rawAgents = dashboardData?.agents || [];
   const teams = dashboardData?.teams || [];
@@ -34,6 +39,12 @@ export default function TvDashboard() {
   const announcements = dashboardData?.announcements || [];
   const recentSales = dashboardData?.sales?.slice(0, 5) || [];
   const allSales = dashboardData?.sales || [];
+
+  // Extract system settings
+  const companyName = systemSettings?.find((s: any) => s.key === "companyName")?.value || "Sales Dashboard";
+  const logoUrl = systemSettings?.find((s: any) => s.key === "logoUrl")?.value || "";
+  const primaryColor = systemSettings?.find((s: any) => s.key === "primaryColor")?.value || "#3B82F6";
+  const accentColor = systemSettings?.find((s: any) => s.key === "accentColor")?.value || "#10B981";
 
   // Process agents with their current sales calculations
   const agents = rawAgents.map((agent: any) => {
@@ -142,11 +153,22 @@ export default function TvDashboard() {
       <header className="bg-white shadow-sm border-b border-corporate-100 px-4 py-2 flex-shrink-0">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-white" />
-            </div>
+            {/* Company Logo */}
+            {logoUrl ? (
+              <img 
+                src={logoUrl} 
+                alt={companyName} 
+                className="w-12 h-12 object-contain rounded-xl"
+              />
+            ) : (
+              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+                <Building className="w-6 h-6 text-white" />
+              </div>
+            )}
             <div>
-              <h1 className="text-2xl font-bold text-corporate-800">Sales Leaderboard</h1>
+              <h1 className="text-2xl font-bold text-corporate-800" style={{ color: primaryColor }}>
+                {companyName}
+              </h1>
               <p className="text-corporate-500">Real-time Performance Dashboard</p>
             </div>
           </div>

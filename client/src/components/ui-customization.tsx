@@ -1,472 +1,482 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTheme } from "@/components/theme-provider";
 import { 
   Palette, 
   Type, 
-  Layout, 
+  Moon, 
+  Sun, 
   Settings, 
-  Monitor, 
-  Zap,
+  Monitor,
+  Image,
+  Upload,
+  Trash2,
   Eye,
-  Volume2,
-  Clock,
-  Sparkles,
-  Accessibility
+  Check,
+  X,
+  RefreshCw,
+  Building
 } from "lucide-react";
+import { z } from "zod";
 
 const uiCustomizationSchema = z.object({
+  companyName: z.string().min(1, "Company name is required"),
+  logoUrl: z.string().optional(),
   primaryColor: z.string().min(1, "Primary color is required"),
   secondaryColor: z.string().min(1, "Secondary color is required"),
+  backgroundColor: z.string().min(1, "Background color is required"),
   accentColor: z.string().min(1, "Accent color is required"),
-  fontSize: z.number().min(10).max(24).default(16),
   fontFamily: z.string().min(1, "Font family is required"),
-  cardStyle: z.enum(["minimal", "rounded", "shadow", "gradient"]),
-  animationSpeed: z.number().min(0.5).max(3).default(1),
-  newsTickerSpeed: z.number().min(10).max(100).default(50),
-  autoSlideInterval: z.number().min(10).max(300).default(30),
-  soundEnabled: z.boolean().default(true),
-  highContrast: z.boolean().default(false),
-  largeText: z.boolean().default(false),
-  reducedMotion: z.boolean().default(false),
+  fontSize: z.string().min(1, "Font size is required"),
+  enableHighContrast: z.boolean(),
+  enableReducedMotion: z.boolean(),
 });
 
 type UICustomizationData = z.infer<typeof uiCustomizationSchema>;
 
 export default function UICustomization() {
-  const [activeTab, setActiveTab] = useState("colors");
-  const [previewMode, setPreviewMode] = useState(false);
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const { data: systemSettings } = useQuery({
+    queryKey: ["/api/system-settings"],
+    refetchInterval: 5000,
+  });
+
+  const { data: files } = useQuery({
+    queryKey: ["/api/files"],
+    refetchInterval: 5000,
+  });
 
   const form = useForm<UICustomizationData>({
     resolver: zodResolver(uiCustomizationSchema),
     defaultValues: {
-      primaryColor: "#1e40af",
-      secondaryColor: "#64748b",
-      accentColor: "#10b981",
-      fontSize: 16,
-      fontFamily: "Inter",
-      cardStyle: "rounded",
-      animationSpeed: 1,
-      newsTickerSpeed: 50,
-      autoSlideInterval: 30,
-      soundEnabled: true,
-      highContrast: false,
-      largeText: false,
-      reducedMotion: false,
+      companyName: systemSettings?.find((s: any) => s.key === "companyName")?.value || "Sales Dashboard",
+      logoUrl: systemSettings?.find((s: any) => s.key === "logoUrl")?.value || "",
+      primaryColor: systemSettings?.find((s: any) => s.key === "primaryColor")?.value || "#3B82F6",
+      secondaryColor: systemSettings?.find((s: any) => s.key === "secondaryColor")?.value || "#64748B",
+      backgroundColor: systemSettings?.find((s: any) => s.key === "backgroundColor")?.value || "#FFFFFF",
+      accentColor: systemSettings?.find((s: any) => s.key === "accentColor")?.value || "#10B981",
+      fontFamily: systemSettings?.find((s: any) => s.key === "fontFamily")?.value || "Inter, sans-serif",
+      fontSize: systemSettings?.find((s: any) => s.key === "fontSize")?.value || "16px",
+      enableHighContrast: systemSettings?.find((s: any) => s.key === "enableHighContrast")?.value === "true",
+      enableReducedMotion: systemSettings?.find((s: any) => s.key === "enableReducedMotion")?.value === "true",
     },
   });
 
-  const handleSubmit = (data: UICustomizationData) => {
-    // Apply CSS custom properties
-    const root = document.documentElement;
-    root.style.setProperty('--custom-primary', data.primaryColor);
-    root.style.setProperty('--custom-secondary', data.secondaryColor);
-    root.style.setProperty('--custom-accent', data.accentColor);
-    root.style.setProperty('--custom-font-size', `${data.fontSize}px`);
-    root.style.setProperty('--custom-font-family', data.fontFamily);
-    root.style.setProperty('--custom-animation-speed', `${data.animationSpeed}s`);
-    
-    // Also update the main color variables
-    root.style.setProperty('--primary', `${data.primaryColor}`);
-    root.style.setProperty('--accent', `${data.accentColor}`);
-    
-    // Apply accessibility settings
-    if (data.highContrast) {
-      root.classList.add('high-contrast');
-    } else {
-      root.classList.remove('high-contrast');
-    }
-    
-    if (data.largeText) {
-      root.classList.add('large-text');
-    } else {
-      root.classList.remove('large-text');
-    }
-    
-    if (data.reducedMotion) {
-      root.classList.add('reduced-motion');
-    } else {
-      root.classList.remove('reduced-motion');
+  const updateSettingMutation = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: string }) => {
+      const existingSetting = systemSettings?.find((s: any) => s.key === key);
+      if (existingSetting) {
+        return apiRequest("PUT", `/api/system-settings/${key}`, { value });
+      } else {
+        return apiRequest("POST", "/api/system-settings", { key, value, type: "string" });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/system-settings"] });
+      toast({
+        title: "Success",
+        description: "UI settings updated successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSubmit = async (data: UICustomizationData) => {
+    // Update all settings
+    for (const [key, value] of Object.entries(data)) {
+      await updateSettingMutation.mutateAsync({ 
+        key, 
+        value: typeof value === 'boolean' ? value.toString() : value 
+      });
     }
 
-    // Save to localStorage
-    localStorage.setItem('ui-customization', JSON.stringify(data));
+    // Apply theme changes immediately
+    applyThemeChanges(data);
+  };
+
+  const applyThemeChanges = (data: UICustomizationData) => {
+    const root = document.documentElement;
     
-    toast({
-      title: "UI Settings Updated",
-      description: "Your customization settings have been applied successfully.",
-    });
+    // Apply colors
+    root.style.setProperty('--primary', data.primaryColor);
+    root.style.setProperty('--secondary', data.secondaryColor);
+    root.style.setProperty('--background', data.backgroundColor);
+    root.style.setProperty('--accent', data.accentColor);
+    
+    // Apply typography
+    root.style.setProperty('--font-family', data.fontFamily);
+    root.style.setProperty('--font-size', data.fontSize);
+    
+    // Store in localStorage for persistence
+    localStorage.setItem("ui-customization", JSON.stringify(data));
+  };
+
+  const handleColorChange = (field: keyof UICustomizationData, value: string) => {
+    form.setValue(field, value);
+    if (isPreviewMode) {
+      applyPreviewStyles(field, value);
+    }
+  };
+
+  const applyPreviewStyles = (field: string, value: string) => {
+    const root = document.documentElement;
+    switch (field) {
+      case 'primaryColor':
+        root.style.setProperty('--primary', value);
+        break;
+      case 'secondaryColor':
+        root.style.setProperty('--secondary', value);
+        break;
+      case 'backgroundColor':
+        root.style.setProperty('--background', value);
+        break;
+      case 'accentColor':
+        root.style.setProperty('--accent', value);
+        break;
+    }
   };
 
   const resetToDefaults = () => {
     form.reset();
-    localStorage.removeItem('ui-customization');
-    
-    // Reset CSS custom properties
     const root = document.documentElement;
-    root.style.removeProperty('--primary-color');
-    root.style.removeProperty('--secondary-color');
-    root.style.removeProperty('--accent-color');
-    root.style.removeProperty('--font-size');
+    root.style.removeProperty('--primary');
+    root.style.removeProperty('--secondary');
+    root.style.removeProperty('--background');
+    root.style.removeProperty('--accent');
     root.style.removeProperty('--font-family');
-    root.style.removeProperty('--animation-speed');
-    root.classList.remove('high-contrast', 'large-text', 'reduced-motion');
+    root.style.removeProperty('--font-size');
     
     toast({
-      title: "Settings Reset",
-      description: "UI customization has been reset to default values.",
+      title: "Reset Complete",
+      description: "All settings have been reset to defaults",
     });
   };
 
-  const previewColors = [
-    { name: "Corporate Blue", primary: "#1e40af", secondary: "#64748b", accent: "#10b981" },
-    { name: "Modern Purple", primary: "#7c3aed", secondary: "#6b7280", accent: "#f59e0b" },
-    { name: "Professional Green", primary: "#059669", secondary: "#4b5563", accent: "#ef4444" },
-    { name: "Elegant Dark", primary: "#1f2937", secondary: "#6b7280", accent: "#8b5cf6" },
-  ];
+  const togglePreview = () => {
+    setIsPreviewMode(!isPreviewMode);
+    if (!isPreviewMode) {
+      const data = form.getValues();
+      applyThemeChanges(data);
+    }
+  };
+
+  const imageFiles = files?.filter((file: any) => file.type === 'image') || [];
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center">
-              <Sparkles className="w-5 h-5 mr-2" />
-              UI Customization
-            </CardTitle>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPreviewMode(!previewMode)}
-              >
-                <Eye className="w-4 h-4 mr-2" />
-                {previewMode ? "Exit Preview" : "Preview"}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={resetToDefaults}
-              >
-                Reset to Defaults
-              </Button>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="w-5 h-5" />
+            UI Customization & Theme Settings
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="colors">Colors</TabsTrigger>
-                <TabsTrigger value="typography">Typography</TabsTrigger>
-                <TabsTrigger value="layout">Layout</TabsTrigger>
-                <TabsTrigger value="behavior">Behavior</TabsTrigger>
-                <TabsTrigger value="accessibility">Accessibility</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="colors" className="space-y-4">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold flex items-center">
-                      <Palette className="w-5 h-5 mr-2" />
-                      Color Scheme
-                    </h3>
-                    
-                    <div className="space-y-3">
-                      <div>
-                        <Label htmlFor="primaryColor">Primary Color</Label>
-                        <div className="flex items-center space-x-2">
-                          <Input
-                            id="primaryColor"
-                            type="color"
-                            {...form.register("primaryColor")}
-                            className="w-12 h-10"
-                          />
-                          <Input
-                            {...form.register("primaryColor")}
-                            placeholder="#1e40af"
-                            className="flex-1"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="secondaryColor">Secondary Color</Label>
-                        <div className="flex items-center space-x-2">
-                          <Input
-                            id="secondaryColor"
-                            type="color"
-                            {...form.register("secondaryColor")}
-                            className="w-12 h-10"
-                          />
-                          <Input
-                            {...form.register("secondaryColor")}
-                            placeholder="#64748b"
-                            className="flex-1"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <Label htmlFor="accentColor">Accent Color</Label>
-                        <div className="flex items-center space-x-2">
-                          <Input
-                            id="accentColor"
-                            type="color"
-                            {...form.register("accentColor")}
-                            className="w-12 h-10"
-                          />
-                          <Input
-                            {...form.register("accentColor")}
-                            placeholder="#10b981"
-                            className="flex-1"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <h3 className="text-lg font-semibold">Color Presets</h3>
-                    <div className="grid grid-cols-2 gap-3">
-                      {previewColors.map((preset) => (
+            {/* Theme Selection */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">Theme Mode</Label>
+              <div className="grid grid-cols-3 gap-4">
+                <Button
+                  type="button"
+                  variant={theme === "light" ? "default" : "outline"}
+                  className="flex items-center gap-2"
+                  onClick={() => setTheme("light")}
+                >
+                  <Sun className="w-4 h-4" />
+                  Light
+                </Button>
+                <Button
+                  type="button"
+                  variant={theme === "dark" ? "default" : "outline"}
+                  className="flex items-center gap-2"
+                  onClick={() => setTheme("dark")}
+                >
+                  <Moon className="w-4 h-4" />
+                  Dark
+                </Button>
+                <Button
+                  type="button"
+                  variant={theme === "system" ? "default" : "outline"}
+                  className="flex items-center gap-2"
+                  onClick={() => setTheme("system")}
+                >
+                  <Monitor className="w-4 h-4" />
+                  System
+                </Button>
+              </div>
+            </div>
+
+            {/* Company Branding */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                <Building className="w-4 h-4" />
+                Company Branding
+              </Label>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Company Name</Label>
+                  <Input
+                    {...form.register("companyName")}
+                    placeholder="Enter company name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Logo URL</Label>
+                  <Input
+                    {...form.register("logoUrl")}
+                    placeholder="Enter logo URL or select from uploaded files"
+                  />
+                </div>
+                {imageFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Select from uploaded files</Label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {imageFiles.map((file: any) => (
                         <div
-                          key={preset.name}
-                          className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                          key={file.id}
+                          className="relative cursor-pointer border-2 border-dashed border-gray-300 rounded-lg p-2 hover:border-primary transition-colors"
                           onClick={() => {
-                            form.setValue("primaryColor", preset.primary);
-                            form.setValue("secondaryColor", preset.secondary);
-                            form.setValue("accentColor", preset.accent);
+                            const logoUrl = `/uploads/${file.filename}`;
+                            form.setValue("logoUrl", logoUrl);
+                            setLogoPreview(logoUrl);
                           }}
                         >
-                          <div className="flex items-center space-x-2 mb-2">
-                            <div
-                              className="w-4 h-4 rounded-full"
-                              style={{ backgroundColor: preset.primary }}
-                            />
-                            <div
-                              className="w-4 h-4 rounded-full"
-                              style={{ backgroundColor: preset.secondary }}
-                            />
-                            <div
-                              className="w-4 h-4 rounded-full"
-                              style={{ backgroundColor: preset.accent }}
-                            />
-                          </div>
-                          <p className="text-sm font-medium">{preset.name}</p>
+                          <img
+                            src={`/uploads/${file.filename}`}
+                            alt={file.originalName}
+                            className="w-full h-16 object-contain rounded"
+                          />
+                          <p className="text-xs text-center mt-1 truncate">{file.originalName}</p>
                         </div>
                       ))}
                     </div>
                   </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="typography" className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center">
-                  <Type className="w-5 h-5 mr-2" />
-                  Typography Settings
-                </h3>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="fontSize">Font Size</Label>
-                    <div className="space-y-2">
-                      <Slider
-                        value={[form.watch("fontSize")]}
-                        onValueChange={(value) => form.setValue("fontSize", value[0])}
-                        max={24}
-                        min={10}
-                        step={1}
-                        className="w-full"
+                )}
+                {(logoPreview || form.watch("logoUrl")) && (
+                  <div className="space-y-2">
+                    <Label>Logo Preview</Label>
+                    <div className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-800">
+                      <img
+                        src={logoPreview || form.watch("logoUrl")}
+                        alt="Logo preview"
+                        className="h-16 object-contain"
                       />
-                      <div className="flex justify-between text-sm text-gray-500">
-                        <span>10px</span>
-                        <span>{form.watch("fontSize")}px</span>
-                        <span>24px</span>
-                      </div>
                     </div>
                   </div>
-                  
-                  <div>
-                    <Label htmlFor="fontFamily">Font Family</Label>
-                    <Select
-                      value={form.watch("fontFamily")}
-                      onValueChange={(value) => form.setValue("fontFamily", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select font family" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Inter">Inter</SelectItem>
-                        <SelectItem value="Roboto">Roboto</SelectItem>
-                        <SelectItem value="Open Sans">Open Sans</SelectItem>
-                        <SelectItem value="Lato">Lato</SelectItem>
-                        <SelectItem value="Montserrat">Montserrat</SelectItem>
-                        <SelectItem value="Poppins">Poppins</SelectItem>
-                      </SelectContent>
-                    </Select>
+                )}
+              </div>
+            </div>
+
+            {/* Color Palette */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                <Palette className="w-4 h-4" />
+                Color Palette
+              </Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Primary Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={form.watch("primaryColor")}
+                      onChange={(e) => handleColorChange("primaryColor", e.target.value)}
+                      className="w-12 h-10 p-1"
+                    />
+                    <Input
+                      type="text"
+                      value={form.watch("primaryColor")}
+                      onChange={(e) => handleColorChange("primaryColor", e.target.value)}
+                      className="flex-1"
+                    />
                   </div>
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="layout" className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center">
-                  <Layout className="w-5 h-5 mr-2" />
-                  Layout & Style
-                </h3>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="cardStyle">Card Style</Label>
-                    <Select
-                      value={form.watch("cardStyle")}
-                      onValueChange={(value) => form.setValue("cardStyle", value as any)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select card style" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="minimal">Minimal</SelectItem>
-                        <SelectItem value="rounded">Rounded</SelectItem>
-                        <SelectItem value="shadow">Shadow</SelectItem>
-                        <SelectItem value="gradient">Gradient</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="animationSpeed">Animation Speed</Label>
-                    <div className="space-y-2">
-                      <Slider
-                        value={[form.watch("animationSpeed")]}
-                        onValueChange={(value) => form.setValue("animationSpeed", value[0])}
-                        max={3}
-                        min={0.5}
-                        step={0.1}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between text-sm text-gray-500">
-                        <span>0.5x</span>
-                        <span>{form.watch("animationSpeed")}x</span>
-                        <span>3x</span>
-                      </div>
-                    </div>
+                <div className="space-y-2">
+                  <Label>Secondary Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={form.watch("secondaryColor")}
+                      onChange={(e) => handleColorChange("secondaryColor", e.target.value)}
+                      className="w-12 h-10 p-1"
+                    />
+                    <Input
+                      type="text"
+                      value={form.watch("secondaryColor")}
+                      onChange={(e) => handleColorChange("secondaryColor", e.target.value)}
+                      className="flex-1"
+                    />
                   </div>
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="behavior" className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center">
-                  <Settings className="w-5 h-5 mr-2" />
-                  Behavior Settings
-                </h3>
-                
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="newsTickerSpeed">News Ticker Speed</Label>
-                    <div className="space-y-2">
-                      <Slider
-                        value={[form.watch("newsTickerSpeed")]}
-                        onValueChange={(value) => form.setValue("newsTickerSpeed", value[0])}
-                        max={100}
-                        min={10}
-                        step={5}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between text-sm text-gray-500">
-                        <span>Slow</span>
-                        <span>{form.watch("newsTickerSpeed")}%</span>
-                        <span>Fast</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="autoSlideInterval">Auto-slide Interval (seconds)</Label>
-                    <div className="space-y-2">
-                      <Slider
-                        value={[form.watch("autoSlideInterval")]}
-                        onValueChange={(value) => form.setValue("autoSlideInterval", value[0])}
-                        max={300}
-                        min={10}
-                        step={10}
-                        className="w-full"
-                      />
-                      <div className="flex justify-between text-sm text-gray-500">
-                        <span>10s</span>
-                        <span>{form.watch("autoSlideInterval")}s</span>
-                        <span>5min</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="soundEnabled"
-                      checked={form.watch("soundEnabled")}
-                      onCheckedChange={(checked) => form.setValue("soundEnabled", checked)}
+                <div className="space-y-2">
+                  <Label>Background Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={form.watch("backgroundColor")}
+                      onChange={(e) => handleColorChange("backgroundColor", e.target.value)}
+                      className="w-12 h-10 p-1"
                     />
-                    <Label htmlFor="soundEnabled" className="flex items-center">
-                      <Volume2 className="w-4 h-4 mr-2" />
-                      Sound Effects
-                    </Label>
+                    <Input
+                      type="text"
+                      value={form.watch("backgroundColor")}
+                      onChange={(e) => handleColorChange("backgroundColor", e.target.value)}
+                      className="flex-1"
+                    />
                   </div>
                 </div>
-              </TabsContent>
-              
-              <TabsContent value="accessibility" className="space-y-4">
-                <h3 className="text-lg font-semibold flex items-center">
-                  <Accessibility className="w-5 h-5 mr-2" />
-                  Accessibility Features
-                </h3>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="highContrast"
-                      checked={form.watch("highContrast")}
-                      onCheckedChange={(checked) => form.setValue("highContrast", checked)}
+                <div className="space-y-2">
+                  <Label>Accent Color</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="color"
+                      value={form.watch("accentColor")}
+                      onChange={(e) => handleColorChange("accentColor", e.target.value)}
+                      className="w-12 h-10 p-1"
                     />
-                    <Label htmlFor="highContrast">High Contrast Mode</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="largeText"
-                      checked={form.watch("largeText")}
-                      onCheckedChange={(checked) => form.setValue("largeText", checked)}
+                    <Input
+                      type="text"
+                      value={form.watch("accentColor")}
+                      onChange={(e) => handleColorChange("accentColor", e.target.value)}
+                      className="flex-1"
                     />
-                    <Label htmlFor="largeText">Large Text</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="reducedMotion"
-                      checked={form.watch("reducedMotion")}
-                      onCheckedChange={(checked) => form.setValue("reducedMotion", checked)}
-                    />
-                    <Label htmlFor="reducedMotion">Reduced Motion</Label>
                   </div>
                 </div>
-              </TabsContent>
-            </Tabs>
-            
-            <div className="flex justify-end space-x-2">
-              <Button type="submit" className="bg-primary hover:bg-primary/90">
-                Apply Changes
+              </div>
+            </div>
+
+            {/* Typography */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                <Type className="w-4 h-4" />
+                Typography
+              </Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Font Family</Label>
+                  <Select
+                    value={form.watch("fontFamily")}
+                    onValueChange={(value) => form.setValue("fontFamily", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Inter, sans-serif">Inter</SelectItem>
+                      <SelectItem value="Roboto, sans-serif">Roboto</SelectItem>
+                      <SelectItem value="Open Sans, sans-serif">Open Sans</SelectItem>
+                      <SelectItem value="Lato, sans-serif">Lato</SelectItem>
+                      <SelectItem value="Montserrat, sans-serif">Montserrat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Font Size</Label>
+                  <Select
+                    value={form.watch("fontSize")}
+                    onValueChange={(value) => form.setValue("fontSize", value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="14px">Small (14px)</SelectItem>
+                      <SelectItem value="16px">Medium (16px)</SelectItem>
+                      <SelectItem value="18px">Large (18px)</SelectItem>
+                      <SelectItem value="20px">Extra Large (20px)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Accessibility */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">Accessibility Options</Label>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label>High Contrast Mode</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Increase contrast for better visibility
+                    </p>
+                  </div>
+                  <Switch
+                    checked={form.watch("enableHighContrast")}
+                    onCheckedChange={(checked) => form.setValue("enableHighContrast", checked)}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <Label>Reduced Motion</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Reduce animations and transitions
+                    </p>
+                  </div>
+                  <Switch
+                    checked={form.watch("enableReducedMotion")}
+                    onCheckedChange={(checked) => form.setValue("enableReducedMotion", checked)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-4 pt-4">
+              <Button
+                type="submit"
+                disabled={updateSettingMutation.isPending}
+                className="flex-1"
+              >
+                {updateSettingMutation.isPending ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4 mr-2" />
+                    Save Settings
+                  </>
+                )}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={togglePreview}
+                className="flex-1"
+              >
+                <Eye className="w-4 h-4 mr-2" />
+                {isPreviewMode ? "Exit Preview" : "Preview Changes"}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={resetToDefaults}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Reset
               </Button>
             </div>
           </form>

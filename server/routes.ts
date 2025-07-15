@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema, agentLoginSchema, insertFileUploadSchema } from "@shared/schema";
+import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema, agentLoginSchema, insertFileUploadSchema, insertSystemSettingSchema } from "@shared/schema";
 import { z } from "zod";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -215,6 +215,37 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.put("/api/teams/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      const teamData = insertTeamSchema.parse(req.body);
+      const team = await storage.updateTeam(id, teamData);
+      
+      broadcastToClients({ type: "team_updated", data: team });
+      
+      res.json(team);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid team data" });
+    }
+  });
+
+  app.delete("/api/teams/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteTeam(id);
+      
+      broadcastToClients({ type: "team_deleted", data: { id } });
+      
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete team" });
+    }
+  });
+
   // Sales endpoints
   app.get("/api/sales", async (req, res) => {
     try {
@@ -277,6 +308,31 @@ export function registerRoutes(app: Express): Server {
         error: "Invalid cash offer data",
         details: error instanceof z.ZodError ? error.errors : error.message 
       });
+    }
+  });
+
+  app.put("/api/cash-offers/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      const transformedData = {
+        title: req.body.title,
+        description: req.body.description,
+        reward: parseFloat(req.body.amount || req.body.reward || 0),
+        type: req.body.type || 'volume',
+        target: parseFloat(req.body.targetSales || req.body.target || 0),
+        expiresAt: new Date(req.body.expiresAt)
+      };
+      
+      const offerData = insertCashOfferSchema.parse(transformedData);
+      const offer = await storage.updateCashOffer(id, offerData);
+      
+      broadcastToClients({ type: "cash_offer_updated", data: offer });
+      
+      res.json(offer);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid cash offer data" });
     }
   });
 
@@ -376,6 +432,37 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.put("/api/announcements/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      const announcementData = insertAnnouncementSchema.parse(req.body);
+      const announcement = await storage.updateAnnouncement(id, announcementData);
+      
+      broadcastToClients({ type: "announcement_updated", data: announcement });
+      
+      res.json(announcement);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid announcement data" });
+    }
+  });
+
+  app.delete("/api/announcements/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteAnnouncement(id);
+      
+      broadcastToClients({ type: "announcement_deleted", data: { id } });
+      
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete announcement" });
+    }
+  });
+
   // News ticker endpoints
   app.get("/api/news-ticker", async (req, res) => {
     try {
@@ -398,6 +485,37 @@ export function registerRoutes(app: Express): Server {
       res.status(201).json(ticker);
     } catch (error) {
       res.status(400).json({ error: "Invalid news ticker data" });
+    }
+  });
+
+  app.put("/api/news-ticker/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      const tickerData = insertNewsTickerSchema.parse(req.body);
+      const ticker = await storage.updateNewsTicker(id, tickerData);
+      
+      broadcastToClients({ type: "news_ticker_updated", data: ticker });
+      
+      res.json(ticker);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid news ticker data" });
+    }
+  });
+
+  app.delete("/api/news-ticker/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteNewsTicker(id);
+      
+      broadcastToClients({ type: "news_ticker_deleted", data: { id } });
+      
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete news ticker" });
     }
   });
 
@@ -488,6 +606,67 @@ export function registerRoutes(app: Express): Server {
       res.status(201).json(sale);
     } catch (error) {
       res.status(400).json({ error: "Invalid sale data" });
+    }
+  });
+
+  // System settings endpoints
+  app.get("/api/system-settings", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const settings = await storage.getSystemSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch system settings" });
+    }
+  });
+
+  app.get("/api/system-settings/:key", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const setting = await storage.getSystemSetting(req.params.key);
+      if (!setting) {
+        return res.status(404).json({ error: "Setting not found" });
+      }
+      res.json(setting);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch system setting" });
+    }
+  });
+
+  app.post("/api/system-settings", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const settingData = insertSystemSettingSchema.parse(req.body);
+      const setting = await storage.createSystemSetting(settingData);
+      res.status(201).json(setting);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid system setting data" });
+    }
+  });
+
+  app.put("/api/system-settings/:key", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { value } = req.body;
+      const setting = await storage.updateSystemSetting(req.params.key, value);
+      res.json(setting);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update system setting" });
+    }
+  });
+
+  app.delete("/api/system-settings/:key", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      await storage.deleteSystemSetting(req.params.key);
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete system setting" });
     }
   });
 
