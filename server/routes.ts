@@ -220,14 +220,25 @@ export function registerRoutes(app: Express): Server {
     
     try {
       const id = parseInt(req.params.id);
-      const teamData = insertTeamSchema.parse(req.body);
+      console.log("Team update request body:", req.body);
+      
+      // Convert string values to appropriate types
+      const processedData = {
+        ...req.body,
+        volumeTarget: req.body.volumeTarget ? parseFloat(req.body.volumeTarget) : 0,
+        unitsTarget: req.body.unitsTarget ? parseInt(req.body.unitsTarget) : 0,
+      };
+      
+      console.log("Processed team data:", processedData);
+      const teamData = insertTeamSchema.parse(processedData);
       const team = await storage.updateTeam(id, teamData);
       
       broadcastToClients({ type: "team_updated", data: team });
       
       res.json(team);
     } catch (error) {
-      res.status(400).json({ error: "Invalid team data" });
+      console.error("Team update error:", error);
+      res.status(400).json({ error: "Invalid team data", details: error.message });
     }
   });
 
