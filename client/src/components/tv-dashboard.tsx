@@ -27,12 +27,32 @@ export default function TvDashboard() {
   });
 
   // Extract data from query result
-  const agents = dashboardData?.agents || [];
+  const rawAgents = dashboardData?.agents || [];
   const teams = dashboardData?.teams || [];
   const cashOffers = dashboardData?.cashOffers || [];
   const mediaSlides = dashboardData?.mediaSlides || [];
   const announcements = dashboardData?.announcements || [];
   const recentSales = dashboardData?.sales?.slice(0, 5) || [];
+  const allSales = dashboardData?.sales || [];
+
+  // Process agents with their current sales calculations
+  const agents = rawAgents.map((agent: any) => {
+    const agentSales = allSales.filter((sale: any) => sale.agentId === agent.id);
+    
+    // Calculate current volume and units
+    const currentVolume = agentSales.reduce((sum: number, sale: any) => sum + (parseFloat(sale.amount) || 0), 0);
+    const currentUnits = agentSales.length;
+    
+    // Find associated team
+    const team = teams.find((t: any) => t.id === agent.teamId);
+    
+    return {
+      ...agent,
+      currentVolume: currentVolume.toString(),
+      currentUnits: currentUnits,
+      team: team
+    };
+  });
 
   // Handle WebSocket messages for sale notifications
   useEffect(() => {
@@ -58,7 +78,6 @@ export default function TvDashboard() {
   useEffect(() => {
     if (mediaSlides.length > 0) {
       const interval = setInterval(() => {
-        console.log('Triggering media presentation...');
         setShowMediaPresentation(true);
       }, 10000); // Every 10 seconds
 
@@ -333,10 +352,7 @@ export default function TvDashboard() {
       <FullscreenMediaPresentation
         slides={mediaSlides}
         isVisible={showMediaPresentation}
-        onComplete={() => {
-          console.log('Media presentation completed, hiding...');
-          setShowMediaPresentation(false);
-        }}
+        onComplete={() => setShowMediaPresentation(false)}
       />
 
     </div>

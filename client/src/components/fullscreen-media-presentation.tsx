@@ -46,11 +46,7 @@ export default function FullscreenMediaPresentation({
               return nextSlide;
             } else {
               // Complete the presentation
-              console.log('Media presentation completing...');
-              setTimeout(() => {
-                console.log('Calling onComplete...');
-                onComplete();
-              }, 100);
+              setTimeout(() => onComplete(), 100);
               return current;
             }
           });
