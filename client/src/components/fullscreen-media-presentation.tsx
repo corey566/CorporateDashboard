@@ -17,41 +17,50 @@ export default function FullscreenMediaPresentation({
   const [currentSlide, setCurrentSlide] = useState(0);
   const [timeLeft, setTimeLeft] = useState(0);
 
+  // Reset when presentation starts
+  useEffect(() => {
+    if (isVisible && slides && slides.length > 0) {
+      setCurrentSlide(0);
+      setTimeLeft(slides[0]?.duration || 10);
+    }
+  }, [isVisible, slides]);
+
+  // Timer logic
   useEffect(() => {
     if (!isVisible || !slides || slides.length === 0) {
       return;
     }
 
-    const slide = slides[currentSlide];
-    const duration = slide?.duration || 10;
-    setTimeLeft(duration);
-
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           // Move to next slide or complete presentation
-          if (currentSlide < slides.length - 1) {
-            setCurrentSlide(prev => prev + 1);
-            return slides[currentSlide + 1]?.duration || 10;
-          } else {
-            // Complete presentation and reset
-            onComplete();
-            return 0;
-          }
+          setCurrentSlide(current => {
+            if (current < slides.length - 1) {
+              const nextSlide = current + 1;
+              setTimeLeft(slides[nextSlide]?.duration || 10);
+              return nextSlide;
+            } else {
+              // Complete presentation and reset
+              onComplete();
+              return 0;
+            }
+          });
+          return 0;
         }
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isVisible, currentSlide, slides, onComplete]);
+  }, [isVisible, slides, onComplete]);
 
+  // Update time when slide changes manually
   useEffect(() => {
-    if (isVisible) {
-      setCurrentSlide(0);
-      setTimeLeft(slides[0]?.duration || 10);
+    if (isVisible && slides && slides[currentSlide]) {
+      setTimeLeft(slides[currentSlide]?.duration || 10);
     }
-  }, [isVisible, slides]);
+  }, [currentSlide, isVisible, slides]);
 
   if (!isVisible || !slides || slides.length === 0) {
     return null;
@@ -77,7 +86,6 @@ export default function FullscreenMediaPresentation({
         onClick={() => {
           const newSlide = Math.max(0, currentSlide - 1);
           setCurrentSlide(newSlide);
-          setTimeLeft(slides[newSlide]?.duration || 10);
         }}
         className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white p-2 rounded-full bg-black/30 hover:bg-black/50"
         disabled={currentSlide === 0}
@@ -89,7 +97,6 @@ export default function FullscreenMediaPresentation({
         onClick={() => {
           const newSlide = Math.min(slides.length - 1, currentSlide + 1);
           setCurrentSlide(newSlide);
-          setTimeLeft(slides[newSlide]?.duration || 10);
         }}
         className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white p-2 rounded-full bg-black/30 hover:bg-black/50"
         disabled={currentSlide === slides.length - 1}
@@ -99,9 +106,9 @@ export default function FullscreenMediaPresentation({
 
       {/* Slide content */}
       <div className="w-full h-full flex items-center justify-center p-8">
-        {slide.type === 'image' && slide.imageUrl ? (
+        {slide.type === 'image' && slide.url ? (
           <img
-            src={slide.imageUrl}
+            src={slide.url}
             alt={slide.title}
             className="max-w-full max-h-full object-contain"
           />
