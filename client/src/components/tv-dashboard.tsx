@@ -8,6 +8,7 @@ import TeamLeaderboard from "./team-leaderboard";
 import NewsTicker from "./news-ticker";
 import SalePopup from "./sale-popup";
 import CompanySlidesOverlay from "./company-slides-overlay";
+import MediaSlides from "./media-slides";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useState, useEffect } from "react";
 
@@ -19,13 +20,14 @@ export default function TvDashboard() {
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["/api/dashboard"],
-    refetchInterval: 2000,
+    refetchInterval: 10000, // Reduced from 2 seconds to 10 seconds
   });
 
   // Extract data from query result
   const agents = dashboardData?.agents || [];
   const teams = dashboardData?.teams || [];
   const cashOffers = dashboardData?.cashOffers || [];
+  const mediaSlides = dashboardData?.mediaSlides || [];
   const recentSales = dashboardData?.sales?.slice(0, 5) || [];
 
   // Handle WebSocket messages for sale notifications
@@ -172,6 +174,11 @@ export default function TvDashboard() {
           {/* Team Leaderboard - Fixed height */}
           <div className="flex-1 min-h-0">
             <TeamLeaderboard teams={teams} agents={agents} />
+          </div>
+          
+          {/* Media Slides - Fixed height */}
+          <div className="flex-1 min-h-0">
+            <MediaSlides slides={mediaSlides} />
           </div>
           
           {/* Recent Sales - Fixed height */}

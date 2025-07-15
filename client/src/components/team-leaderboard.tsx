@@ -8,10 +8,11 @@ interface TeamLeaderboardProps {
 }
 
 export default function TeamLeaderboard({ teams, agents }: TeamLeaderboardProps) {
-  // Teams already have calculated scores from the backend
+  // Calculate team performance based on agents' data
   const teamPerformance = teams.map((team, index) => {
-    const totalSales = parseFloat(team.currentVolume || 0);
-    const targetSales = parseFloat(team.volumeTarget || 0);
+    const teamAgents = agents.filter(agent => agent.teamId === team.id);
+    const totalSales = teamAgents.reduce((sum, agent) => sum + parseFloat(agent.currentVolume || 0), 0);
+    const targetSales = teamAgents.reduce((sum, agent) => sum + parseFloat(agent.volumeTarget || 0), 0);
     const percentage = targetSales > 0 ? (totalSales / targetSales) * 100 : 0;
     
     return {
@@ -19,10 +20,10 @@ export default function TeamLeaderboard({ teams, agents }: TeamLeaderboardProps)
       totalSales,
       targetSales,
       percentage,
-      memberCount: team.agentCount || 0,
+      memberCount: teamAgents.length,
       rank: index + 1
     };
-  });
+  }).sort((a, b) => b.totalSales - a.totalSales);
 
   const getTeamIcon = (rank: number) => {
     switch (rank) {

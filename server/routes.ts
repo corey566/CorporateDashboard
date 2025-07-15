@@ -50,7 +50,8 @@ export function registerRoutes(app: Express): Server {
       const data = await storage.getDashboardData();
       res.json(data);
     } catch (error) {
-      res.status(500).json({ error: "Failed to fetch dashboard data" });
+      console.error("Dashboard data error:", error);
+      res.status(500).json({ error: "Failed to fetch dashboard data", details: error.message });
     }
   });
 
