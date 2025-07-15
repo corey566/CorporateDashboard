@@ -19,6 +19,7 @@ export default function TvDashboard() {
   const [announcementPopup, setAnnouncementPopup] = useState<any>(null);
   const [cashOfferPopup, setCashOfferPopup] = useState<any>(null);
   const [showMediaPresentation, setShowMediaPresentation] = useState(false);
+  const [soundEffectCache, setSoundEffectCache] = useState<{[key: string]: any}>({});
   const { isConnected, lastMessage } = useWebSocket();
 
   const { data: dashboardData, isLoading } = useQuery({
@@ -31,15 +32,65 @@ export default function TvDashboard() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
-  // Function to play event sound
+  // Pre-load sound effects on component mount
+  useEffect(() => {
+    const preloadSoundEffects = async () => {
+      const eventTypes = ["sale", "announcement", "cash_offer"];
+      
+      for (const eventType of eventTypes) {
+        try {
+          const response = await fetch(`/api/sound-effects/event/${eventType}`);
+          if (response.ok) {
+            const soundEffect = await response.json();
+            setSoundEffectCache(prev => ({
+              ...prev,
+              [eventType]: soundEffect
+            }));
+          }
+        } catch (error) {
+          console.error(`Error preloading ${eventType} sound effect:`, error);
+        }
+      }
+    };
+    
+    preloadSoundEffects();
+  }, []);
+
+  // Function to play event sound (optimized with cache)
   const playEventSound = async (eventType: string) => {
     try {
-      const response = await fetch(`/api/sound-effects/event/${eventType}`);
-      if (response.ok) {
-        const soundEffect = await response.json();
+      console.log(`${eventType.charAt(0).toUpperCase() + eventType.slice(1)} sound effect triggered`);
+      
+      // Use cached sound effect if available
+      let soundEffect = soundEffectCache[eventType];
+      
+      // If not cached, fetch it
+      if (!soundEffect) {
+        const response = await fetch(`/api/sound-effects/event/${eventType}`);
+        if (response.ok) {
+          soundEffect = await response.json();
+          // Cache it for future use
+          setSoundEffectCache(prev => ({
+            ...prev,
+            [eventType]: soundEffect
+          }));
+        }
+      }
+      
+      if (soundEffect) {
+        // Create and play audio immediately
         const audio = new Audio(soundEffect.fileUrl);
-        audio.volume = soundEffect.volume;
-        audio.play().catch(console.error);
+        audio.volume = soundEffect.volume || 0.5;
+        
+        // Pre-load and play
+        audio.load();
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+          playPromise.catch(error => {
+            console.error('Error playing sound:', error);
+          });
+        }
       }
     } catch (error) {
       console.error('Error playing sound effect:', error);
@@ -83,6 +134,9 @@ export default function TvDashboard() {
   // Handle WebSocket messages for sale notifications
   useEffect(() => {
     if (lastMessage?.type === "sale_created" && lastMessage.data && dashboardData?.agents) {
+      // Play sound effect immediately
+      playEventSound("sale");
+      
       // Find the agent who made the sale
       const saleAgent = dashboardData.agents.find(agent => agent.id === lastMessage.data.agentId);
       if (saleAgent) {
@@ -92,16 +146,13 @@ export default function TvDashboard() {
           agentPhoto: saleAgent.photo
         };
         setSalePopup(saleWithAgent);
-        
-        // Play sound effect for sale
-        playEventSound("sale");
       }
     } else if (lastMessage?.type === "announcement_created" && lastMessage.data) {
-      setAnnouncementPopup(lastMessage.data);
       playEventSound("announcement");
+      setAnnouncementPopup(lastMessage.data);
     } else if (lastMessage?.type === "cash_offer_created" && lastMessage.data) {
-      setCashOfferPopup(lastMessage.data);
       playEventSound("cash_offer");
+      setCashOfferPopup(lastMessage.data);
     }
   }, [lastMessage, dashboardData?.agents]);
 
