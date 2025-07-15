@@ -118,6 +118,17 @@ export default function TvDashboard() {
     }
   }, [cashOfferPopup]);
 
+  // Auto-close sale popup after 5 seconds
+  useEffect(() => {
+    if (salePopup) {
+      const timer = setTimeout(() => {
+        setSalePopup(null);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [salePopup]);
+
   // Update last updated timestamp
   useEffect(() => {
     const interval = setInterval(() => {

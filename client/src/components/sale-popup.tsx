@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Trophy, X, DollarSign, Star, Users, Calendar } from "lucide-react";
 import confetti from "canvas-confetti";
@@ -12,6 +12,7 @@ interface SalePopupProps {
 export default function SalePopup({ sale, onClose }: SalePopupProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [applauseCount, setApplauseCount] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Confetti animation
   const fireConfetti = () => {
@@ -53,9 +54,16 @@ export default function SalePopup({ sale, onClose }: SalePopupProps) {
   // Applause sound effect
   const playApplause = () => {
     try {
-      const audio = new Audio(applauseSoundPath);
-      audio.volume = 0.3;
-      audio.play().catch(() => {
+      // Stop any existing audio first
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      
+      // Create new audio instance
+      audioRef.current = new Audio(applauseSoundPath);
+      audioRef.current.volume = 0.3;
+      audioRef.current.play().catch(() => {
         // Fallback if audio fails
         console.log('Applause sound effect triggered');
       });
@@ -88,18 +96,28 @@ export default function SalePopup({ sale, onClose }: SalePopupProps) {
     return () => {
       clearTimeout(timer);
       clearInterval(applauseInterval);
+      // Clean up audio on unmount
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
     };
   }, [onClose]);
 
   const handleClose = () => {
+    // Stop audio when closing
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
     setIsVisible(false);
     setTimeout(onClose, 500);
   };
 
   const handleCelebrate = () => {
     fireConfetti();
-    playApplause();
     createApplause();
+    // Don't play applause again to avoid overlap
   };
 
   return (
