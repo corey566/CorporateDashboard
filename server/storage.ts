@@ -39,6 +39,8 @@ export interface IStorage {
   getSales(): Promise<Sale[]>;
   getSalesByAgent(agentId: number): Promise<Sale[]>;
   createSale(sale: InsertSale): Promise<Sale>;
+  updateSale(id: number, sale: Partial<InsertSale>): Promise<Sale>;
+  deleteSale(id: number): Promise<void>;
   
   // Cash offers methods
   getActiveCashOffers(): Promise<CashOffer[]>;
@@ -174,6 +176,15 @@ export class DatabaseStorage implements IStorage {
   async createSale(sale: InsertSale): Promise<Sale> {
     const [newSale] = await db.insert(sales).values(sale).returning();
     return newSale;
+  }
+
+  async updateSale(id: number, sale: Partial<InsertSale>): Promise<Sale> {
+    const [updatedSale] = await db.update(sales).set(sale).where(eq(sales.id, id)).returning();
+    return updatedSale;
+  }
+
+  async deleteSale(id: number): Promise<void> {
+    await db.delete(sales).where(eq(sales.id, id));
   }
   
   async getActiveCashOffers(): Promise<CashOffer[]> {

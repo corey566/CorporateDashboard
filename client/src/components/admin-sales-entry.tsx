@@ -11,7 +11,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertSaleSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, DollarSign, Package } from "lucide-react";
+import { Plus, DollarSign, Package, Edit, Trash2 } from "lucide-react";
 import { z } from "zod";
 
 const saleFormSchema = insertSaleSchema.extend({
@@ -23,6 +23,7 @@ const saleFormSchema = insertSaleSchema.extend({
 type SaleFormData = z.infer<typeof saleFormSchema>;
 
 export default function AdminSalesEntry() {
+  const [editingSale, setEditingSale] = useState<any>(null);
   const { toast } = useToast();
 
   const { data: agents } = useQuery({
@@ -65,6 +66,7 @@ export default function AdminSalesEntry() {
         description: "Sale recorded successfully",
       });
       form.reset();
+      setEditingSale(null);
     },
     onError: (error) => {
       toast({
@@ -75,8 +77,81 @@ export default function AdminSalesEntry() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: SaleFormData }) => {
+      const saleData = {
+        ...data,
+        agentId: parseInt(data.agentId),
+        amount: data.amount,
+        units: parseInt(data.units),
+      };
+      return apiRequest("PUT", `/api/sales/${id}`, saleData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      toast({
+        title: "Success",
+        description: "Sale updated successfully",
+      });
+      form.reset();
+      setEditingSale(null);
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest("DELETE", `/api/sales/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      toast({
+        title: "Success",
+        description: "Sale deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleEdit = (sale: any) => {
+    setEditingSale(sale);
+    form.reset({
+      agentId: sale.agentId.toString(),
+      amount: sale.amount.toString(),
+      units: sale.units.toString(),
+      category: sale.category,
+      clientName: sale.clientName,
+      description: sale.description,
+      subscriptionPeriod: sale.subscriptionPeriod,
+    });
+  };
+
+  const handleDelete = (id: number) => {
+    if (confirm("Are you sure you want to delete this sale?")) {
+      deleteMutation.mutate(id);
+    }
+  };
+
   const handleSubmit = (data: SaleFormData) => {
-    createMutation.mutate(data);
+    if (editingSale) {
+      updateMutation.mutate({ id: editingSale.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
   };
 
   const todaysSales = sales?.filter((sale: any) => {
@@ -98,7 +173,9 @@ export default function AdminSalesEntry() {
       {/* Sales Entry Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Sales Entry</CardTitle>
+          <CardTitle>
+            {editingSale ? "Edit Sale" : "Quick Sales Entry"}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -216,14 +293,33 @@ export default function AdminSalesEntry() {
               />
             </div>
             
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={createMutation.isPending}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Record Sale
-            </Button>
+            <div className="flex space-x-2">
+              {editingSale && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setEditingSale(null);
+                    form.reset();
+                  }}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button
+                type="submit"
+                className="flex-1"
+                disabled={createMutation.isPending || updateMutation.isPending}
+              >
+                {editingSale ? (
+                  <Edit className="w-4 h-4 mr-2" />
+                ) : (
+                  <Plus className="w-4 h-4 mr-2" />
+                )}
+                {editingSale ? "Update Sale" : "Record Sale"}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
@@ -278,13 +374,31 @@ export default function AdminSalesEntry() {
                         {new Date(sale.createdAt).toLocaleTimeString()}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-accent">
-                        ${parseFloat(sale.amount).toLocaleString()}
-                      </p>
-                      <p className="text-sm text-corporate-500">
-                        {sale.units} units
-                      </p>
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <p className="font-bold text-accent">
+                          ${parseFloat(sale.amount).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-corporate-500">
+                          {sale.units} units
+                        </p>
+                      </div>
+                      <div className="flex space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(sale)}
+                        >
+                          <Edit className="w-4 h-4 text-primary" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(sale.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 );

@@ -272,6 +272,39 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.put("/api/sales/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      const saleData = insertSaleSchema.parse(req.body);
+      const sale = await storage.updateSale(id, saleData);
+      
+      // Broadcast real-time sale update
+      broadcastToClients({ type: "sale_updated", data: sale });
+      
+      res.json(sale);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid sale data" });
+    }
+  });
+
+  app.delete("/api/sales/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteSale(id);
+      
+      // Broadcast real-time sale update
+      broadcastToClients({ type: "sale_deleted", data: { id } });
+      
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete sale" });
+    }
+  });
+
   // Cash offers endpoints
   app.get("/api/cash-offers", async (req, res) => {
     try {
@@ -697,8 +730,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/sound-effects/event/:eventType", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
-    
+    // No authentication required for TV dashboard sound playback
     try {
       const soundEffect = await storage.getSoundEffectByEventType(req.params.eventType);
       if (!soundEffect) {
