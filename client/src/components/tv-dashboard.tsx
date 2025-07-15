@@ -58,6 +58,7 @@ export default function TvDashboard() {
   useEffect(() => {
     if (mediaSlides.length > 0) {
       const interval = setInterval(() => {
+        console.log('Triggering media presentation...');
         setShowMediaPresentation(true);
       }, 10000); // Every 10 seconds
 
@@ -332,7 +333,10 @@ export default function TvDashboard() {
       <FullscreenMediaPresentation
         slides={mediaSlides}
         isVisible={showMediaPresentation}
-        onComplete={() => setShowMediaPresentation(false)}
+        onComplete={() => {
+          console.log('Media presentation completed, hiding...');
+          setShowMediaPresentation(false);
+        }}
       />
 
     </div>
