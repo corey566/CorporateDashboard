@@ -6,10 +6,8 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-corporate-50 to-blue-50">
-
-
       {/* Connection Status */}
-      <div className="fixed top-4 left-4 z-50">
+      {/* <div className="fixed top-4 left-4 z-50">
         <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${
           isConnected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
         }`}>
@@ -18,7 +16,7 @@ export default function DashboardPage() {
           }`} />
           <span>{isConnected ? 'Connected' : 'Disconnected'}</span>
         </div>
-      </div>
+      </div> */}
 
       <TvDashboard />
     </div>

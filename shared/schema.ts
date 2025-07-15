@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, json, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, json, varchar, real } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -117,6 +117,17 @@ export const systemSettings = pgTable("system_settings", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Sound effects table for different event types
+export const soundEffects = pgTable("sound_effects", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  eventType: text("event_type").notNull(), // 'sale', 'announcement', 'cash_offer', 'birthday', 'emergency'
+  fileUrl: text("file_url").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  volume: real("volume").notNull().default(0.5), // 0.0 to 1.0
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // Relations
 export const teamsRelations = relations(teams, ({ many }) => ({
   agents: many(agents),
@@ -197,6 +208,11 @@ export const insertSystemSettingSchema = createInsertSchema(systemSettings).omit
   updatedAt: true,
 });
 
+export const insertSoundEffectSchema = createInsertSchema(soundEffects).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -218,3 +234,5 @@ export type FileUpload = typeof fileUploads.$inferSelect;
 export type InsertFileUpload = z.infer<typeof insertFileUploadSchema>;
 export type SystemSetting = typeof systemSettings.$inferSelect;
 export type InsertSystemSetting = z.infer<typeof insertSystemSettingSchema>;
+export type SoundEffect = typeof soundEffects.$inferSelect;
+export type InsertSoundEffect = z.infer<typeof insertSoundEffectSchema>;

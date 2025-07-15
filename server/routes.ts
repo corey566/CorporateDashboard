@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema, agentLoginSchema, insertFileUploadSchema, insertSystemSettingSchema } from "@shared/schema";
+import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema, agentLoginSchema, insertFileUploadSchema, insertSystemSettingSchema, insertSoundEffectSchema } from "@shared/schema";
 import { z } from "zod";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -667,6 +667,95 @@ export function registerRoutes(app: Express): Server {
       res.sendStatus(204);
     } catch (error) {
       res.status(500).json({ error: "Failed to delete system setting" });
+    }
+  });
+
+  // Sound effects endpoints
+  app.get("/api/sound-effects", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const soundEffects = await storage.getSoundEffects();
+      res.json(soundEffects);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch sound effects" });
+    }
+  });
+
+  app.get("/api/sound-effects/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const soundEffect = await storage.getSoundEffect(parseInt(req.params.id));
+      if (!soundEffect) {
+        return res.status(404).json({ error: "Sound effect not found" });
+      }
+      res.json(soundEffect);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch sound effect" });
+    }
+  });
+
+  app.get("/api/sound-effects/event/:eventType", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const soundEffect = await storage.getSoundEffectByEventType(req.params.eventType);
+      if (!soundEffect) {
+        return res.status(404).json({ error: "Sound effect not found for event type" });
+      }
+      res.json(soundEffect);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch sound effect" });
+    }
+  });
+
+  app.post("/api/sound-effects", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const soundEffectData = insertSoundEffectSchema.parse(req.body);
+      const soundEffect = await storage.createSoundEffect(soundEffectData);
+      
+      // Broadcast real-time update
+      broadcastToClients({ type: "sound_effect_created", data: soundEffect });
+      
+      res.status(201).json(soundEffect);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid sound effect data" });
+    }
+  });
+
+  app.put("/api/sound-effects/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      const soundEffectData = insertSoundEffectSchema.partial().parse(req.body);
+      const soundEffect = await storage.updateSoundEffect(id, soundEffectData);
+      
+      // Broadcast real-time update
+      broadcastToClients({ type: "sound_effect_updated", data: soundEffect });
+      
+      res.json(soundEffect);
+    } catch (error) {
+      res.status(400).json({ error: "Failed to update sound effect" });
+    }
+  });
+
+  app.delete("/api/sound-effects/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteSoundEffect(id);
+      
+      // Broadcast real-time update
+      broadcastToClients({ type: "sound_effect_deleted", data: { id } });
+      
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete sound effect" });
     }
   });
 

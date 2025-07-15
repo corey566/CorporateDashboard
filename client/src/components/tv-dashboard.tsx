@@ -31,6 +31,21 @@ export default function TvDashboard() {
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
+  // Function to play event sound
+  const playEventSound = async (eventType: string) => {
+    try {
+      const response = await fetch(`/api/sound-effects/event/${eventType}`);
+      if (response.ok) {
+        const soundEffect = await response.json();
+        const audio = new Audio(soundEffect.fileUrl);
+        audio.volume = soundEffect.volume;
+        audio.play().catch(console.error);
+      }
+    } catch (error) {
+      console.error('Error playing sound effect:', error);
+    }
+  };
+
   // Extract data from query result
   const rawAgents = dashboardData?.agents || [];
   const teams = dashboardData?.teams || [];
@@ -77,11 +92,16 @@ export default function TvDashboard() {
           agentPhoto: saleAgent.photo
         };
         setSalePopup(saleWithAgent);
+        
+        // Play sound effect for sale
+        playEventSound("sale");
       }
     } else if (lastMessage?.type === "announcement_created" && lastMessage.data) {
       setAnnouncementPopup(lastMessage.data);
+      playEventSound("announcement");
     } else if (lastMessage?.type === "cash_offer_created" && lastMessage.data) {
       setCashOfferPopup(lastMessage.data);
+      playEventSound("cash_offer");
     }
   }, [lastMessage, dashboardData?.agents]);
 

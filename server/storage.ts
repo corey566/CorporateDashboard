@@ -1,9 +1,10 @@
 import { 
-  users, agents, teams, sales, cashOffers, mediaSlides, announcements, newsTicker, fileUploads, systemSettings,
+  users, agents, teams, sales, cashOffers, mediaSlides, announcements, newsTicker, fileUploads, systemSettings, soundEffects,
   type User, type InsertUser, type Agent, type InsertAgent, type Team, type InsertTeam,
   type Sale, type InsertSale, type CashOffer, type InsertCashOffer, type MediaSlide,
   type InsertMediaSlide, type Announcement, type InsertAnnouncement, type NewsTicker,
-  type InsertNewsTicker, type FileUpload, type InsertFileUpload, type SystemSetting, type InsertSystemSetting
+  type InsertNewsTicker, type FileUpload, type InsertFileUpload, type SystemSetting, type InsertSystemSetting,
+  type SoundEffect, type InsertSoundEffect
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -77,6 +78,14 @@ export interface IStorage {
   createSystemSetting(setting: InsertSystemSetting): Promise<SystemSetting>;
   updateSystemSetting(key: string, value: string): Promise<SystemSetting>;
   deleteSystemSetting(key: string): Promise<void>;
+  
+  // Sound effects methods
+  getSoundEffects(): Promise<SoundEffect[]>;
+  getSoundEffect(id: number): Promise<SoundEffect | undefined>;
+  getSoundEffectByEventType(eventType: string): Promise<SoundEffect | undefined>;
+  createSoundEffect(effect: InsertSoundEffect): Promise<SoundEffect>;
+  updateSoundEffect(id: number, effect: Partial<InsertSoundEffect>): Promise<SoundEffect>;
+  deleteSoundEffect(id: number): Promise<void>;
   
   sessionStore: session.SessionStore;
 }
@@ -303,6 +312,36 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSystemSetting(key: string): Promise<void> {
     await db.delete(systemSettings).where(eq(systemSettings.key, key));
+  }
+
+  async getSoundEffects(): Promise<SoundEffect[]> {
+    return await db.select().from(soundEffects).orderBy(desc(soundEffects.createdAt));
+  }
+
+  async getSoundEffect(id: number): Promise<SoundEffect | undefined> {
+    const [effect] = await db.select().from(soundEffects).where(eq(soundEffects.id, id));
+    return effect;
+  }
+
+  async getSoundEffectByEventType(eventType: string): Promise<SoundEffect | undefined> {
+    const [effect] = await db.select()
+      .from(soundEffects)
+      .where(and(eq(soundEffects.eventType, eventType), eq(soundEffects.isActive, true)));
+    return effect;
+  }
+
+  async createSoundEffect(effect: InsertSoundEffect): Promise<SoundEffect> {
+    const [newEffect] = await db.insert(soundEffects).values(effect).returning();
+    return newEffect;
+  }
+
+  async updateSoundEffect(id: number, effect: Partial<InsertSoundEffect>): Promise<SoundEffect> {
+    const [updatedEffect] = await db.update(soundEffects).set(effect).where(eq(soundEffects.id, id)).returning();
+    return updatedEffect;
+  }
+
+  async deleteSoundEffect(id: number): Promise<void> {
+    await db.delete(soundEffects).where(eq(soundEffects.id, id));
   }
 }
 
