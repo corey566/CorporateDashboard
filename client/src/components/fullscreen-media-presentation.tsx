@@ -41,7 +41,8 @@ export default function FullscreenMediaPresentation({
             if (current < slides.length - 1) {
               const nextSlide = current + 1;
               const nextDuration = slides[nextSlide]?.duration || 10;
-              startTimer(nextDuration);
+              // Use setTimeout to avoid setState during render
+              setTimeout(() => startTimer(nextDuration), 0);
               return nextSlide;
             } else {
               onComplete();

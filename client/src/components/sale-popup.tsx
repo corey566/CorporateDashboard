@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trophy, X, DollarSign, Star, Users, Calendar } from "lucide-react";
 import confetti from "canvas-confetti";
+import applauseSoundPath from "../assets/applause-cheer.mp3";
 
 interface SalePopupProps {
   sale: any;
@@ -51,12 +52,16 @@ export default function SalePopup({ sale, onClose }: SalePopupProps) {
 
   // Applause sound effect
   const playApplause = () => {
-    const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmgpBCl+zPLVgTEGHm+77N+aUQ0PVKjo+cBuHgwyeL3runnGBCuL2/7RcCEENA'); 
-    audio.volume = 0.3;
-    audio.play().catch(() => {
-      // Fallback if audio fails
-      console.log('Applause sound effect triggered');
-    });
+    try {
+      const audio = new Audio(applauseSoundPath);
+      audio.volume = 0.3;
+      audio.play().catch(() => {
+        // Fallback if audio fails
+        console.log('Applause sound effect triggered');
+      });
+    } catch (error) {
+      console.log('Audio playback failed, using fallback');
+    }
   };
 
   // Applause effect

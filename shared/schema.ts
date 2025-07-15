@@ -94,6 +94,18 @@ export const newsTicker = pgTable("news_ticker", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// File uploads table
+export const fileUploads = pgTable("file_uploads", {
+  id: serial("id").primaryKey(),
+  originalName: text("original_name").notNull(),
+  filename: text("filename").notNull(),
+  mimetype: text("mimetype").notNull(),
+  size: integer("size").notNull(),
+  path: text("path").notNull(),
+  type: text("type").notNull(), // 'image', 'audio', 'video'
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const teamsRelations = relations(teams, ({ many }) => ({
   agents: many(agents),
@@ -163,6 +175,11 @@ export const insertNewsTickerSchema = createInsertSchema(newsTicker).omit({
   createdAt: true,
 });
 
+export const insertFileUploadSchema = createInsertSchema(fileUploads).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -180,3 +197,5 @@ export type Announcement = typeof announcements.$inferSelect;
 export type InsertAnnouncement = z.infer<typeof insertAnnouncementSchema>;
 export type NewsTicker = typeof newsTicker.$inferSelect;
 export type InsertNewsTicker = z.infer<typeof insertNewsTickerSchema>;
+export type FileUpload = typeof fileUploads.$inferSelect;
+export type InsertFileUpload = z.infer<typeof insertFileUploadSchema>;

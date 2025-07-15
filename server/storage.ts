@@ -1,9 +1,9 @@
 import { 
-  users, agents, teams, sales, cashOffers, mediaSlides, announcements, newsTicker,
+  users, agents, teams, sales, cashOffers, mediaSlides, announcements, newsTicker, fileUploads,
   type User, type InsertUser, type Agent, type InsertAgent, type Team, type InsertTeam,
   type Sale, type InsertSale, type CashOffer, type InsertCashOffer, type MediaSlide,
   type InsertMediaSlide, type Announcement, type InsertAnnouncement, type NewsTicker,
-  type InsertNewsTicker
+  type InsertNewsTicker, type FileUpload, type InsertFileUpload
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
@@ -65,6 +65,11 @@ export interface IStorage {
   
   // Dashboard data
   getDashboardData(): Promise<any>;
+  
+  // File upload methods
+  getFileUploads(): Promise<FileUpload[]>;
+  createFileUpload(upload: InsertFileUpload): Promise<FileUpload>;
+  deleteFileUpload(id: number): Promise<void>;
   
   sessionStore: session.SessionStore;
 }
@@ -252,6 +257,19 @@ export class DatabaseStorage implements IStorage {
       newsTicker: tickerData,
       announcements: announcementsData
     };
+  }
+
+  async getFileUploads(): Promise<FileUpload[]> {
+    return await db.select().from(fileUploads).orderBy(desc(fileUploads.createdAt));
+  }
+
+  async createFileUpload(upload: InsertFileUpload): Promise<FileUpload> {
+    const [newUpload] = await db.insert(fileUploads).values(upload).returning();
+    return newUpload;
+  }
+
+  async deleteFileUpload(id: number): Promise<void> {
+    await db.delete(fileUploads).where(eq(fileUploads.id, id));
   }
 }
 

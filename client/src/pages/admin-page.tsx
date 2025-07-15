@@ -4,13 +4,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Monitor, Users, TrendingUp, Gift, LogOut, ShieldQuestion, UsersIcon, UserPlus, Megaphone, Image } from "lucide-react";
+import { Monitor, Users, TrendingUp, Gift, LogOut, ShieldQuestion, UsersIcon, UserPlus, Megaphone, Image, FolderOpen } from "lucide-react";
 import AdminTeamManagement from "@/components/admin-team-management";
 import AdminAgentManagement from "@/components/admin-agent-management";
 import AdminSalesEntry from "@/components/admin-sales-entry";
 import AdminCashOffers from "@/components/admin-cash-offers";
 import AdminAnnouncements from "@/components/admin-announcements";
 import AdminMedia from "@/components/admin-media";
+import AdminFileManager from "@/components/admin-file-manager";
 import UICustomization from "@/components/ui-customization";
 import { useQuery } from "@tanstack/react-query";
 import { useWebSocket } from "@/hooks/use-websocket";
@@ -163,13 +164,14 @@ export default function AdminPage() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="teams" className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="teams">Teams</TabsTrigger>
             <TabsTrigger value="agents">Agents</TabsTrigger>
             <TabsTrigger value="sales">Sales Entry</TabsTrigger>
             <TabsTrigger value="offers">Cash Offers</TabsTrigger>
             <TabsTrigger value="announcements">Announcements</TabsTrigger>
             <TabsTrigger value="media">Media</TabsTrigger>
+            <TabsTrigger value="files">Files</TabsTrigger>
             <TabsTrigger value="customization">UI</TabsTrigger>
           </TabsList>
           
@@ -195,6 +197,10 @@ export default function AdminPage() {
           
           <TabsContent value="media" className="space-y-6">
             <AdminMedia />
+          </TabsContent>
+          
+          <TabsContent value="files" className="space-y-6">
+            <AdminFileManager />
           </TabsContent>
           
           <TabsContent value="customization" className="space-y-6">
