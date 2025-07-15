@@ -233,13 +233,14 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getDashboardData(): Promise<any> {
-    const [agentsData, teamsData, salesData, offersData, slidesData, tickerData] = await Promise.all([
+    const [agentsData, teamsData, salesData, offersData, slidesData, tickerData, announcementsData] = await Promise.all([
       db.select().from(agents).where(eq(agents.isActive, true)),
       db.select().from(teams),
       db.select().from(sales).orderBy(desc(sales.createdAt)).limit(50),
       this.getActiveCashOffers(),
       this.getActiveMediaSlides(),
-      this.getActiveNewsTicker()
+      this.getActiveNewsTicker(),
+      this.getActiveAnnouncements()
     ]);
     
     return {
@@ -248,7 +249,8 @@ export class DatabaseStorage implements IStorage {
       sales: salesData,
       cashOffers: offersData,
       mediaSlides: slidesData,
-      newsTicker: tickerData
+      newsTicker: tickerData,
+      announcements: announcementsData
     };
   }
 }

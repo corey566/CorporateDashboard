@@ -7,13 +7,18 @@ import AgentCard from "./agent-card";
 import TeamLeaderboard from "./team-leaderboard";
 import NewsTicker from "./news-ticker";
 import SalePopup from "./sale-popup";
-import MediaSlides from "./media-slides";
+import AnnouncementPopup from "./announcement-popup";
+import CashOfferPopup from "./cash-offer-popup";
+import FullscreenMediaPresentation from "./fullscreen-media-presentation";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useState, useEffect } from "react";
 
 export default function TvDashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [salePopup, setSalePopup] = useState<any>(null);
+  const [announcementPopup, setAnnouncementPopup] = useState<any>(null);
+  const [cashOfferPopup, setCashOfferPopup] = useState<any>(null);
+  const [showMediaPresentation, setShowMediaPresentation] = useState(false);
   const { isConnected, lastMessage } = useWebSocket();
 
   const { data: dashboardData, isLoading } = useQuery({
@@ -26,6 +31,7 @@ export default function TvDashboard() {
   const teams = dashboardData?.teams || [];
   const cashOffers = dashboardData?.cashOffers || [];
   const mediaSlides = dashboardData?.mediaSlides || [];
+  const announcements = dashboardData?.announcements || [];
   const recentSales = dashboardData?.sales?.slice(0, 5) || [];
 
   // Handle WebSocket messages for sale notifications
@@ -41,8 +47,45 @@ export default function TvDashboard() {
         };
         setSalePopup(saleWithAgent);
       }
+    } else if (lastMessage?.type === "announcement_created" && lastMessage.data) {
+      setAnnouncementPopup(lastMessage.data);
+    } else if (lastMessage?.type === "cash_offer_created" && lastMessage.data) {
+      setCashOfferPopup(lastMessage.data);
     }
   }, [lastMessage, dashboardData?.agents]);
+
+  // Media presentation timer - every 10 seconds
+  useEffect(() => {
+    if (mediaSlides.length > 0) {
+      const interval = setInterval(() => {
+        setShowMediaPresentation(true);
+      }, 10000); // Every 10 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [mediaSlides]);
+
+  // Auto-close announcement popup after 5 seconds
+  useEffect(() => {
+    if (announcementPopup) {
+      const timer = setTimeout(() => {
+        setAnnouncementPopup(null);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [announcementPopup]);
+
+  // Auto-close cash offer popup after 5 seconds
+  useEffect(() => {
+    if (cashOfferPopup) {
+      const timer = setTimeout(() => {
+        setCashOfferPopup(null);
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [cashOfferPopup]);
 
   // Update last updated timestamp
   useEffect(() => {
@@ -174,9 +217,44 @@ export default function TvDashboard() {
             <TeamLeaderboard teams={teams} agents={agents} />
           </div>
           
-          {/* Media Slides - Fixed height */}
+          {/* Cash Offers - Fixed height */}
           <div className="flex-1 min-h-0">
-            <MediaSlides slides={mediaSlides} />
+            <Card className="h-full">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center">
+                  <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center mr-2">
+                    <span className="text-white text-sm">$</span>
+                  </div>
+                  Cash Offers
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 h-[calc(100%-4rem)] overflow-y-auto">
+                <div className="space-y-3">
+                  {cashOffers.map((offer: any) => (
+                    <div
+                      key={offer.id}
+                      className="bg-gradient-to-r from-green-50 to-green-100 p-3 rounded-lg border border-green-200"
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-semibold text-green-800">{offer.title}</h4>
+                        <Badge className="bg-green-500 text-white">
+                          ${offer.amount}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-green-700 mb-2">{offer.description}</p>
+                      <div className="text-xs text-green-600">
+                        Target: {offer.targetSales} sales | Expires: {new Date(offer.expiresAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                  {cashOffers.length === 0 && (
+                    <div className="text-center py-8 text-corporate-500">
+                      No active cash offers
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
           
           {/* Recent Sales - Fixed height */}
@@ -234,6 +312,28 @@ export default function TvDashboard() {
         />
       )}
 
+      {/* Announcement Popup */}
+      {announcementPopup && (
+        <AnnouncementPopup
+          announcement={announcementPopup}
+          onClose={() => setAnnouncementPopup(null)}
+        />
+      )}
+
+      {/* Cash Offer Popup */}
+      {cashOfferPopup && (
+        <CashOfferPopup
+          offer={cashOfferPopup}
+          onClose={() => setCashOfferPopup(null)}
+        />
+      )}
+
+      {/* Fullscreen Media Presentation */}
+      <FullscreenMediaPresentation
+        slides={mediaSlides}
+        isVisible={showMediaPresentation}
+        onComplete={() => setShowMediaPresentation(false)}
+      />
 
     </div>
   );

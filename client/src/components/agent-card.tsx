@@ -26,73 +26,93 @@ export default function AgentCard({ agent }: AgentCardProps) {
   };
 
   return (
-    <div className={`bg-gradient-to-r ${getCardGradient(agent.id)} rounded-lg p-4 border`}>
-      <div className="flex items-center space-x-4">
+    <div className={`bg-gradient-to-br ${getCardGradient(agent.id)} rounded-xl p-6 border-2 shadow-lg hover:shadow-xl transition-all duration-300`}>
+      <div className="flex items-center space-x-6">
         {/* Agent Photo and Basic Info */}
-        <div className="flex items-center space-x-3 min-w-0 flex-1">
+        <div className="flex items-center space-x-4 min-w-0 flex-1">
           <div className="relative">
             <img
               src={agent.photo || `https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=150&h=150`}
               alt={agent.name}
-              className="w-14 h-14 rounded-full object-cover border-2 border-primary"
+              className="w-16 h-16 rounded-full object-cover border-3 border-white shadow-md"
             />
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-              <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+            <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-accent to-accent-foreground rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-white text-sm font-bold">#{agent.rank || 1}</span>
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-white">
+              <div className="w-2 h-2 bg-white rounded-full"></div>
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold text-corporate-800 text-lg truncate">{agent.name}</h3>
-            <div className="flex items-center space-x-2">
-              <Badge variant="secondary" className={`${getTeamColor(agent.teamId)} text-xs font-medium`}>
+            <h3 className="font-bold text-corporate-800 text-xl truncate">{agent.name}</h3>
+            <div className="flex items-center space-x-2 mb-1">
+              <Badge variant="secondary" className={`${getTeamColor(agent.teamId)} text-xs font-medium px-2 py-1`}>
                 {agent.team?.name || 'Team'}
               </Badge>
-              <span className="text-xs text-corporate-500">#{agent.rank || 1}</span>
+              <Badge variant="outline" className="text-xs">
+                {agent.category}
+              </Badge>
             </div>
-            <p className="text-sm text-corporate-500 truncate">{agent.category}</p>
           </div>
         </div>
 
-        {/* Progress Bars */}
-        <div className="flex-1 space-y-3">
+        {/* Progress Bars - Enhanced */}
+        <div className="flex-1 space-y-4">
           {/* Sales Volume Progress */}
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm font-medium text-corporate-700">Volume Target</span>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-semibold text-corporate-700">Volume Progress</span>
               <span className="text-sm font-bold text-primary">
                 ${parseFloat(agent.currentVolume || 0).toLocaleString()} / ${parseFloat(agent.volumeTarget).toLocaleString()}
               </span>
             </div>
-            <Progress value={volumeProgress} className="h-2" />
+            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-primary to-primary-foreground h-3 rounded-full transition-all duration-500 shadow-inner"
+                style={{ width: `${Math.min(100, volumeProgress)}%` }}
+              />
+            </div>
+            <div className="text-xs text-corporate-500 mt-1">
+              {Math.round(volumeProgress)}% Complete
+            </div>
           </div>
 
           {/* Sales Quantity Progress */}
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm font-medium text-corporate-700">Units Target</span>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-semibold text-corporate-700">Units Progress</span>
               <span className="text-sm font-bold text-accent">
                 {agent.currentUnits || 0} / {agent.unitsTarget}
               </span>
             </div>
-            <Progress value={unitsProgress} className="h-2" />
+            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-accent to-accent-foreground h-3 rounded-full transition-all duration-500 shadow-inner"
+                style={{ width: `${Math.min(100, unitsProgress)}%` }}
+              />
+            </div>
+            <div className="text-xs text-corporate-500 mt-1">
+              {Math.round(unitsProgress)}% Complete
+            </div>
           </div>
         </div>
 
-        {/* Status Badge */}
-        <div className="flex items-center space-x-2">
+        {/* Status Badge - Enhanced */}
+        <div className="flex flex-col items-center space-y-2">
           {volumeProgress > 80 ? (
-            <div className="flex items-center space-x-1 bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">
-              <Trophy className="w-4 h-4" />
-              <span className="text-sm font-medium">Top Performer</span>
+            <div className="flex items-center space-x-2 bg-gradient-to-r from-yellow-100 to-yellow-200 text-yellow-800 px-4 py-2 rounded-full shadow-md">
+              <Trophy className="w-5 h-5" />
+              <span className="text-sm font-bold">Top Performer</span>
             </div>
           ) : volumeProgress > 60 ? (
-            <div className="flex items-center space-x-1 bg-green-100 text-green-800 px-3 py-1 rounded-full">
-              <TrendingUp className="w-4 h-4" />
-              <span className="text-sm font-medium">Rising</span>
+            <div className="flex items-center space-x-2 bg-gradient-to-r from-green-100 to-green-200 text-green-800 px-4 py-2 rounded-full shadow-md">
+              <TrendingUp className="w-5 h-5" />
+              <span className="text-sm font-bold">Rising Star</span>
             </div>
           ) : (
-            <div className="flex items-center space-x-1 bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-              <Target className="w-4 h-4" />
-              <span className="text-sm font-medium">Steady</span>
+            <div className="flex items-center space-x-2 bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800 px-4 py-2 rounded-full shadow-md">
+              <Target className="w-5 h-5" />
+              <span className="text-sm font-bold">Steady</span>
             </div>
           )}
         </div>
