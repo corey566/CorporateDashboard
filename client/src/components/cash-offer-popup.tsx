@@ -61,7 +61,7 @@ export default function CashOfferPopup({ offer, onClose }: CashOfferPopupProps) 
           
           <div className="flex justify-center mb-4">
             <Badge className="bg-green-500 text-white text-lg px-4 py-2">
-              ${offer.amount}
+              ${offer.reward}
             </Badge>
           </div>
           
@@ -71,7 +71,7 @@ export default function CashOfferPopup({ offer, onClose }: CashOfferPopupProps) 
                 <Target className="w-4 h-4 mr-1" />
                 Target Sales:
               </div>
-              <span className="font-semibold text-green-800">{offer.targetSales}</span>
+              <span className="font-semibold text-green-800">{offer.target}</span>
             </div>
             
             <div className="flex items-center justify-between text-sm">

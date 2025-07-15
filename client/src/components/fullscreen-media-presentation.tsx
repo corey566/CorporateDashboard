@@ -23,17 +23,18 @@ export default function FullscreenMediaPresentation({
     }
 
     const slide = slides[currentSlide];
-    const duration = (slide?.duration || 10) * 1000;
-    setTimeLeft(duration / 1000);
+    const duration = slide?.duration || 10;
+    setTimeLeft(duration);
 
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           // Move to next slide or complete presentation
           if (currentSlide < slides.length - 1) {
-            setCurrentSlide(currentSlide + 1);
-            return (slides[currentSlide + 1]?.duration || 10);
+            setCurrentSlide(prev => prev + 1);
+            return slides[currentSlide + 1]?.duration || 10;
           } else {
+            // Complete presentation and reset
             onComplete();
             return 0;
           }
@@ -48,8 +49,9 @@ export default function FullscreenMediaPresentation({
   useEffect(() => {
     if (isVisible) {
       setCurrentSlide(0);
+      setTimeLeft(slides[0]?.duration || 10);
     }
-  }, [isVisible]);
+  }, [isVisible, slides]);
 
   if (!isVisible || !slides || slides.length === 0) {
     return null;
@@ -72,7 +74,11 @@ export default function FullscreenMediaPresentation({
 
       {/* Navigation arrows */}
       <button
-        onClick={() => setCurrentSlide(Math.max(0, currentSlide - 1))}
+        onClick={() => {
+          const newSlide = Math.max(0, currentSlide - 1);
+          setCurrentSlide(newSlide);
+          setTimeLeft(slides[newSlide]?.duration || 10);
+        }}
         className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white p-2 rounded-full bg-black/30 hover:bg-black/50"
         disabled={currentSlide === 0}
       >
@@ -80,7 +86,11 @@ export default function FullscreenMediaPresentation({
       </button>
 
       <button
-        onClick={() => setCurrentSlide(Math.min(slides.length - 1, currentSlide + 1))}
+        onClick={() => {
+          const newSlide = Math.min(slides.length - 1, currentSlide + 1);
+          setCurrentSlide(newSlide);
+          setTimeLeft(slides[newSlide]?.duration || 10);
+        }}
         className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white p-2 rounded-full bg-black/30 hover:bg-black/50"
         disabled={currentSlide === slides.length - 1}
       >

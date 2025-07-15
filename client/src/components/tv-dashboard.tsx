@@ -238,12 +238,12 @@ export default function TvDashboard() {
                       <div className="flex items-center justify-between mb-1">
                         <h4 className="font-semibold text-green-800">{offer.title}</h4>
                         <Badge className="bg-green-500 text-white">
-                          ${offer.amount}
+                          ${offer.reward}
                         </Badge>
                       </div>
                       <p className="text-sm text-green-700 mb-2">{offer.description}</p>
                       <div className="text-xs text-green-600">
-                        Target: {offer.targetSales} sales | Expires: {new Date(offer.expiresAt).toLocaleDateString()}
+                        Target: {offer.target} sales | Expires: {new Date(offer.expiresAt).toLocaleDateString()}
                       </div>
                     </div>
                   ))}

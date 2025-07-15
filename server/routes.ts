@@ -212,13 +212,17 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      // Create a server-side schema that handles string-to-number conversion
-      const serverCashOfferSchema = insertCashOfferSchema.extend({
-        amount: z.union([z.number(), z.string().transform(val => parseFloat(val))]),
-        minSalesAmount: z.union([z.number(), z.string().transform(val => parseFloat(val))]).optional(),
-      });
+      // Transform the request body to match the schema
+      const transformedData = {
+        title: req.body.title,
+        description: req.body.description,
+        reward: parseFloat(req.body.amount || req.body.reward || 0),
+        type: req.body.type || 'volume',
+        target: parseFloat(req.body.targetSales || req.body.target || 0),
+        expiresAt: new Date(req.body.expiresAt)
+      };
       
-      const offerData = serverCashOfferSchema.parse(req.body);
+      const offerData = insertCashOfferSchema.parse(transformedData);
       const offer = await storage.createCashOffer(offerData);
       
       broadcastToClients({ type: "cash_offer_created", data: offer });
