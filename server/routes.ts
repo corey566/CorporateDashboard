@@ -222,10 +222,10 @@ export function registerRoutes(app: Express): Server {
       const id = parseInt(req.params.id);
       console.log("Team update request body:", req.body);
       
-      // Convert string values to appropriate types
+      // Convert values to appropriate types - volumeTarget should be string for decimal
       const processedData = {
         ...req.body,
-        volumeTarget: req.body.volumeTarget ? parseFloat(req.body.volumeTarget) : 0,
+        volumeTarget: req.body.volumeTarget ? req.body.volumeTarget.toString() : "0",
         unitsTarget: req.body.unitsTarget ? parseInt(req.body.unitsTarget) : 0,
       };
       
