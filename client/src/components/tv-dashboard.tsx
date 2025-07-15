@@ -230,39 +230,39 @@ export default function TvDashboard() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-corporate-100 px-4 py-2 flex-shrink-0">
-        <div className="flex justify-between items-center">
+      <header className="bg-card shadow-lg border-b border-border px-4 py-3 flex-shrink-0">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div className="flex items-center space-x-4">
             {/* Company Logo */}
             {logoUrl ? (
               <img 
                 src={logoUrl} 
                 alt={companyName} 
-                className="w-12 h-12 object-contain rounded-xl"
+                className="w-12 h-12 object-contain rounded-xl border border-border"
               />
             ) : (
-              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-                <Building className="w-6 h-6 text-white" />
+              <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-md">
+                <Building className="w-6 h-6 text-primary-foreground" />
               </div>
             )}
             <div>
-              <h1 className="text-2xl font-bold text-corporate-800" style={{ color: primaryColor }}>
+              <h1 className="text-xl lg:text-2xl font-bold text-foreground">
                 {companyName}
               </h1>
-              <p className="text-corporate-500">Real-time Performance Dashboard</p>
+              <p className="text-muted-foreground text-sm">Real-time Performance Dashboard</p>
             </div>
           </div>
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-4 lg:space-x-6">
             <div className="text-right">
-              <p className="text-sm text-corporate-500">Last Updated</p>
-              <p className="font-semibold text-corporate-800">
+              <p className="text-sm text-muted-foreground">Last Updated</p>
+              <p className="font-semibold text-foreground text-sm">
                 {formatTimeElapsed(lastUpdated)}
               </p>
             </div>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              isConnected ? 'bg-accent' : 'bg-red-500'
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+              isConnected ? 'bg-accent' : 'bg-destructive'
             }`}>
               <Wifi className="w-4 h-4 text-white" />
             </div>
@@ -271,22 +271,22 @@ export default function TvDashboard() {
       </header>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-12 gap-4 p-4 h-[calc(100vh-120px)] overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 h-[calc(100vh-120px)] overflow-hidden">
         {/* Left Side - Agent Leaderboard */}
-        <div className="col-span-8 h-full overflow-hidden flex flex-col">
+        <div className="lg:col-span-8 h-full overflow-hidden flex flex-col">
           {/* Individual Agent Cards */}
           <div className="flex-1 min-h-0">
-            <Card className="h-full">
-              <CardHeader className="pb-3 flex-shrink-0">
+            <Card className="h-full bg-card border-border shadow-md">
+              <CardHeader className="pb-3 flex-shrink-0 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl">Sales Agents</CardTitle>
-                  <Badge variant="secondary" className="bg-accent text-white">
+                  <CardTitle className="text-xl text-foreground">Sales Agents</CardTitle>
+                  <Badge variant="secondary" className="bg-accent text-accent-foreground">
                     <Users className="w-4 h-4 mr-1" />
                     {agents.length} Active
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 h-[calc(100%-5rem)] overflow-y-auto">
+              <CardContent className="p-4 h-[calc(100%-5rem)] overflow-y-auto custom-scrollbar">
                 <div className="space-y-3">
                   {agents.map((agent: any) => (
                     <AgentCard key={agent.id} agent={agent} />

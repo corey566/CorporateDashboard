@@ -26,27 +26,27 @@ export default function AgentCard({ agent }: AgentCardProps) {
   };
 
   return (
-    <div className={`bg-gradient-to-br ${getCardGradient(agent.id)} rounded-xl p-6 border-2 shadow-lg hover:shadow-xl transition-all duration-300`}>
-      <div className="flex items-center space-x-6">
+    <div className="bg-card border border-border rounded-xl p-4 lg:p-6 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]">
+      <div className="flex flex-col lg:flex-row lg:items-center space-y-4 lg:space-y-0 lg:space-x-6">
         {/* Agent Photo and Basic Info */}
         <div className="flex items-center space-x-4 min-w-0 flex-1">
           <div className="relative">
             <img
               src={agent.photo || `https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=150&h=150`}
               alt={agent.name}
-              className="w-16 h-16 rounded-full object-cover border-3 border-white shadow-md"
+              className="w-12 h-12 lg:w-16 lg:h-16 rounded-full object-cover border-2 border-border shadow-md"
             />
-            <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-r from-accent to-accent-foreground rounded-full flex items-center justify-center shadow-lg">
-              <span className="text-white text-sm font-bold">#{agent.rank || 1}</span>
+            <div className="absolute -top-1 -right-1 lg:-top-2 lg:-right-2 w-6 h-6 lg:w-8 lg:h-8 bg-gradient-to-r from-accent to-accent-foreground rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-white text-xs lg:text-sm font-bold">#{agent.rank || 1}</span>
             </div>
-            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-white">
-              <div className="w-2 h-2 bg-white rounded-full"></div>
+            <div className="absolute -bottom-1 -right-1 w-4 h-4 lg:w-5 lg:h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-white">
+              <div className="w-1.5 h-1.5 lg:w-2 lg:h-2 bg-white rounded-full"></div>
             </div>
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="font-bold text-corporate-800 text-xl truncate">{agent.name}</h3>
+            <h3 className="font-bold text-foreground text-lg lg:text-xl truncate">{agent.name}</h3>
             <div className="flex items-center space-x-2 mb-1">
-              <Badge variant="secondary" className={`${getTeamColor(agent.teamId)} text-xs font-medium px-2 py-1`}>
+              <Badge variant="secondary" className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary">
                 {agent.team?.name || 'Team'}
               </Badge>
               <Badge variant="outline" className="text-xs">
@@ -61,18 +61,18 @@ export default function AgentCard({ agent }: AgentCardProps) {
           {/* Sales Volume Progress */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-semibold text-corporate-700">Volume Progress</span>
+              <span className="text-sm font-semibold text-foreground">Volume Progress</span>
               <span className="text-sm font-bold text-primary">
                 ${parseFloat(agent.currentVolume || 0).toLocaleString()} / ${parseFloat(agent.volumeTarget).toLocaleString()}
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
               <div 
-                className="bg-gradient-to-r from-primary to-primary-foreground h-3 rounded-full transition-all duration-500 shadow-inner"
+                className="bg-gradient-to-r from-primary to-primary/80 h-3 rounded-full transition-all duration-500 shadow-inner"
                 style={{ width: `${Math.min(100, volumeProgress)}%` }}
               />
             </div>
-            <div className="text-xs text-corporate-500 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               {Math.round(volumeProgress)}% Complete
             </div>
           </div>
@@ -80,18 +80,18 @@ export default function AgentCard({ agent }: AgentCardProps) {
           {/* Sales Quantity Progress */}
           <div>
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-semibold text-corporate-700">Units Progress</span>
+              <span className="text-sm font-semibold text-foreground">Units Progress</span>
               <span className="text-sm font-bold text-accent">
                 {agent.currentUnits || 0} / {agent.unitsTarget}
               </span>
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+            <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
               <div 
-                className="bg-gradient-to-r from-accent to-accent-foreground h-3 rounded-full transition-all duration-500 shadow-inner"
+                className="bg-gradient-to-r from-accent to-accent/80 h-3 rounded-full transition-all duration-500 shadow-inner"
                 style={{ width: `${Math.min(100, unitsProgress)}%` }}
               />
             </div>
-            <div className="text-xs text-corporate-500 mt-1">
+            <div className="text-xs text-muted-foreground mt-1">
               {Math.round(unitsProgress)}% Complete
             </div>
           </div>

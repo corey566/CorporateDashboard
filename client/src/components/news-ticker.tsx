@@ -23,33 +23,23 @@ export default function NewsTicker() {
 
   if (!messages || messages.length === 0) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-800 text-white py-2 overflow-hidden shadow-lg border-t-2 border-blue-300">
+      <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-primary via-accent to-primary text-primary-foreground py-2 overflow-hidden shadow-lg border-t-2 border-primary/20">
         <div className="flex items-center justify-center">
-          <span className="text-sm font-medium text-white">📈 Welcome to the Sales Leaderboard Dashboard!</span>
+          <span className="text-sm font-medium">📈 Welcome to the Sales Leaderboard Dashboard!</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-700 via-purple-700 to-blue-800 text-white py-2 overflow-hidden shadow-lg border-t-2 border-blue-300">
+    <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-primary via-accent to-primary text-primary-foreground py-2 overflow-hidden shadow-lg border-t-2 border-primary/20">
       <div className="animate-marquee flex items-center space-x-8">
         {messages.map((message: any, index: number) => (
-          <span key={`${message.id}-${index}`} className="whitespace-nowrap text-sm font-medium text-white">
+          <span key={`${message.id}-${index}`} className="whitespace-nowrap text-sm font-medium">
             {message.message}
           </span>
         ))}
       </div>
-      
-      <style jsx>{`
-        @keyframes marquee {
-          0% { transform: translateX(100%); }
-          100% { transform: translateX(-100%); }
-        }
-        .animate-marquee {
-          animation: marquee 30s linear infinite;
-        }
-      `}</style>
     </div>
   );
 }

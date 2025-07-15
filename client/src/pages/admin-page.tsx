@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import {
   Monitor,
   Users,
@@ -75,51 +76,53 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="min-h-screen bg-corporate-50">
+    <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-corporate-100 px-8 py-4">
-        <div className="flex justify-between items-center">
+      <header className="bg-card shadow-lg border-b border-border px-4 lg:px-8 py-4">
+        <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
-              <ShieldQuestion className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center shadow-md">
+              <ShieldQuestion className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-corporate-800">
+              <h1 className="text-xl lg:text-2xl font-bold text-foreground">
                 Admin Panel
               </h1>
-              <p className="text-corporate-500">Sales Leaderboard Management</p>
+              <p className="text-muted-foreground">Sales Leaderboard Management</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
             {/* Connection Status */}
-            {/* <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${
-              isConnected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-sm ${
+              isConnected ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
             }`}>
               <div className={`w-2 h-2 rounded-full ${
                 isConnected ? 'bg-green-500' : 'bg-red-500'
               }`} />
               <span>{isConnected ? 'Live' : 'Offline'}</span>
-            </div> */}
+            </div>
+
+            <ThemeToggle />
 
             <Button
               onClick={() => navigate("/")}
               variant="outline"
-              className="bg-primary text-white hover:bg-secondary border-primary"
+              className="flex items-center gap-2"
             >
-              <Monitor className="w-4 h-4 mr-2" />
+              <Monitor className="w-4 h-4" />
               TV Dashboard
             </Button>
 
             <Button
               onClick={handleLogout}
               variant="outline"
-              className="text-corporate-600 hover:text-corporate-800"
+              className="flex items-center gap-2"
             >
-              <LogOut className="w-4 h-4 mr-2" />
+              <LogOut className="w-4 h-4" />
               Logout
             </Button>
 
-            <div className="flex items-center space-x-2 text-corporate-600">
+            <div className="flex items-center space-x-2 text-muted-foreground">
               <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                 <span className="text-white text-sm font-medium">
                   {user?.username?.charAt(0).toUpperCase()}
@@ -134,58 +137,66 @@ export default function AdminPage() {
       <div className="p-8">
         {/* Quick Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="card-hover">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-corporate-500 text-sm">Total Agents</p>
-                  <p className="text-2xl font-bold text-corporate-800">
+                  <p className="text-muted-foreground text-sm">Total Agents</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {stats.totalAgents}
                   </p>
                 </div>
-                <Users className="w-8 h-8 text-primary" />
+                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-md">
+                  <Users className="w-6 h-6 text-primary-foreground" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="card-hover">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-corporate-500 text-sm">Active Teams</p>
-                  <p className="text-2xl font-bold text-corporate-800">
+                  <p className="text-muted-foreground text-sm">Active Teams</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {stats.activeTeams}
                   </p>
                 </div>
-                <Users className="w-8 h-8 text-accent" />
+                <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center shadow-md">
+                  <Users className="w-6 h-6 text-accent-foreground" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="card-hover">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-corporate-500 text-sm">Today's Sales</p>
-                  <p className="text-2xl font-bold text-corporate-800">
+                  <p className="text-muted-foreground text-sm">Today's Sales</p>
+                  <p className="text-2xl font-bold text-foreground">
                     ${stats.todaysSales.toLocaleString()}
                   </p>
                 </div>
-                <TrendingUp className="w-8 h-8 text-warning" />
+                <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-md">
+                  <TrendingUp className="w-6 h-6 text-primary-foreground" />
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="card-hover">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-corporate-500 text-sm">Active Offers</p>
-                  <p className="text-2xl font-bold text-corporate-800">
+                  <p className="text-muted-foreground text-sm">Active Offers</p>
+                  <p className="text-2xl font-bold text-foreground">
                     {stats.activeOffers}
                   </p>
                 </div>
-                <Gift className="w-8 h-8 text-purple-500" />
+                <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center shadow-md">
+                  <Gift className="w-6 h-6 text-accent-foreground" />
+                </div>
               </div>
             </CardContent>
           </Card>
