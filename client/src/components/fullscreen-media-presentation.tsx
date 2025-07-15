@@ -48,7 +48,7 @@ export default function FullscreenMediaPresentation({
               return current;
             }
           });
-          return prev - 1;
+          return 0; // Return 0 instead of prev - 1 to prevent double decrement
         }
         return prev - 1;
       });
