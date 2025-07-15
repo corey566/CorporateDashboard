@@ -15,7 +15,8 @@ export const teams = pgTable("teams", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   color: text("color").notNull().default("#2563eb"),
-  target: decimal("target", { precision: 10, scale: 2 }).notNull().default("0"),
+  volumeTarget: decimal("volume_target", { precision: 10, scale: 2 }).notNull().default("0"),
+  unitsTarget: integer("units_target").notNull().default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
