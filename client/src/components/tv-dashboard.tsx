@@ -15,14 +15,34 @@ export default function TvDashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [salePopup, setSalePopup] = useState<any>(null);
   const [showCompanySlides, setShowCompanySlides] = useState(false);
-  const { isConnected } = useWebSocket();
+  const { isConnected, lastMessage } = useWebSocket();
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["/api/dashboard"],
     refetchInterval: 2000,
   });
 
+  // Extract data from query result
+  const agents = dashboardData?.agents || [];
+  const teams = dashboardData?.teams || [];
+  const cashOffers = dashboardData?.cashOffers || [];
+  const recentSales = dashboardData?.sales?.slice(0, 5) || [];
 
+  // Handle WebSocket messages for sale notifications
+  useEffect(() => {
+    if (lastMessage?.type === "sale_created" && lastMessage.data && dashboardData?.agents) {
+      // Find the agent who made the sale
+      const saleAgent = dashboardData.agents.find(agent => agent.id === lastMessage.data.agentId);
+      if (saleAgent) {
+        const saleWithAgent = {
+          ...lastMessage.data,
+          agentName: saleAgent.name,
+          agentPhoto: saleAgent.photo
+        };
+        setSalePopup(saleWithAgent);
+      }
+    }
+  }, [lastMessage, dashboardData?.agents]);
 
   // Update last updated timestamp
   useEffect(() => {
@@ -52,11 +72,6 @@ export default function TvDashboard() {
       </div>
     );
   }
-
-  const agents = dashboardData?.agents || [];
-  const teams = dashboardData?.teams || [];
-  const cashOffers = dashboardData?.cashOffers || [];
-  const recentSales = dashboardData?.sales?.slice(0, 5) || [];
 
   return (
     <div className="min-h-screen">
@@ -105,7 +120,7 @@ export default function TvDashboard() {
                 </div>
               </CardHeader>
               <CardContent className="p-4 h-[calc(100%-5rem)] overflow-y-auto">
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
+                <div className="space-y-3">
                   {agents.map((agent: any) => (
                     <AgentCard key={agent.id} agent={agent} />
                   ))}
