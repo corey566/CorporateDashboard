@@ -55,21 +55,18 @@ export default function CurrencySettings() {
   const updateCurrencyMutation = useMutation({
     mutationFn: async (currency: CurrencySettings) => {
       // Update currency symbol
-      await apiRequest("/api/system-settings/currencySymbol", {
-        method: "PUT",
-        body: { value: currency.symbol },
+      await apiRequest("PUT", `/api/system-settings/currencySymbol`, {
+        value: currency.symbol,
       });
       
       // Update currency code
-      await apiRequest("/api/system-settings/currencyCode", {
-        method: "PUT",
-        body: { value: currency.code },
+      await apiRequest("PUT", `/api/system-settings/currencyCode`, {
+        value: currency.code,
       });
       
       // Update currency name
-      await apiRequest("/api/system-settings/currencyName", {
-        method: "PUT",
-        body: { value: currency.name },
+      await apiRequest("PUT", `/api/system-settings/currencyName`, {
+        value: currency.name,
       });
     },
     onSuccess: () => {
