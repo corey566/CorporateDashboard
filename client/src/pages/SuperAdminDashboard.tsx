@@ -7,10 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
-import { Loader2, Eye, EyeOff, Building2, Users, Calendar, DollarSign } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Loader2, Eye, EyeOff, Building2, Users, Calendar, DollarSign, Settings, Mail, CreditCard } from "lucide-react";
 
 interface SuperAdminLoginResponse {
   admin: any;
@@ -72,6 +73,59 @@ export default function SuperAdminDashboard() {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+      });
+    },
+  });
+
+  const { data: settings, isLoading: settingsLoading } = useQuery({
+    queryKey: ["/api/superadmin/settings"],
+    enabled: isLoggedIn,
+    queryFn: async () => {
+      const token = localStorage.getItem("superAdminToken");
+      return await apiRequest<any[]>("/api/superadmin/settings", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    },
+  });
+
+  const { data: plans, isLoading: plansLoading } = useQuery({
+    queryKey: ["/api/superadmin/plans"],
+    enabled: isLoggedIn,
+    queryFn: async () => {
+      const token = localStorage.getItem("superAdminToken");
+      return await apiRequest<any[]>("/api/superadmin/plans", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    },
+  });
+
+  const updateSettingMutation = useMutation({
+    mutationFn: async ({ key, value }: { key: string; value: string }) => {
+      const token = localStorage.getItem("superAdminToken");
+      return await apiRequest("/api/superadmin/settings", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ key, value }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/superadmin/settings"] });
+      toast({
+        title: "Setting updated",
+        description: "System setting has been updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Update failed",
+        description: error.message || "Failed to update setting",
+        variant: "destructive",
       });
     },
   });
@@ -181,6 +235,55 @@ export default function SuperAdminDashboard() {
     );
   }
 
+  const renderEmailSettings = () => {
+    const smtpSettings = settings?.filter(s => s.key.startsWith('smtp_')) || [];
+    
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {smtpSettings.map((setting) => (
+            <Card key={setting.key}>
+              <CardHeader>
+                <CardTitle className="text-sm font-medium">
+                  {setting.key.replace('smtp_', '').replace('_', ' ').toUpperCase()}
+                </CardTitle>
+                <CardDescription>{setting.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2">
+                  <Input
+                    type={setting.key.includes('password') ? 'password' : 'text'}
+                    defaultValue={setting.value}
+                    onBlur={(e) => {
+                      if (e.target.value !== setting.value) {
+                        updateSettingMutation.mutate({ key: setting.key, value: e.target.value });
+                      }
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Test Email Configuration</CardTitle>
+            <CardDescription>
+              Send a test email to verify SMTP settings
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Input placeholder="test@example.com" />
+              <Button>Send Test Email</Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b">
@@ -245,50 +348,130 @@ export default function SuperAdminDashboard() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Companies</CardTitle>
-            <CardDescription>
-              Manage all companies on the platform
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Company</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Company ID</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Subscription</TableHead>
-                    <TableHead>Users</TableHead>
-                    <TableHead>Agents</TableHead>
-                    <TableHead>Created</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {companies?.map((company) => (
-                    <TableRow key={company.id}>
-                      <TableCell className="font-medium">{company.name}</TableCell>
-                      <TableCell>{company.email}</TableCell>
-                      <TableCell className="font-mono text-sm">{company.companyId}</TableCell>
-                      <TableCell>{getStatusBadge(company.isActive)}</TableCell>
-                      <TableCell>{getSubscriptionBadge(company.subscription)}</TableCell>
-                      <TableCell>{company.userCount}</TableCell>
-                      <TableCell>{company.agentCount}</TableCell>
-                      <TableCell>{new Date(company.createdAt).toLocaleDateString()}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
+        <Tabs defaultValue="companies" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="companies">
+              <Building2 className="h-4 w-4 mr-2" />
+              Companies
+            </TabsTrigger>
+            <TabsTrigger value="settings">
+              <Settings className="h-4 w-4 mr-2" />
+              Email Settings
+            </TabsTrigger>
+            <TabsTrigger value="plans">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Subscription Plans
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="companies">
+            <Card>
+              <CardHeader>
+                <CardTitle>Companies</CardTitle>
+                <CardDescription>
+                  Manage all companies on the platform
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Company</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Company ID</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Subscription</TableHead>
+                        <TableHead>Users</TableHead>
+                        <TableHead>Agents</TableHead>
+                        <TableHead>Created</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {companies?.map((company) => (
+                        <TableRow key={company.id}>
+                          <TableCell className="font-medium">{company.name}</TableCell>
+                          <TableCell>{company.email}</TableCell>
+                          <TableCell className="font-mono text-sm">{company.companyId}</TableCell>
+                          <TableCell>{getStatusBadge(company.isActive)}</TableCell>
+                          <TableCell>{getSubscriptionBadge(company.subscription)}</TableCell>
+                          <TableCell>{company.userCount}</TableCell>
+                          <TableCell>{company.agentCount}</TableCell>
+                          <TableCell>{new Date(company.createdAt).toLocaleDateString()}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="settings">
+            <Card>
+              <CardHeader>
+                <CardTitle>Email Configuration</CardTitle>
+                <CardDescription>
+                  Configure SMTP settings for system emails
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {settingsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  renderEmailSettings()
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="plans">
+            <Card>
+              <CardHeader>
+                <CardTitle>Subscription Plans</CardTitle>
+                <CardDescription>
+                  Manage subscription plans and pricing
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {plansLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Plan</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Max Users</TableHead>
+                        <TableHead>Max Agents</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {plans?.map((plan) => (
+                        <TableRow key={plan.id}>
+                          <TableCell className="font-medium">{plan.name}</TableCell>
+                          <TableCell>{plan.currency} {plan.price}</TableCell>
+                          <TableCell>{plan.maxUsers}</TableCell>
+                          <TableCell>{plan.maxAgents}</TableCell>
+                          <TableCell>{getStatusBadge(plan.isActive)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

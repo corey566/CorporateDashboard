@@ -5,7 +5,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { authenticateToken, requireCompanyAccess, requireSuperAdmin, authRateLimit, generateAuthToken, generateSuperAdminToken } from "./auth";
 import { storage } from "./storage";
 import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema, agentLoginSchema, insertFileUploadSchema, insertSystemSettingSchema, insertSoundEffectSchema } from "@shared/schema";
-import { userService, companyService, superAdminService, subscriptionService, paymentService, getTenantService } from "./saas-storage";
+import { userService, companyService, superAdminService, subscriptionService, paymentService, systemSettingsService, getTenantService } from "./saas-storage";
 import { payHereService } from "./payhere-service";
 import { emailService } from "./auth-utils";
 import * as saasSchema from "@shared/saas-schema";
@@ -173,6 +173,30 @@ export function registerRoutes(app: Express): Server {
     res.json({ user: req.user, company: req.company });
   });
   
+  // Company Dashboard Routes
+  app.get('/api/company/dashboard', authenticateToken, requireCompanyAccess, async (req, res) => {
+    try {
+      const tenantService = getTenantService(req.companyId!);
+      const dashboardData = await tenantService.getDashboardData();
+      
+      // Add statistics
+      const stats = {
+        totalSales: dashboardData.sales?.length || 0,
+        totalAgents: dashboardData.agents?.length || 0,
+        totalTeams: dashboardData.teams?.length || 0,
+        monthlyRevenue: dashboardData.sales?.reduce((sum, sale) => sum + (sale.amount || 0), 0) || 0,
+      };
+      
+      res.json({
+        ...dashboardData,
+        stats,
+      });
+    } catch (error) {
+      console.error('Dashboard error:', error);
+      res.status(500).json({ error: 'Failed to fetch dashboard data' });
+    }
+  });
+
   // Super Admin Dashboard Routes
   app.get('/api/superadmin/companies', requireSuperAdmin, async (req, res) => {
     try {
@@ -180,6 +204,52 @@ export function registerRoutes(app: Express): Server {
       res.json(companies);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch companies' });
+    }
+  });
+
+  // System Settings Management
+  app.get('/api/superadmin/settings', requireSuperAdmin, async (req, res) => {
+    try {
+      const settings = await systemSettingsService.getSystemSettings();
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch system settings' });
+    }
+  });
+
+  app.post('/api/superadmin/settings', requireSuperAdmin, async (req, res) => {
+    try {
+      const { key, value } = req.body;
+      const setting = await systemSettingsService.updateSystemSetting(key, value);
+      
+      // Refresh email service configuration if SMTP settings changed
+      if (key.startsWith('smtp_')) {
+        await emailService.refreshConfiguration();
+      }
+      
+      res.json(setting);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to update system setting' });
+    }
+  });
+
+  // Subscription Plans Management
+  app.get('/api/superadmin/plans', requireSuperAdmin, async (req, res) => {
+    try {
+      const plans = await subscriptionService.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch subscription plans' });
+    }
+  });
+
+  app.post('/api/superadmin/plans', requireSuperAdmin, async (req, res) => {
+    try {
+      const planData = saasSchema.insertSubscriptionPlanSchema.parse(req.body);
+      const plan = await subscriptionService.createSubscriptionPlan(planData);
+      res.status(201).json(plan);
+    } catch (error) {
+      res.status(400).json({ error: 'Failed to create subscription plan' });
     }
   });
   

@@ -14,6 +14,7 @@ import MobileDashboardPage from "@/pages/mobile-dashboard-page";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import SuperAdminDashboard from "@/pages/SuperAdminDashboard";
+import CompanyDashboard from "@/pages/CompanyDashboard";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -32,6 +33,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/superadmin" component={SuperAdminDashboard} />
+      <Route path="/dashboard" component={CompanyDashboard} />
       
       <Route component={NotFound} />
     </Switch>

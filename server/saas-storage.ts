@@ -806,12 +806,42 @@ export class SuperAdminService {
   }
 }
 
+// System settings service
+export class SystemSettingsService {
+  async getSystemSettings(): Promise<schema.SystemSetting[]> {
+    return await db.select().from(schema.systemSettings);
+  }
+
+  async getSystemSetting(key: string): Promise<schema.SystemSetting | undefined> {
+    const [setting] = await db.select().from(schema.systemSettings).where(eq(schema.systemSettings.key, key));
+    return setting;
+  }
+
+  async updateSystemSetting(key: string, value: string): Promise<schema.SystemSetting> {
+    const [setting] = await db
+      .update(schema.systemSettings)
+      .set({ value, updatedAt: new Date() })
+      .where(eq(schema.systemSettings.key, key))
+      .returning();
+    return setting;
+  }
+
+  async createSystemSetting(settingData: schema.InsertSystemSetting): Promise<schema.SystemSetting> {
+    const [setting] = await db
+      .insert(schema.systemSettings)
+      .values(settingData)
+      .returning();
+    return setting;
+  }
+}
+
 // Export service instances
 export const companyService = new CompanyService();
 export const subscriptionService = new SubscriptionService();
 export const userService = new UserService();
 export const paymentService = new PaymentService();
 export const superAdminService = new SuperAdminService();
+export const systemSettingsService = new SystemSettingsService();
 
 // Export factory function for tenant-specific services
 export const getTenantService = (companyId: number) => new TenantDataService(companyId);

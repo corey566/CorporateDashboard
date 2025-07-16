@@ -56,17 +56,59 @@ export function generateConnectionString(): string {
 // Email service
 export class EmailService {
   private transporter: nodemailer.Transporter;
+  private smtpConfig: any = {};
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: false,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-      },
-    });
+    this.initializeTransporter();
+  }
+
+  private async initializeTransporter() {
+    try {
+      // Load SMTP settings from database
+      const { db } = await import('./db');
+      const { systemSettings } = await import('@shared/schema');
+      const { eq } = await import('drizzle-orm');
+      
+      const smtpSettings = await db.select().from(systemSettings);
+      for (const setting of smtpSettings) {
+        if (setting.key.startsWith('smtp_')) {
+          this.smtpConfig[setting.key] = setting.value;
+        }
+      }
+      
+      // Configure with database settings or fallback
+      const smtpHost = this.smtpConfig.smtp_host || 'smtppro.zoho.com';
+      const smtpPort = parseInt(this.smtpConfig.smtp_port || '465');
+      const smtpUser = this.smtpConfig.smtp_username || 'noreply@codestudio.lk';
+      const smtpPass = this.smtpConfig.smtp_password || 'Fyh4xTDFieGr';
+      const smtpEncryption = this.smtpConfig.smtp_encryption || 'ssl';
+      
+      this.transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpEncryption === 'ssl',
+        auth: {
+          user: smtpUser,
+          pass: smtpPass
+        }
+      });
+    } catch (error) {
+      console.error('Error initializing email service:', error);
+      // Fallback to default configuration
+      this.transporter = nodemailer.createTransport({
+        host: 'smtppro.zoho.com',
+        port: 465,
+        secure: true,
+        auth: {
+          user: 'noreply@codestudio.lk',
+          pass: 'Fyh4xTDFieGr'
+        }
+      });
+    }
+  }
+
+  async refreshConfiguration() {
+    await this.initializeTransporter();
   }
 
   async sendWelcomeEmail(email: string, name: string, companyName: string): Promise<void> {
