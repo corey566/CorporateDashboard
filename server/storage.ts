@@ -143,7 +143,23 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getAgents(): Promise<Agent[]> {
-    return await db.select().from(agents).where(eq(agents.isActive, true));
+    console.log("Fetching agents from database...");
+    try {
+      const result = await db.select().from(agents);
+      console.log("All agents:", result);
+      console.log("Number of agents:", result.length);
+      if (result.length > 0) {
+        console.log("First agent:", result[0]);
+        console.log("First agent isActive type:", typeof result[0].isActive);
+        console.log("First agent isActive value:", result[0].isActive);
+      }
+      const activeAgents = result.filter(agent => agent.isActive);
+      console.log("Active agents:", activeAgents);
+      return activeAgents;
+    } catch (error) {
+      console.error("Error fetching agents:", error);
+      return [];
+    }
   }
   
   async getAgent(id: number): Promise<Agent | undefined> {
@@ -171,7 +187,10 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getTeams(): Promise<Team[]> {
-    return await db.select().from(teams);
+    console.log("Fetching teams from database...");
+    const result = await db.select().from(teams);
+    console.log("Teams result:", result);
+    return result;
   }
   
   async getTeam(id: number): Promise<Team | undefined> {

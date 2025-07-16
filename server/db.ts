@@ -9,5 +9,19 @@ const DATABASE_URL = "postgresql://neondb_owner:npg_mXcejVDTP8U6@ep-polished-sea
 
 console.log("Database URL:", DATABASE_URL.replace(/:[^@]*@/, ':***@'));
 
-export const pool = new Pool({ connectionString: DATABASE_URL });
+export const pool = new Pool({ 
+  connectionString: DATABASE_URL,
+  max: 10, // Maximum number of connections
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 2000,
+});
+
+// Test the connection
+pool.query('SELECT NOW()', (err, result) => {
+  if (err) {
+    console.error('Database connection error:', err);
+  } else {
+    console.log('Database connected successfully at:', result.rows[0].now);
+  }
+});
 export const db = drizzle({ client: pool, schema });
