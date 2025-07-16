@@ -33,6 +33,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/superadmin" component={SuperAdminDashboard} />
+      <Route path="/superadmin-dashboard" component={SuperAdminDashboard} />
       <Route path="/dashboard" component={CompanyDashboard} />
       
       <Route component={NotFound} />

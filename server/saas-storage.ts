@@ -1,6 +1,7 @@
 import { eq, and, sql, desc, asc, count, sum, avg } from "drizzle-orm";
-import { db } from "./db";
+import { db, pool } from "./db";
 import * as schema from "@shared/saas-schema";
+import { superAdmins } from "@shared/saas-schema";
 import { hashPassword, verifyPassword, generateCompanyId, generateConnectionString, generateRandomToken } from "./auth-utils";
 import { addDays, addMonths, addYears } from "date-fns";
 
@@ -737,7 +738,7 @@ export class SuperAdminService {
     const hashedPassword = await hashPassword(adminData.password);
     
     const [admin] = await db
-      .insert(schema.superAdmins)
+      .insert(superAdmins)
       .values({
         ...adminData,
         password: hashedPassword,
@@ -747,11 +748,13 @@ export class SuperAdminService {
   }
 
   async getSuperAdminByEmail(email: string): Promise<schema.SuperAdmin | undefined> {
-    const [admin] = await db
-      .select()
-      .from(schema.superAdmins)
-      .where(eq(schema.superAdmins.email, email));
-    return admin;
+    try {
+      const result = await pool.query('SELECT * FROM super_admins WHERE email = $1 LIMIT 1', [email]);
+      return result.rows[0] as schema.SuperAdmin;
+    } catch (error) {
+      console.error('Error fetching super admin:', error);
+      return undefined;
+    }
   }
 
   async verifySuperAdminPassword(email: string, password: string): Promise<schema.SuperAdmin | null> {

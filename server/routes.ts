@@ -8,6 +8,7 @@ import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferS
 import { userService, companyService, superAdminService, subscriptionService, paymentService, systemSettingsService, getTenantService } from "./saas-storage";
 import { payHereService } from "./payhere-service";
 import { emailService } from "./auth-utils";
+import { pool } from "./db";
 import * as saasSchema from "@shared/saas-schema";
 import { z } from "zod";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
@@ -15,6 +16,7 @@ import { promisify } from "util";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import bcrypt from "bcryptjs";
 
 const scryptAsync = promisify(scrypt);
 
@@ -155,13 +157,26 @@ export function registerRoutes(app: Express): Server {
     try {
       const { email, password } = req.body;
       
-      const admin = await superAdminService.verifySuperAdminPassword(email, password);
-      if (!admin) {
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password are required' });
+      }
+      
+      // Try direct database query first
+      const result = await pool.query('SELECT * FROM super_admins WHERE email = $1', [email]);
+      
+      if (result.rows.length === 0) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      
+      const admin = result.rows[0];
+      const isPasswordValid = await bcrypt.compare(password, admin.password);
+      
+      if (!isPasswordValid) {
         return res.status(401).json({ error: 'Invalid credentials' });
       }
       
       const token = generateSuperAdminToken(admin);
-      res.json({ admin, token });
+      res.json({ token, admin: { id: admin.id, email: admin.email, name: admin.name } });
     } catch (error) {
       console.error('Super admin login error:', error);
       res.status(400).json({ error: 'Login failed', details: error.message });

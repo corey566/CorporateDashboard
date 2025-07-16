@@ -6,7 +6,7 @@ import * as saasSchema from "@shared/saas-schema";
 
 neonConfig.webSocketConstructor = ws;
 
-const DATABASE_URL = "postgresql://neondb_owner:npg_mXcejVDTP8U6@ep-polished-sea-aetzkmw6-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
+const DATABASE_URL = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_mXcejVDTP8U6@ep-polished-sea-aetzkmw6-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
 
 console.log("Database URL:", DATABASE_URL.replace(/:[^@]*@/, ':***@'));
 
