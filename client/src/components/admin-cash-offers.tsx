@@ -18,8 +18,14 @@ import { z } from "zod";
 import { useCurrency } from "@/hooks/use-currency";
 
 const cashOfferFormSchema = insertCashOfferSchema.extend({
-  reward: z.string().min(1, "Reward is required").transform(val => parseFloat(val)),
-  target: z.string().min(1, "Target is required").transform(val => parseFloat(val)),
+  reward: z.union([
+    z.string().min(1, "Reward is required"),
+    z.number().positive("Reward must be positive").transform(val => val.toString())
+  ]),
+  target: z.union([
+    z.string().min(1, "Target is required"),
+    z.number().positive("Target must be positive").transform(val => val.toString())
+  ]),
   expiresAt: z.string().min(1, "Expiry date is required"),
 });
 
@@ -51,8 +57,8 @@ export default function AdminCashOffers() {
     mutationFn: async (data: CashOfferFormData) => {
       const offerData = {
         ...data,
-        reward: data.reward,
-        target: data.target,
+        reward: typeof data.reward === 'number' ? data.reward.toString() : data.reward,
+        target: typeof data.target === 'number' ? data.target.toString() : data.target,
         expiresAt: new Date(data.expiresAt).toISOString(),
       };
       return apiRequest("POST", "/api/cash-offers", offerData);
