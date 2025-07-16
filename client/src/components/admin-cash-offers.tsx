@@ -15,6 +15,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Gift, Trash2, Clock, DollarSign } from "lucide-react";
 import { z } from "zod";
+import { useCurrency } from "@/hooks/use-currency";
 
 const cashOfferFormSchema = insertCashOfferSchema.extend({
   reward: z.string().min(1, "Reward is required").transform(val => parseFloat(val)),
@@ -27,6 +28,7 @@ type CashOfferFormData = z.infer<typeof cashOfferFormSchema>;
 export default function AdminCashOffers() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
+  const { formatCurrency } = useCurrency();
 
   const { data: cashOffers, isLoading } = useQuery({
     queryKey: ["/api/cash-offers"],
@@ -179,7 +181,7 @@ export default function AdminCashOffers() {
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="reward">Reward ($)</Label>
+                      <Label htmlFor="reward">Reward Amount</Label>
                       <Input
                         id="reward"
                         type="number"
@@ -299,7 +301,7 @@ export default function AdminCashOffers() {
                 
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-corporate-500">
-                    Target: {offer.type === 'volume' ? '$' : ''}{parseFloat(offer.target).toLocaleString()}
+                    Target: {offer.type === 'volume' ? formatCurrency(offer.target) : parseFloat(offer.target).toLocaleString()}
                     {offer.type === 'units' ? ' units' : ''}
                   </span>
                   <div className="flex items-center space-x-1 text-warning">

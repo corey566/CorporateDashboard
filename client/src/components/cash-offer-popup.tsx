@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X, DollarSign, Target, Calendar } from "lucide-react";
 import confetti from "canvas-confetti";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface CashOfferPopupProps {
   offer: any;
@@ -11,6 +12,8 @@ interface CashOfferPopupProps {
 }
 
 export default function CashOfferPopup({ offer, onClose }: CashOfferPopupProps) {
+  const { formatCurrency } = useCurrency();
+  
   useEffect(() => {
     // Trigger confetti animation
     confetti({
@@ -61,7 +64,7 @@ export default function CashOfferPopup({ offer, onClose }: CashOfferPopupProps) 
           
           <div className="flex justify-center mb-4">
             <Badge className="bg-green-500 text-white text-lg px-4 py-2">
-              ${offer.reward}
+              {formatCurrency(offer.reward)}
             </Badge>
           </div>
           

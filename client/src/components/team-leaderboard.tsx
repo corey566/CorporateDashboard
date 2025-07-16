@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Crown, TrendingUp, Target } from "lucide-react";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface TeamLeaderboardProps {
   teams: any[];
@@ -8,6 +9,8 @@ interface TeamLeaderboardProps {
 }
 
 export default function TeamLeaderboard({ teams, agents }: TeamLeaderboardProps) {
+  const { formatCurrency } = useCurrency();
+  
   // Calculate team performance based on agents' data
   const teamPerformance = teams.map((team, index) => {
     const teamAgents = agents.filter(agent => agent.teamId === team.id);
@@ -91,7 +94,7 @@ export default function TeamLeaderboard({ teams, agents }: TeamLeaderboardProps)
               </div>
               <div className="text-right">
                 <p className={`font-bold text-sm ${team.rank === 1 ? 'text-primary' : team.rank === 2 ? 'text-accent' : 'text-purple-500'}`}>
-                  ${team.totalSales.toLocaleString()}
+                  {formatCurrency(team.totalSales)}
                 </p>
                 <p className="text-xs text-corporate-500">
                   {team.percentage.toFixed(0)}% of target
