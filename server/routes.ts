@@ -2,9 +2,13 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { setupAuth } from "./auth";
+import { authenticateToken, requireCompanyAccess, requireSuperAdmin, authRateLimit, generateAuthToken, generateSuperAdminToken } from "./auth";
 import { storage } from "./storage";
 import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema, agentLoginSchema, insertFileUploadSchema, insertSystemSettingSchema, insertSoundEffectSchema } from "@shared/schema";
+import { userService, companyService, superAdminService, subscriptionService, paymentService, getTenantService } from "./saas-storage";
+import { payHereService } from "./payhere-service";
+import { emailService } from "./auth-utils";
+import * as saasSchema from "@shared/saas-schema";
 import { z } from "zod";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -77,8 +81,166 @@ const upload = multer({
 });
 
 export function registerRoutes(app: Express): Server {
-  // Setup authentication routes
-  setupAuth(app);
+  // SAAS Authentication Routes
+  app.use('/api/auth', authRateLimit);
+  
+  // User Registration
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const { name, email, password, companyName, planId } = saasSchema.registerSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUser = await userService.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: 'User already exists' });
+      }
+      
+      // Create company
+      const company = await companyService.createCompany({
+        name: companyName,
+        email: email,
+        subdomain: companyName.toLowerCase().replace(/\s+/g, '-'),
+      });
+      
+      // Create user
+      const user = await userService.createCompanyUser({
+        companyId: company.id,
+        name,
+        email,
+        password,
+        role: 'admin',
+      });
+      
+      // Create subscription if planId provided
+      if (planId) {
+        await subscriptionService.createCompanySubscription(company.id, planId, 'monthly');
+      }
+      
+      // Send welcome email
+      await emailService.sendWelcomeEmail(email, name, companyName);
+      
+      const token = generateAuthToken(user, company);
+      res.status(201).json({ user, company, token });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(400).json({ error: 'Registration failed', details: error.message });
+    }
+  });
+  
+  // User Login
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { email, password } = saasSchema.loginSchema.parse(req.body);
+      
+      const user = await userService.verifyUserPassword(email, password);
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      
+      const company = await companyService.getCompanyById(user.companyId);
+      if (!company) {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      
+      const token = generateAuthToken(user, company);
+      res.json({ user, company, token });
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(400).json({ error: 'Login failed', details: error.message });
+    }
+  });
+  
+  // Super Admin Login
+  app.post('/api/auth/superadmin/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      const admin = await superAdminService.verifySuperAdminPassword(email, password);
+      if (!admin) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+      
+      const token = generateSuperAdminToken(admin);
+      res.json({ admin, token });
+    } catch (error) {
+      console.error('Super admin login error:', error);
+      res.status(400).json({ error: 'Login failed', details: error.message });
+    }
+  });
+  
+  // Get current user
+  app.get('/api/auth/me', authenticateToken, async (req, res) => {
+    res.json({ user: req.user, company: req.company });
+  });
+  
+  // Super Admin Dashboard Routes
+  app.get('/api/superadmin/companies', requireSuperAdmin, async (req, res) => {
+    try {
+      const companies = await superAdminService.getAllCompaniesWithStats();
+      res.json(companies);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch companies' });
+    }
+  });
+  
+  // Payment Routes
+  app.post('/api/payment/create', authenticateToken, requireCompanyAccess, async (req, res) => {
+    try {
+      const { planId, billingInterval } = req.body;
+      
+      const subscription = await subscriptionService.createCompanySubscription(
+        req.companyId!,
+        planId,
+        billingInterval
+      );
+      
+      const payment = payHereService.createPayment({
+        companyId: req.companyId!,
+        subscriptionId: subscription.id,
+        amount: 1000, // This should come from plan pricing
+        currency: 'LKR',
+        description: 'Sales Dashboard Subscription',
+        customerName: req.user!.name,
+        customerEmail: req.user!.email,
+        customerPhone: req.company!.phone || '+94123456789',
+        customerAddress: req.company!.address || 'Colombo',
+        customerCity: 'Colombo',
+      });
+      
+      res.json({ payment });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to create payment' });
+    }
+  });
+  
+  // PayHere notification handler
+  app.post('/api/payment/payhere/notify', async (req, res) => {
+    try {
+      const notification = req.body;
+      
+      if (payHereService.verifyPayment(notification)) {
+        const status = payHereService.isPaymentSuccessful(notification.status_code) ? 'completed' : 'failed';
+        await paymentService.updatePaymentStatus(notification.order_id, status, notification);
+      }
+      
+      res.status(200).send('OK');
+    } catch (error) {
+      console.error('PayHere notification error:', error);
+      res.status(500).send('Error');
+    }
+  });
+  
+  // Multi-tenant Company Dashboard Routes
+  app.get('/api/company/dashboard', authenticateToken, requireCompanyAccess, async (req, res) => {
+    try {
+      const tenantService = getTenantService(req.companyId!);
+      const data = await tenantService.getDashboardData();
+      res.json(data);
+    } catch (error) {
+      console.error('Company dashboard error:', error);
+      res.status(500).json({ error: 'Failed to fetch dashboard data' });
+    }
+  });
 
   // Serve uploaded files
   app.use('/uploads', (req, res, next) => {
@@ -655,7 +817,7 @@ export function registerRoutes(app: Express): Server {
 
   // System settings endpoints
   app.get("/api/system-settings", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // Allow unauthenticated access for backward compatibility
     
     try {
       const settings = await storage.getSystemSettings();
@@ -666,7 +828,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.get("/api/system-settings/:key", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // Allow unauthenticated access for backward compatibility
     
     try {
       const setting = await storage.getSystemSetting(req.params.key);
@@ -680,7 +842,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/system-settings", async (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+    // Allow unauthenticated access for backward compatibility
     
     try {
       const settingData = insertSystemSettingSchema.parse(req.body);

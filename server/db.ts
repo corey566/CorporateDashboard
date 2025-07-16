@@ -2,6 +2,7 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
+import * as saasSchema from "@shared/saas-schema";
 
 neonConfig.webSocketConstructor = ws;
 
@@ -10,4 +11,4 @@ const DATABASE_URL = "postgresql://neondb_owner:npg_mXcejVDTP8U6@ep-polished-sea
 console.log("Database URL:", DATABASE_URL.replace(/:[^@]*@/, ':***@'));
 
 export const pool = new Pool({ connectionString: DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+export const db = drizzle({ client: pool, schema: { ...schema, ...saasSchema } });
