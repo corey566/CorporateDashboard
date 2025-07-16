@@ -1,227 +1,96 @@
-import { Request, Response, NextFunction } from "express";
-import { userService, companyService, superAdminService } from "./saas-storage";
-import { generateToken, verifyToken } from "./auth-utils";
-import { db } from "./db";
-import * as schema from "@shared/saas-schema";
+import passport from "passport";
+import { Strategy as LocalStrategy } from "passport-local";
+import { Express } from "express";
+import session from "express-session";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+import { storage } from "./storage";
+import { User as SelectUser } from "@shared/schema";
 
-// Extend Express Request interface to include user information
 declare global {
   namespace Express {
-    interface Request {
-      user?: schema.CompanyUser;
-      company?: schema.Company;
-      superAdmin?: schema.SuperAdmin;
-      companyId?: number;
+    interface User extends SelectUser {}
+    interface Session {
+      agentId?: number;
     }
   }
 }
 
-// Middleware to verify JWT token
-export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1];
+const scryptAsync = promisify(scrypt);
 
-  if (!token) {
-    return res.status(401).json({ error: 'Access token required' });
-  }
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
-  try {
-    const decoded = verifyToken(token);
-    req.user = decoded.user;
-    req.company = decoded.company;
-    req.companyId = decoded.companyId;
-    next();
-  } catch (error) {
-    return res.status(403).json({ error: 'Invalid token' });
-  }
-};
+async function comparePasswords(supplied: string, stored: string) {
+  const [hashed, salt] = stored.split(".");
+  const hashedBuf = Buffer.from(hashed, "hex");
+  const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+  return timingSafeEqual(hashedBuf, suppliedBuf);
+}
 
-// Middleware to verify company access
-export const requireCompanyAccess = async (req: Request, res: Response, next: NextFunction) => {
-  if (!req.user || !req.companyId) {
-    return res.status(401).json({ error: 'Company access required' });
-  }
-
-  try {
-    const company = await companyService.getCompanyById(req.companyId);
-    if (!company || !company.isActive) {
-      return res.status(404).json({ error: 'Company not found or inactive' });
-    }
-
-    req.company = company;
-    next();
-  } catch (error) {
-    return res.status(500).json({ error: 'Error verifying company access' });
-  }
-};
-
-// Middleware to verify super admin access
-export const requireSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
-  const authHeader = req.headers.authorization;
-  const token = authHeader && authHeader.split(' ')[1];
-
-  if (!token) {
-    return res.status(401).json({ error: 'Super admin access required' });
-  }
-
-  try {
-    const decoded = verifyToken(token);
-    if (!decoded.superAdmin) {
-      return res.status(403).json({ error: 'Super admin access required' });
-    }
-
-    req.superAdmin = decoded.superAdmin;
-    next();
-  } catch (error) {
-    return res.status(403).json({ error: 'Invalid super admin token' });
-  }
-};
-
-// Middleware to check subscription limits
-export const checkSubscriptionLimits = (resourceType: 'users' | 'agents' | 'admins') => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    if (!req.companyId) {
-      return res.status(401).json({ error: 'Company access required' });
-    }
-
-    try {
-      const subscription = await db
-        .select()
-        .from(schema.companySubscriptions)
-        .where(
-          schema.companySubscriptions.companyId.eq(req.companyId)
-        )
-        .limit(1);
-
-      if (!subscription[0]) {
-        return res.status(403).json({ error: 'No active subscription' });
-      }
-
-      const plan = await db
-        .select()
-        .from(schema.subscriptionPlans)
-        .where(
-          schema.subscriptionPlans.id.eq(subscription[0].planId)
-        )
-        .limit(1);
-
-      if (!plan[0]) {
-        return res.status(403).json({ error: 'Subscription plan not found' });
-      }
-
-      const currentCount = subscription[0][`current${resourceType.charAt(0).toUpperCase() + resourceType.slice(1)}` as keyof typeof subscription[0]] as number;
-      const maxCount = plan[0][`max${resourceType.charAt(0).toUpperCase() + resourceType.slice(1)}` as keyof typeof plan[0]] as number;
-
-      if (currentCount >= maxCount) {
-        return res.status(403).json({ 
-          error: `${resourceType} limit exceeded. Current: ${currentCount}, Max: ${maxCount}` 
-        });
-      }
-
-      next();
-    } catch (error) {
-      return res.status(500).json({ error: 'Error checking subscription limits' });
-    }
+export function setupAuth(app: Express) {
+  const sessionSettings: session.SessionOptions = {
+    secret: process.env.SESSION_SECRET!,
+    resave: false,
+    saveUninitialized: false,
+    store: storage.sessionStore,
   };
-};
 
-// Auth helper functions
-export const generateAuthToken = (user: schema.CompanyUser, company: schema.Company): string => {
-  return generateToken({
-    user: {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    },
-    company: {
-      id: company.id,
-      name: company.name,
-      companyId: company.companyId,
-    },
-    companyId: company.id,
+  app.set("trust proxy", 1);
+  app.use(session(sessionSettings));
+  app.use(passport.initialize());
+  app.use(passport.session());
+
+  passport.use(
+    new LocalStrategy(async (username, password, done) => {
+      const user = await storage.getUserByUsername(username);
+      if (!user || !(await comparePasswords(password, user.password))) {
+        return done(null, false);
+      } else {
+        return done(null, user);
+      }
+    }),
+  );
+
+  passport.serializeUser((user, done) => done(null, user.id));
+  passport.deserializeUser(async (id: number, done) => {
+    const user = await storage.getUser(id);
+    done(null, user);
   });
-};
 
-export const generateSuperAdminToken = (admin: schema.SuperAdmin): string => {
-  return generateToken({
-    superAdmin: {
-      id: admin.id,
-      email: admin.email,
-      name: admin.name,
-    },
-  });
-};
-
-// Session-based authentication for backward compatibility
-export const sessionAuth = (req: Request, res: Response, next: NextFunction) => {
-  // Check for session-based authentication for existing routes
-  if (req.session && req.session.user) {
-    next();
-  } else {
-    // Try JWT authentication
-    authenticateToken(req, res, next);
-  }
-};
-
-// Rate limiting for authentication routes
-const authAttempts = new Map<string, { count: number; lastAttempt: number }>();
-
-export const authRateLimit = (req: Request, res: Response, next: NextFunction) => {
-  const clientId = req.ip || req.connection.remoteAddress || 'unknown';
-  const now = Date.now();
-  const windowMs = 15 * 60 * 1000; // 15 minutes
-  const maxAttempts = 50; // Increased for development
-
-  const attempts = authAttempts.get(clientId);
-  
-  if (attempts) {
-    // Reset if window expired
-    if (now - attempts.lastAttempt > windowMs) {
-      authAttempts.delete(clientId);
-    } else if (attempts.count >= maxAttempts) {
-      return res.status(429).json({
-        error: 'Too many authentication attempts. Please try again later.',
-      });
+  app.post("/api/register", async (req, res, next) => {
+    const existingUser = await storage.getUserByUsername(req.body.username);
+    if (existingUser) {
+      return res.status(400).send("Username already exists");
     }
-  }
 
-  // Record this attempt
-  const currentAttempts = attempts ? attempts.count + 1 : 1;
-  authAttempts.set(clientId, {
-    count: currentAttempts,
-    lastAttempt: now,
+    const user = await storage.createUser({
+      ...req.body,
+      password: await hashPassword(req.body.password),
+    });
+
+    req.login(user, (err) => {
+      if (err) return next(err);
+      res.status(201).json(user);
+    });
   });
 
-  next();
-};
+  app.post("/api/login", passport.authenticate("local"), (req, res) => {
+    res.status(200).json(req.user);
+  });
 
-// Password validation
-export const validatePassword = (password: string): { valid: boolean; errors: string[] } => {
-  const errors: string[] = [];
-  
-  if (password.length < 8) {
-    errors.push('Password must be at least 8 characters long');
-  }
-  
-  if (!/[A-Z]/.test(password)) {
-    errors.push('Password must contain at least one uppercase letter');
-  }
-  
-  if (!/[a-z]/.test(password)) {
-    errors.push('Password must contain at least one lowercase letter');
-  }
-  
-  if (!/[0-9]/.test(password)) {
-    errors.push('Password must contain at least one number');
-  }
-  
-  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
-    errors.push('Password must contain at least one special character');
-  }
+  app.post("/api/logout", (req, res, next) => {
+    req.logout((err) => {
+      if (err) return next(err);
+      res.sendStatus(200);
+    });
+  });
 
-  return {
-    valid: errors.length === 0,
-    errors,
-  };
-};
+  app.get("/api/user", (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    res.json(req.user);
+  });
+}

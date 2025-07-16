@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a comprehensive multi-tenant SaaS platform that transforms the original TV dashboard system into a scalable business solution. The platform supports multiple companies with subscription-based access, individual company dashboards, and comprehensive administrative controls. Each company gets their own isolated workspace with real-time sales performance data, team management, and customizable settings.
+This is a full-stack web application built for call centers to display real-time sales performance data on large screens or TVs. The system features a live dashboard showing individual agent performance, team leaderboards, and real-time updates through WebSocket connections.
 
 ## User Preferences
 
@@ -10,41 +10,6 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes (July 16, 2025)
 
-**MAJOR MILESTONE: Complete SaaS Platform with PayPal Integration and Public Frontend**
-
-✓ Successfully converted single-tenant TV dashboard to comprehensive multi-tenant SaaS platform
-✓ Implemented complete SaaS database schema with all company-specific tables (company_teams, company_agents, company_sales, etc.)
-✓ Created super admin authentication system with JWT tokens and secure password hashing
-✓ Built comprehensive subscription management system with plan-based user limits
-✓ **Enhanced PaymentService with comprehensive PayPal integration and dummy payment processing**
-✓ **Implemented extensive subscription management API routes for super admin operations (CRUD for plans, company management, payment processing)**
-✓ **Created complete public frontend with PublicHome.tsx, Demo.tsx, and enhanced Register.tsx for company registration**
-✓ **Updated SuperAdminDashboard.tsx with comprehensive subscription and payment management interface**
-✓ **Added public API routes for subscription plans viewing and user registration, updated App.tsx routing system**
-✓ **Created CompanyDashboard.tsx for authenticated company users with subscription overview and team management**
-✓ **Implemented full payment processing workflow with both PayPal and dummy payment options**
-✓ **Added comprehensive company registration flow with plan selection and payment integration**
-✓ **Built complete admin interface for subscription plan management (create, update, delete)**
-✓ **Enhanced routing system to support public pages, authentication, and company-specific dashboards**
-✓ **Implemented proper authentication flow with JWT tokens and secure session management**
-✓ **Fixed authentication rate limiting issues by increasing limits and clearing cache**
-✓ **Added super admin profile management with routes for viewing and updating admin profiles**
-✓ **Added missing getSuperAdminById method to SuperAdminService for profile management**
-✓ **Recreated Demo.tsx as exact replica of original dashboard with real-time sales updates**
-✓ **Created initialization scripts for super admin and subscription plans setup**
-✓ **Resolved ES module compatibility issues in admin creation scripts**
-✓ Created multi-level authentication supporting username/password, OTP, and Google OAuth
-✓ Built company-based agent registration using unique company IDs and connection strings
-✓ Implemented comprehensive admin controls for subscription and payment management
-✓ Configured Zoho SMTP email system (noreply@codestudio.lk) for platform communications
-✓ Created system settings management for configurable email and platform settings
-✓ Built super admin dashboard with complete company and subscription oversight
-✓ Implemented database migration and schema creation for all SaaS components
-✓ Created test companies with active subscriptions and sample data
-✓ Verified all API endpoints and authentication flows are working correctly
-✓ Established proper multi-tenant data isolation and security
-
-**Previous Dashboard Enhancements:**
 ✓ Fixed sale notification auto-close timer to 5 seconds
 ✓ Reduced confetti animation amounts for better performance  
 ✓ Added applause sound effect for sale notifications
