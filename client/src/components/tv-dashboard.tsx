@@ -298,42 +298,7 @@ export default function TvDashboard() {
             </Card>
           </div>
 
-          {/* Cash Offers Section */}
-          {cashOffers.length > 0 && (
-            <div className="mt-4 flex-shrink-0">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center">
-                    <div className="w-6 h-6 bg-warning rounded-full flex items-center justify-center mr-2">
-                      <span className="text-white text-sm">$</span>
-                    </div>
-                    Active Cash Offers
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {cashOffers.map((offer: any) => (
-                      <div
-                        key={offer.id}
-                        className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg p-3 border border-yellow-200"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-corporate-800 text-sm">{offer.title}</h3>
-                          <Badge variant="secondary" className="bg-warning text-white text-xs">
-                            {formatCurrency(offer.reward)}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-corporate-600 mb-2">{offer.description}</p>
-                        <div className="w-full bg-yellow-200 rounded-full h-1.5">
-                          <div className="bg-warning h-1.5 rounded-full" style={{ width: "35%" }}></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+
         </div>
 
         {/* Right Side - Team Leaderboard & Recent Sales */}
