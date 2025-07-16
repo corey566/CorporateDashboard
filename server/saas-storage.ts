@@ -961,6 +961,16 @@ export class SuperAdminService {
     }
   }
 
+  async getSuperAdminById(id: number): Promise<schema.SuperAdmin | undefined> {
+    try {
+      const result = await pool.query('SELECT * FROM super_admins WHERE id = $1 LIMIT 1', [id]);
+      return result.rows[0] as schema.SuperAdmin;
+    } catch (error) {
+      console.error('Error fetching super admin by ID:', error);
+      return undefined;
+    }
+  }
+
   async verifySuperAdminPassword(email: string, password: string): Promise<schema.SuperAdmin | null> {
     const admin = await this.getSuperAdminByEmail(email);
     if (!admin) return null;

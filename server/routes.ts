@@ -231,12 +231,17 @@ export function registerRoutes(app: Express): Server {
         billingInterval || 'monthly'
       );
 
+      // Get plan details for payment amount
+      const plan = await subscriptionService.getSubscriptionPlans().then(plans => 
+        plans.find(p => p.id === planId)
+      );
+      
       // Process dummy payment
       const payment = await paymentService.processDummyPayment({
         companyId: company.id,
         subscriptionId: subscription.id,
-        amount: 29.99, // This should come from the plan
-        currency: 'USD',
+        amount: plan ? parseFloat(plan.price) : 29.99,
+        currency: plan ? plan.currency : 'USD',
         paymentMethod: 'dummy'
       });
 
@@ -265,11 +270,12 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Public subscription plans endpoint
+  // Public subscription plans endpoint - only show active plans
   app.get('/api/public/subscription-plans', async (req, res) => {
     try {
       const plans = await subscriptionService.getSubscriptionPlans();
-      res.json(plans);
+      const activePlans = plans.filter(plan => plan.isActive);
+      res.json(activePlans);
     } catch (error) {
       console.error('Error fetching public plans:', error);
       res.status(500).json({ error: 'Failed to fetch subscription plans' });
@@ -307,6 +313,74 @@ export function registerRoutes(app: Express): Server {
       res.json(companies);
     } catch (error) {
       res.status(500).json({ error: 'Failed to fetch companies' });
+    }
+  });
+
+  // Super Admin Profile Management
+  app.get('/api/superadmin/profile', requireSuperAdmin, async (req, res) => {
+    try {
+      const adminId = req.superAdmin.id;
+      const admin = await superAdminService.getSuperAdminById(adminId);
+      if (!admin) {
+        return res.status(404).json({ error: 'Admin not found' });
+      }
+      res.json({
+        id: admin.id,
+        email: admin.email,
+        name: admin.name,
+        isActive: admin.isActive,
+        createdAt: admin.createdAt
+      });
+    } catch (error) {
+      console.error('Error fetching admin profile:', error);
+      res.status(500).json({ error: 'Failed to fetch profile' });
+    }
+  });
+
+  app.put('/api/superadmin/profile', requireSuperAdmin, async (req, res) => {
+    try {
+      const adminId = req.superAdmin.id;
+      const { name, email, currentPassword, newPassword } = req.body;
+      
+      // Verify current password if changing password
+      if (newPassword) {
+        if (!currentPassword) {
+          return res.status(400).json({ error: 'Current password is required to change password' });
+        }
+        
+        const admin = await superAdminService.getSuperAdminById(adminId);
+        if (!admin) {
+          return res.status(404).json({ error: 'Admin not found' });
+        }
+        
+        const isCurrentPasswordValid = await bcrypt.compare(currentPassword, admin.password);
+        if (!isCurrentPasswordValid) {
+          return res.status(400).json({ error: 'Current password is incorrect' });
+        }
+      }
+      
+      // Update profile
+      const updates: any = {};
+      if (name) updates.name = name;
+      if (email) updates.email = email;
+      if (newPassword) updates.password = await bcrypt.hash(newPassword, 10);
+      
+      const [updatedAdmin] = await db
+        .update(saasSchema.superAdmins)
+        .set(updates)
+        .where(eq(saasSchema.superAdmins.id, adminId))
+        .returning();
+      
+      res.json({
+        id: updatedAdmin.id,
+        email: updatedAdmin.email,
+        name: updatedAdmin.name,
+        isActive: updatedAdmin.isActive,
+        createdAt: updatedAdmin.createdAt
+      });
+    } catch (error) {
+      console.error('Error updating admin profile:', error);
+      res.status(500).json({ error: 'Failed to update profile' });
     }
   });
 
