@@ -28,6 +28,7 @@ import {
 import { useLocation } from "wouter";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { useCurrency } from "@/hooks/use-currency";
 
 type SaleFormData = z.infer<typeof insertSaleSchema>;
 
@@ -35,6 +36,7 @@ export default function MobileDashboardPage() {
   const [, setLocation] = useLocation();
   const [showSaleForm, setShowSaleForm] = useState(false);
   const { toast } = useToast();
+  const { formatCurrency } = useCurrency();
 
   // Get current agent data
   const { data: agent, isLoading: agentLoading } = useQuery({
@@ -170,14 +172,14 @@ export default function MobileDashboardPage() {
                 <div>
                   <p className="text-sm text-gray-600">Volume</p>
                   <p className="text-2xl font-bold text-green-600">
-                    ${totalSales.toLocaleString()}
+                    {formatCurrency(totalSales)}
                   </p>
                 </div>
                 <DollarSign className="h-8 w-8 text-green-600" />
               </div>
               <Progress value={Math.min(volumeProgress, 100)} className="mt-2" />
               <p className="text-xs text-gray-500 mt-1">
-                {volumeProgress.toFixed(1)}% of ${parseFloat(agent.volumeTarget).toLocaleString()} target
+                {volumeProgress.toFixed(1)}% of {formatCurrency(agent.volumeTarget)} target
               </p>
             </CardContent>
           </Card>
@@ -239,7 +241,7 @@ export default function MobileDashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-semibold text-green-600">
-                        ${parseFloat(sale.amount).toLocaleString()}
+                        {formatCurrency(sale.amount)}
                       </p>
                       <p className="text-sm text-gray-600">{sale.units} units</p>
                     </div>
@@ -276,7 +278,7 @@ export default function MobileDashboardPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Sale Amount ($)</Label>
+                  <Label htmlFor="amount">Sale Amount</Label>
                   <Input
                     id="amount"
                     type="number"

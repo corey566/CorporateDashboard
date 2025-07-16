@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, Download, FileText, TrendingUp, Users, DollarSign, Target, Filter } from "lucide-react";
 import { format } from "date-fns";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface ReportFilters {
   startDate: string;
@@ -40,6 +41,7 @@ export default function AdminReports() {
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const { formatCurrency } = useCurrency();
 
   const { data: agents } = useQuery({
     queryKey: ["/api/agents"],
@@ -93,12 +95,7 @@ export default function AdminReports() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(amount);
-  };
+
 
   const formatPercentage = (value: number) => {
     return `${(value * 100).toFixed(1)}%`;

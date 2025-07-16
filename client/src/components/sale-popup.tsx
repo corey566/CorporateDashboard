@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Trophy, X, DollarSign, Star, Users, Calendar } from "lucide-react";
 import confetti from "canvas-confetti";
 import applauseSoundPath from "../assets/applause-cheer.mp3";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface SalePopupProps {
   sale: any;
@@ -13,6 +14,7 @@ export default function SalePopup({ sale, onClose }: SalePopupProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [applauseCount, setApplauseCount] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const { formatCurrency } = useCurrency();
 
   // Confetti animation
   const fireConfetti = () => {
@@ -207,7 +209,7 @@ export default function SalePopup({ sale, onClose }: SalePopupProps) {
                 <DollarSign className="w-8 h-8 text-green-500" />
               </div>
               <p className="text-3xl font-bold text-green-600">
-                ${parseFloat(sale.amount).toLocaleString()}
+                {formatCurrency(sale.amount)}
               </p>
               <p className="text-sm text-gray-500">Sale Amount</p>
             </div>

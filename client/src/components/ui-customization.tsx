@@ -25,8 +25,10 @@ import {
   Check,
   X,
   RefreshCw,
-  Building
+  Building,
+  DollarSign
 } from "lucide-react";
+import CurrencySettings from "./currency-settings";
 import { z } from "zod";
 
 const uiCustomizationSchema = z.object({
@@ -184,6 +186,9 @@ export default function UICustomization() {
 
   return (
     <div className="space-y-6">
+      {/* Currency Settings */}
+      <CurrencySettings />
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

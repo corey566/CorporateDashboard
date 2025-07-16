@@ -1,12 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Trophy, TrendingUp, Target } from "lucide-react";
+import { useCurrency } from "@/hooks/use-currency";
 
 interface AgentCardProps {
   agent: any;
 }
 
 export default function AgentCard({ agent }: AgentCardProps) {
+  const { formatCurrency } = useCurrency();
   const volumeProgress = (parseFloat(agent.currentVolume || 0) / parseFloat(agent.volumeTarget)) * 100;
   const unitsProgress = (agent.currentUnits || 0) / agent.unitsTarget * 100;
 
@@ -63,7 +65,7 @@ export default function AgentCard({ agent }: AgentCardProps) {
             <div className="flex justify-between items-center mb-2">
               <span className="text-sm font-semibold text-foreground">Volume Progress</span>
               <span className="text-sm font-bold text-primary">
-                ${parseFloat(agent.currentVolume || 0).toLocaleString()} / ${parseFloat(agent.volumeTarget).toLocaleString()}
+                {formatCurrency(agent.currentVolume || 0)} / {formatCurrency(agent.volumeTarget)}
               </span>
             </div>
             <div className="w-full bg-muted rounded-full h-3 overflow-hidden">

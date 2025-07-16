@@ -13,6 +13,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, DollarSign, Package, Edit, Trash2 } from "lucide-react";
 import { z } from "zod";
+import { useCurrency } from "@/hooks/use-currency";
 
 const saleFormSchema = insertSaleSchema.extend({
   amount: z.string().min(1, "Amount is required"),
@@ -25,6 +26,7 @@ type SaleFormData = z.infer<typeof saleFormSchema>;
 export default function AdminSalesEntry() {
   const [editingSale, setEditingSale] = useState<any>(null);
   const { toast } = useToast();
+  const { formatCurrency } = useCurrency();
 
   const { data: agents } = useQuery({
     queryKey: ["/api/agents"],
@@ -205,7 +207,7 @@ export default function AdminSalesEntry() {
               </div>
               
               <div>
-                <Label htmlFor="amount">Sale Amount ($)</Label>
+                <Label htmlFor="amount">Sale Amount</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -335,7 +337,7 @@ export default function AdminSalesEntry() {
               <div className="text-center p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-100">
                 <DollarSign className="w-8 h-8 text-accent mx-auto mb-2" />
                 <p className="text-2xl font-bold text-corporate-800">
-                  ${totalSalesAmount.toLocaleString()}
+                  {formatCurrency(totalSalesAmount)}
                 </p>
                 <p className="text-sm text-corporate-500">Total Sales</p>
               </div>
@@ -377,7 +379,7 @@ export default function AdminSalesEntry() {
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
                         <p className="font-bold text-accent">
-                          ${parseFloat(sale.amount).toLocaleString()}
+                          {formatCurrency(sale.amount)}
                         </p>
                         <p className="text-sm text-corporate-500">
                           {sale.units} units

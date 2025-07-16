@@ -12,6 +12,7 @@ import CashOfferPopup from "./cash-offer-popup";
 import FullscreenMediaPresentation from "./fullscreen-media-presentation";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useState, useEffect } from "react";
+import { useCurrency } from "@/hooks/use-currency";
 
 export default function TvDashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -21,6 +22,7 @@ export default function TvDashboard() {
   const [showMediaPresentation, setShowMediaPresentation] = useState(false);
   const [soundEffectCache, setSoundEffectCache] = useState<{[key: string]: any}>({});
   const { isConnected, lastMessage } = useWebSocket();
+  const { formatCurrency } = useCurrency();
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["/api/dashboard"],
@@ -318,7 +320,7 @@ export default function TvDashboard() {
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="font-semibold text-corporate-800 text-sm">{offer.title}</h3>
                           <Badge variant="secondary" className="bg-warning text-white text-xs">
-                            ${offer.reward}
+                            {formatCurrency(offer.reward)}
                           </Badge>
                         </div>
                         <p className="text-xs text-corporate-600 mb-2">{offer.description}</p>
@@ -362,7 +364,7 @@ export default function TvDashboard() {
                       <div className="flex items-center justify-between mb-1">
                         <h4 className="font-semibold text-green-800">{offer.title}</h4>
                         <Badge className="bg-green-500 text-white">
-                          ${offer.reward}
+                          {formatCurrency(offer.reward)}
                         </Badge>
                       </div>
                       <p className="text-sm text-green-700 mb-2">{offer.description}</p>
