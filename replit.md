@@ -8,7 +8,7 @@ This is a full-stack web application built for call centers to display real-time
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (July 15, 2025)
+## Recent Changes (July 16, 2025)
 
 ✓ Fixed sale notification auto-close timer to 5 seconds
 ✓ Reduced confetti animation amounts for better performance  
@@ -22,7 +22,7 @@ Preferred communication style: Simple, everyday language.
 ✓ Removed company slides overlay - media slides now permanently displayed
 ✓ Created complete file upload system with database schema and API endpoints
 ✓ Added file manager interface in admin panel with upload, view, and delete functionality
-✓ Fixed audio playback for sale notifications using imported applause sound
+✓ Fixed audio playbook for sale notifications using imported applause sound
 ✓ Enhanced media slider system with proper timing and file support
 ✓ Implemented comprehensive file handling for photos and audio files
 ✓ Fixed media presentation auto-hide issue - slides now properly disappear after completion timer
@@ -53,6 +53,10 @@ Preferred communication style: Simple, everyday language.
 ✓ Added currency settings to UI customization panel with quick preset selection and custom currency options
 ✓ Updated all financial displays (sales amounts, targets, cash offers) to use new currency formatting
 ✓ Enhanced reports, dashboards, and admin panels with dynamic currency support
+✓ Resolved cash offer display issue by fixing expiry time handling
+✓ Removed duplicate "Active Cash Offers" section from dashboard left panel
+✓ Successfully migrated database to new Neon PostgreSQL instance
+✓ Updated database connection string and verified all existing data integrity
 
 ## System Architecture
 
