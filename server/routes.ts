@@ -228,7 +228,8 @@ export function registerRoutes(app: Express): Server {
       const settings = await systemSettingsService.getSystemSettings();
       res.json(settings);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to fetch system settings' });
+      console.error('System settings error:', error);
+      res.status(500).json({ error: 'Failed to fetch system settings', details: error.message });
     }
   });
 

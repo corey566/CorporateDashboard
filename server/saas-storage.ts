@@ -2,6 +2,7 @@ import { eq, and, sql, desc, asc, count, sum, avg } from "drizzle-orm";
 import { db, pool } from "./db";
 import * as schema from "@shared/saas-schema";
 import { superAdmins } from "@shared/saas-schema";
+import { systemSettings } from "@shared/schema";
 import { hashPassword, verifyPassword, generateCompanyId, generateConnectionString, generateRandomToken } from "./auth-utils";
 import { addDays, addMonths, addYears } from "date-fns";
 
@@ -811,27 +812,35 @@ export class SuperAdminService {
 
 // System settings service
 export class SystemSettingsService {
-  async getSystemSettings(): Promise<schema.SystemSetting[]> {
-    return await db.select().from(schema.systemSettings);
+  async getSystemSettings(): Promise<any[]> {
+    try {
+      console.log('Fetching system settings from database...');
+      const result = await db.select().from(systemSettings);
+      console.log('System settings fetched:', result.length, 'records');
+      return result;
+    } catch (error) {
+      console.error('Error in getSystemSettings:', error);
+      throw error;
+    }
   }
 
-  async getSystemSetting(key: string): Promise<schema.SystemSetting | undefined> {
-    const [setting] = await db.select().from(schema.systemSettings).where(eq(schema.systemSettings.key, key));
+  async getSystemSetting(key: string): Promise<any | undefined> {
+    const [setting] = await db.select().from(systemSettings).where(eq(systemSettings.key, key));
     return setting;
   }
 
-  async updateSystemSetting(key: string, value: string): Promise<schema.SystemSetting> {
+  async updateSystemSetting(key: string, value: string): Promise<any> {
     const [setting] = await db
-      .update(schema.systemSettings)
+      .update(systemSettings)
       .set({ value, updatedAt: new Date() })
-      .where(eq(schema.systemSettings.key, key))
+      .where(eq(systemSettings.key, key))
       .returning();
     return setting;
   }
 
-  async createSystemSetting(settingData: schema.InsertSystemSetting): Promise<schema.SystemSetting> {
+  async createSystemSetting(settingData: any): Promise<any> {
     const [setting] = await db
-      .insert(schema.systemSettings)
+      .insert(systemSettings)
       .values(settingData)
       .returning();
     return setting;
