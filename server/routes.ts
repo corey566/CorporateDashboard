@@ -187,6 +187,94 @@ export function registerRoutes(app: Express): Server {
   app.get('/api/auth/me', authenticateToken, async (req, res) => {
     res.json({ user: req.user, company: req.company });
   });
+
+  // Public registration endpoint
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const { name, email, password, companyName, planId, billingInterval } = req.body;
+      
+      // Validate required fields
+      if (!name || !email || !password || !companyName || !planId) {
+        return res.status(400).json({ error: 'All fields are required' });
+      }
+
+      // Check if email already exists
+      const existingUser = await userService.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ error: 'Email already registered' });
+      }
+
+      // Create company first
+      const company = await companyService.createCompany({
+        name: companyName,
+        email: email,
+        phone: '',
+        address: '',
+        isActive: true,
+      });
+
+      // Create user
+      const user = await userService.createCompanyUser({
+        companyId: company.id,
+        name,
+        email,
+        password,
+        role: 'admin',
+        isActive: true,
+        isEmailVerified: true,
+      });
+
+      // Create subscription with dummy payment
+      const subscription = await subscriptionService.createCompanySubscription(
+        company.id,
+        planId,
+        billingInterval || 'monthly'
+      );
+
+      // Process dummy payment
+      const payment = await paymentService.processDummyPayment({
+        companyId: company.id,
+        subscriptionId: subscription.id,
+        amount: 29.99, // This should come from the plan
+        currency: 'USD',
+        paymentMethod: 'dummy'
+      });
+
+      // Generate auth token
+      const token = generateAuthToken(user, company);
+
+      res.status(201).json({
+        token,
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+        company: {
+          id: company.id,
+          name: company.name,
+          companyId: company.companyId,
+        },
+        subscription,
+        payment: payment.transaction,
+      });
+    } catch (error) {
+      console.error('Registration error:', error);
+      res.status(500).json({ error: 'Registration failed' });
+    }
+  });
+
+  // Public subscription plans endpoint
+  app.get('/api/public/subscription-plans', async (req, res) => {
+    try {
+      const plans = await subscriptionService.getSubscriptionPlans();
+      res.json(plans);
+    } catch (error) {
+      console.error('Error fetching public plans:', error);
+      res.status(500).json({ error: 'Failed to fetch subscription plans' });
+    }
+  });
   
   // Company Dashboard Routes
   app.get('/api/company/dashboard', authenticateToken, requireCompanyAccess, async (req, res) => {
@@ -266,6 +354,153 @@ export function registerRoutes(app: Express): Server {
       res.status(201).json(plan);
     } catch (error) {
       res.status(400).json({ error: 'Failed to create subscription plan' });
+    }
+  });
+
+  // Enhanced Subscription Plan Management
+  app.put('/api/superadmin/plans/:id', requireSuperAdmin, async (req, res) => {
+    try {
+      const planId = parseInt(req.params.id);
+      const planData = saasSchema.insertSubscriptionPlanSchema.partial().parse(req.body);
+      const plan = await subscriptionService.updateSubscriptionPlan(planId, planData);
+      res.json(plan);
+    } catch (error) {
+      console.error('Error updating subscription plan:', error);
+      res.status(500).json({ error: 'Failed to update subscription plan' });
+    }
+  });
+
+  app.delete('/api/superadmin/plans/:id', requireSuperAdmin, async (req, res) => {
+    try {
+      const planId = parseInt(req.params.id);
+      await subscriptionService.deleteSubscriptionPlan(planId);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error('Error deleting subscription plan:', error);
+      res.status(500).json({ error: 'Failed to delete subscription plan' });
+    }
+  });
+
+  // Enhanced Company Subscription Management
+  app.post('/api/superadmin/companies/:id/subscription', requireSuperAdmin, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      const { planId, billingInterval, customPrice, endDate } = req.body;
+      
+      const subscription = await subscriptionService.createCompanySubscription(
+        companyId, 
+        planId, 
+        billingInterval, 
+        customPrice, 
+        endDate ? new Date(endDate) : undefined
+      );
+      res.json(subscription);
+    } catch (error) {
+      console.error('Error creating subscription:', error);
+      res.status(500).json({ error: 'Failed to create subscription' });
+    }
+  });
+
+  app.put('/api/superadmin/companies/:id/subscription', requireSuperAdmin, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      const subscriptionData = req.body;
+      
+      // Convert endDate string to Date if provided
+      if (subscriptionData.endDate) {
+        subscriptionData.endDate = new Date(subscriptionData.endDate);
+      }
+      
+      const subscription = await subscriptionService.updateCompanySubscription(companyId, subscriptionData);
+      res.json(subscription);
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+      res.status(500).json({ error: 'Failed to update subscription' });
+    }
+  });
+
+  app.delete('/api/superadmin/companies/:id/subscription', requireSuperAdmin, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      await subscriptionService.cancelSubscription(companyId);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error('Error cancelling subscription:', error);
+      res.status(500).json({ error: 'Failed to cancel subscription' });
+    }
+  });
+
+  // Enhanced Company Management
+  app.delete('/api/superadmin/companies/:id', requireSuperAdmin, async (req, res) => {
+    try {
+      const companyId = parseInt(req.params.id);
+      await companyService.deleteCompany(companyId);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error('Error deleting company:', error);
+      res.status(500).json({ error: 'Failed to delete company' });
+    }
+  });
+
+  // Payment Processing Routes
+  app.post('/api/payments/dummy-payment', async (req, res) => {
+    try {
+      const { companyId, subscriptionId, amount, currency = 'USD' } = req.body;
+      
+      const paymentResult = await paymentService.processDummyPayment({
+        companyId,
+        subscriptionId,
+        amount,
+        currency,
+        paymentMethod: 'dummy'
+      });
+      
+      res.json(paymentResult);
+    } catch (error) {
+      console.error('Error processing dummy payment:', error);
+      res.status(500).json({ error: 'Failed to process payment' });
+    }
+  });
+
+  // PayPal Payment Routes
+  app.get('/api/payments/paypal/setup', async (req, res) => {
+    try {
+      const setupData = await paymentService.setupPayPalPayment();
+      res.json(setupData);
+    } catch (error) {
+      console.error('Error setting up PayPal:', error);
+      res.status(500).json({ error: 'PayPal not configured' });
+    }
+  });
+
+  app.post('/api/payments/paypal/order', async (req, res) => {
+    try {
+      const { companyId, subscriptionId, amount, currency = 'USD' } = req.body;
+      
+      const order = await paymentService.createPayPalOrder({
+        companyId,
+        subscriptionId,
+        amount,
+        currency
+      });
+      
+      res.json(order);
+    } catch (error) {
+      console.error('Error creating PayPal order:', error);
+      res.status(500).json({ error: 'Failed to create PayPal order' });
+    }
+  });
+
+  app.post('/api/payments/paypal/order/:orderID/capture', async (req, res) => {
+    try {
+      const { orderID } = req.params;
+      const { companyId, subscriptionId } = req.body;
+      
+      const result = await paymentService.capturePayPalOrder(orderID, companyId, subscriptionId);
+      res.json(result);
+    } catch (error) {
+      console.error('Error capturing PayPal order:', error);
+      res.status(500).json({ error: 'Failed to capture PayPal order' });
     }
   });
   

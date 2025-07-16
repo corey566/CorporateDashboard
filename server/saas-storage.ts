@@ -86,10 +86,46 @@ export class SubscriptionService {
       .where(eq(schema.subscriptionPlans.isActive, true));
   }
 
+  async updateSubscriptionPlan(planId: number, planData: Partial<schema.InsertSubscriptionPlan>): Promise<schema.SubscriptionPlan> {
+    const [plan] = await db
+      .update(schema.subscriptionPlans)
+      .set(planData)
+      .where(eq(schema.subscriptionPlans.id, planId))
+      .returning();
+    
+    if (!plan) {
+      throw new Error('Subscription plan not found');
+    }
+    
+    return plan;
+  }
+
+  async deleteSubscriptionPlan(planId: number): Promise<void> {
+    // Check if any active subscriptions use this plan
+    const activeSubscriptions = await db
+      .select()
+      .from(schema.companySubscriptions)
+      .where(and(
+        eq(schema.companySubscriptions.planId, planId),
+        eq(schema.companySubscriptions.status, 'active')
+      ));
+
+    if (activeSubscriptions.length > 0) {
+      throw new Error('Cannot delete plan with active subscriptions');
+    }
+
+    await db
+      .update(schema.subscriptionPlans)
+      .set({ isActive: false })
+      .where(eq(schema.subscriptionPlans.id, planId));
+  }
+
   async createCompanySubscription(
     companyId: number,
     planId: number,
-    billingInterval: string
+    billingInterval: string,
+    customPrice?: number,
+    customEndDate?: Date
   ): Promise<schema.CompanySubscription> {
     const plan = await db
       .select()
@@ -104,7 +140,9 @@ export class SubscriptionService {
     const startDate = new Date();
     let endDate: Date;
 
-    if (billingInterval === 'monthly') {
+    if (customEndDate) {
+      endDate = customEndDate;
+    } else if (billingInterval === 'monthly') {
       endDate = addMonths(startDate, 1);
     } else if (billingInterval === 'yearly') {
       endDate = addYears(startDate, 1);
@@ -122,6 +160,28 @@ export class SubscriptionService {
         status: 'active',
       })
       .returning();
+
+    return subscription;
+  }
+
+  async updateCompanySubscription(companyId: number, subscriptionData: {
+    planId?: number;
+    endDate?: Date;
+    currentUsers?: number;
+    currentAgents?: number;
+    currentAdmins?: number;
+    status?: string;
+    autoRenew?: boolean;
+  }): Promise<schema.CompanySubscription> {
+    const [subscription] = await db
+      .update(schema.companySubscriptions)
+      .set(subscriptionData)
+      .where(eq(schema.companySubscriptions.companyId, companyId))
+      .returning();
+
+    if (!subscription) {
+      throw new Error('Company subscription not found');
+    }
 
     return subscription;
   }
@@ -730,6 +790,149 @@ export class PaymentService {
       .from(schema.paymentTransactions)
       .where(eq(schema.paymentTransactions.companyId, companyId))
       .orderBy(desc(schema.paymentTransactions.createdAt));
+  }
+
+  // Dummy Payment Processing
+  async processDummyPayment(paymentData: {
+    companyId: number;
+    subscriptionId: number;
+    amount: number;
+    currency: string;
+    paymentMethod: string;
+  }): Promise<{ success: boolean; transactionId: string; transaction: schema.PaymentTransaction }> {
+    const transactionId = `dummy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    const transaction = await this.createPaymentTransaction({
+      ...paymentData,
+      transactionId,
+      paymentData: {
+        type: 'dummy',
+        processedAt: new Date(),
+        simulatedSuccess: true,
+      }
+    });
+
+    // Update status to completed
+    const completedTransaction = await this.updatePaymentStatus(transactionId, 'completed', {
+      type: 'dummy',
+      processedAt: new Date(),
+      simulatedSuccess: true,
+    });
+
+    return {
+      success: true,
+      transactionId,
+      transaction: completedTransaction
+    };
+  }
+
+  // PayPal Integration
+  async setupPayPalPayment(): Promise<{ clientToken?: string; error?: string }> {
+    try {
+      // Check if PayPal is configured
+      if (!process.env.PAYPAL_CLIENT_ID || !process.env.PAYPAL_CLIENT_SECRET) {
+        return { error: 'PayPal not configured' };
+      }
+
+      // In a real implementation, we would generate a client token
+      // For now, return a placeholder
+      return { clientToken: 'dummy-client-token' };
+    } catch (error) {
+      return { error: 'PayPal setup failed' };
+    }
+  }
+
+  async createPayPalOrder(orderData: {
+    companyId: number;
+    subscriptionId: number;
+    amount: number;
+    currency: string;
+  }): Promise<{ id: string; status: string; links?: any[] }> {
+    const orderId = `paypal_order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Create pending payment transaction
+    await this.createPaymentTransaction({
+      ...orderData,
+      transactionId: orderId,
+      paymentMethod: 'paypal',
+      paymentData: {
+        type: 'paypal',
+        orderId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+      }
+    });
+
+    // Mock PayPal order response
+    return {
+      id: orderId,
+      status: 'CREATED',
+      links: [
+        {
+          href: `https://api.paypal.com/v2/checkout/orders/${orderId}`,
+          rel: 'self',
+          method: 'GET'
+        },
+        {
+          href: `https://www.paypal.com/checkoutnow?token=${orderId}`,
+          rel: 'approve',
+          method: 'GET'
+        }
+      ]
+    };
+  }
+
+  async capturePayPalOrder(orderId: string, companyId: number, subscriptionId: number): Promise<{ 
+    id: string; 
+    status: string; 
+    purchase_units?: any[]; 
+    payer?: any; 
+  }> {
+    // Update payment status to completed
+    await this.updatePaymentStatus(orderId, 'completed', {
+      type: 'paypal',
+      capturedAt: new Date(),
+      orderId,
+      companyId,
+      subscriptionId
+    });
+
+    // Mock PayPal capture response
+    return {
+      id: orderId,
+      status: 'COMPLETED',
+      purchase_units: [
+        {
+          reference_id: 'subscription_payment',
+          amount: {
+            currency_code: 'USD',
+            value: '29.99'
+          },
+          payee: {
+            email_address: 'merchant@example.com'
+          },
+          payments: {
+            captures: [
+              {
+                id: `capture_${Date.now()}`,
+                status: 'COMPLETED',
+                amount: {
+                  currency_code: 'USD',
+                  value: '29.99'
+                }
+              }
+            ]
+          }
+        }
+      ],
+      payer: {
+        name: {
+          given_name: 'John',
+          surname: 'Doe'
+        },
+        email_address: 'customer@example.com'
+      }
+    };
   }
 }
 

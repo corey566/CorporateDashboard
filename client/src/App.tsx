@@ -15,6 +15,8 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import SuperAdminDashboard from "@/pages/SuperAdminDashboard";
 import CompanyDashboard from "@/pages/CompanyDashboard";
+import PublicHome from "@/pages/PublicHome";
+import Demo from "@/pages/Demo";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -28,6 +30,10 @@ function Router() {
       <Route path="/mobile/auth" component={MobileAuthPage} />
       <Route path="/mobile/dashboard" component={MobileDashboardPage} />
       <Route path="/mobile" component={MobileAuthPage} />
+      
+      {/* SaaS Public Routes */}
+      <Route path="/public" component={PublicHome} />
+      <Route path="/demo" component={Demo} />
       
       {/* SaaS Authentication Routes */}
       <Route path="/login" component={Login} />
