@@ -334,9 +334,9 @@ export function registerRoutes(app: Express): Server {
       const transformedData = {
         title: req.body.title,
         description: req.body.description,
-        reward: parseFloat(req.body.amount || req.body.reward || 0),
+        reward: (req.body.amount || req.body.reward || 0).toString(),
         type: req.body.type || 'volume',
-        target: parseFloat(req.body.targetSales || req.body.target || 0),
+        target: (req.body.targetSales || req.body.target || 0).toString(),
         expiresAt: new Date(req.body.expiresAt)
       };
       
@@ -363,9 +363,9 @@ export function registerRoutes(app: Express): Server {
       const transformedData = {
         title: req.body.title,
         description: req.body.description,
-        reward: parseFloat(req.body.amount || req.body.reward || 0),
+        reward: (req.body.amount || req.body.reward || 0).toString(),
         type: req.body.type || 'volume',
-        target: parseFloat(req.body.targetSales || req.body.target || 0),
+        target: (req.body.targetSales || req.body.target || 0).toString(),
         expiresAt: new Date(req.body.expiresAt)
       };
       
