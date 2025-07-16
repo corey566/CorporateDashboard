@@ -1,132 +1,132 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal, json, varchar, real } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer, blob, real } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Users table for admin authentication
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+export const users = sqliteTable("users", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
 });
 
 // Teams table
-export const teams = pgTable("teams", {
-  id: serial("id").primaryKey(),
+export const teams = sqliteTable("teams", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   color: text("color").notNull().default("#2563eb"),
-  volumeTarget: decimal("volume_target", { precision: 10, scale: 2 }).notNull().default("0"),
+  volumeTarget: real("volume_target").notNull().default(0),
   unitsTarget: integer("units_target").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(Date.now()),
 });
 
 // Agents table
-export const agents = pgTable("agents", {
-  id: serial("id").primaryKey(),
+export const agents = sqliteTable("agents", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   photo: text("photo"),
   teamId: integer("team_id").references(() => teams.id).notNull(),
   category: text("category").notNull(),
-  volumeTarget: decimal("volume_target", { precision: 10, scale: 2 }).notNull().default("0"),
+  volumeTarget: real("volume_target").notNull().default(0),
   unitsTarget: integer("units_target").notNull().default(0),
-  isActive: boolean("is_active").notNull().default(true),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
   // Mobile auth fields
   username: text("username").unique(),
   password: text("password"),
-  canSelfReport: boolean("can_self_report").notNull().default(false),
-  createdAt: timestamp("created_at").defaultNow(),
+  canSelfReport: integer("can_self_report", { mode: "boolean" }).notNull().default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(Date.now()),
 });
 
 // Sales table
-export const sales = pgTable("sales", {
-  id: serial("id").primaryKey(),
+export const sales = sqliteTable("sales", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   agentId: integer("agent_id").references(() => agents.id).notNull(),
-  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  amount: real("amount").notNull(),
   units: integer("units").notNull().default(1),
   category: text("category").notNull(),
   clientName: text("client_name").notNull(),
   description: text("description"),
   subscriptionPeriod: text("subscription_period"),
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(Date.now()),
 });
 
 // Cash offers table
-export const cashOffers = pgTable("cash_offers", {
-  id: serial("id").primaryKey(),
+export const cashOffers = sqliteTable("cash_offers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  reward: decimal("reward", { precision: 10, scale: 2 }).notNull(),
+  reward: real("reward").notNull(),
   type: text("type").notNull(), // 'volume' or 'units'
-  target: decimal("target", { precision: 10, scale: 2 }).notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+  target: real("target").notNull(),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(Date.now()),
 });
 
 // Media slides table
-export const mediaSlides = pgTable("media_slides", {
-  id: serial("id").primaryKey(),
+export const mediaSlides = sqliteTable("media_slides", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   title: text("title").notNull(),
   type: text("type").notNull(), // 'image', 'video', 'text'
   url: text("url"),
   content: text("content"),
   duration: integer("duration").notNull().default(10), // Duration in seconds
   order: integer("order").notNull().default(0),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(Date.now()),
 });
 
 // Announcements table
-export const announcements = pgTable("announcements", {
-  id: serial("id").primaryKey(),
+export const announcements = sqliteTable("announcements", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   type: text("type").notNull(), // 'general', 'birthday', 'emergency'
   title: text("title").notNull(),
   message: text("message").notNull(),
   soundUrl: text("sound_url"),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(Date.now()),
 });
 
 // News ticker table
-export const newsTicker = pgTable("news_ticker", {
-  id: serial("id").primaryKey(),
+export const newsTicker = sqliteTable("news_ticker", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   message: text("message").notNull(),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at").defaultNow(),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(Date.now()),
 });
 
 // File uploads table
-export const fileUploads = pgTable("file_uploads", {
-  id: serial("id").primaryKey(),
+export const fileUploads = sqliteTable("file_uploads", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   originalName: text("original_name").notNull(),
   filename: text("filename").notNull(),
   mimetype: text("mimetype").notNull(),
   size: integer("size").notNull(),
   path: text("path").notNull(),
   type: text("type").notNull(), // 'image', 'audio', 'video'
-  createdAt: timestamp("created_at").defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(Date.now()),
 });
 
 // System settings table
-export const systemSettings = pgTable("system_settings", {
-  id: serial("id").primaryKey(),
-  key: varchar("key", { length: 100 }).notNull().unique(),
+export const systemSettings = sqliteTable("system_settings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  key: text("key").notNull().unique(),
   value: text("value").notNull(),
-  type: varchar("type", { length: 50 }).notNull().default("string"), // 'string', 'number', 'boolean', 'json'
+  type: text("type").notNull().default("string"), // 'string', 'number', 'boolean', 'json'
   description: text("description"),
-  updatedAt: timestamp("updated_at").defaultNow(),
-  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).notNull().default(Date.now()),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(Date.now()),
 });
 
 // Sound effects table for different event types
-export const soundEffects = pgTable("sound_effects", {
-  id: serial("id").primaryKey(),
+export const soundEffects = sqliteTable("sound_effects", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   eventType: text("event_type").notNull(), // 'sale', 'announcement', 'cash_offer', 'birthday', 'emergency'
   fileUrl: text("file_url").notNull(),
-  isActive: boolean("is_active").notNull().default(true),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
   volume: real("volume").notNull().default(0.5), // 0.0 to 1.0
-  createdAt: timestamp("created_at").notNull().defaultNow(),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(Date.now()),
 });
 
 // Relations

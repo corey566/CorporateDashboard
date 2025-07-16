@@ -9,10 +9,9 @@ import {
 import { db } from "./db";
 import { eq, desc, and, sql, gte, lte } from "drizzle-orm";
 import session from "express-session";
-import connectPg from "connect-pg-simple";
-import { pool } from "./db";
+import MemoryStore from "memorystore";
 
-const PostgresSessionStore = connectPg(session);
+const MemorySessionStore = MemoryStore(session);
 
 // Report types
 interface ReportFilters {
@@ -124,7 +123,9 @@ export class DatabaseStorage implements IStorage {
   public sessionStore: session.SessionStore;
   
   constructor() {
-    this.sessionStore = new PostgresSessionStore({ pool, createTableIfMissing: true });
+    this.sessionStore = new MemorySessionStore({
+      checkPeriod: 86400000, // prune expired entries every 24h
+    });
   }
   
   async getUser(id: number): Promise<User | undefined> {
@@ -219,7 +220,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(cashOffers).where(
       and(
         eq(cashOffers.isActive, true),
-        sql`${cashOffers.expiresAt} > NOW()`
+        sql`${cashOffers.expiresAt} > ${Date.now()}`
       )
     );
   }

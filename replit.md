@@ -8,7 +8,7 @@ This is a full-stack web application built for call centers to display real-time
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (July 15, 2025)
+## Recent Changes (July 16, 2025)
 
 ✓ Fixed sale notification auto-close timer to 5 seconds
 ✓ Reduced confetti animation amounts for better performance  
@@ -54,6 +54,15 @@ Preferred communication style: Simple, everyday language.
 ✓ Updated all financial displays (sales amounts, targets, cash offers) to use new currency formatting
 ✓ Enhanced reports, dashboards, and admin panels with dynamic currency support
 
+✓ Migrated application from PostgreSQL to SQLite database for XAMPP compatibility
+✓ Updated all database schemas from PostgreSQL to SQLite syntax
+✓ Replaced Neon serverless database with better-sqlite3 local database
+✓ Updated Drizzle ORM configuration to work with SQLite
+✓ Migrated session storage from PostgreSQL to memory-based sessions
+✓ Created database migration script to initialize SQLite with existing data structure
+✓ Updated all SQL queries to use SQLite-compatible syntax
+✓ Removed "Active Cash Offers" section from dashboard left panel, keeping only right panel
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -67,11 +76,11 @@ Preferred communication style: Simple, everyday language.
 ### Backend Architecture
 - **Runtime**: Node.js with Express.js
 - **Language**: TypeScript with ES modules
-- **Database**: PostgreSQL with Neon serverless
+- **Database**: SQLite with better-sqlite3 driver
 - **ORM**: Drizzle ORM for database operations
 - **Authentication**: Passport.js with local strategy and session management
 - **Real-time**: WebSocket server for live updates
-- **Session Storage**: PostgreSQL-based session store
+- **Session Storage**: Memory-based session store
 
 ## Key Components
 
@@ -136,11 +145,11 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### Core Dependencies
-- **Database**: Neon PostgreSQL serverless database
+- **Database**: SQLite with better-sqlite3 driver
 - **UI Components**: Radix UI primitives via shadcn/ui
 - **Form Handling**: React Hook Form with Zod validation
 - **Real-time**: Native WebSocket implementation
-- **Session Management**: connect-pg-simple for PostgreSQL sessions
+- **Session Management**: Memory-based session store with memorystore
 
 ### Development Tools
 - **Type Safety**: TypeScript throughout the stack
@@ -156,13 +165,13 @@ Preferred communication style: Simple, everyday language.
 - Database: Drizzle migrations for schema management
 
 ### Environment Configuration
-- **DATABASE_URL**: PostgreSQL connection string
+- **DATABASE_FILE**: SQLite database file path (defaults to database.sqlite)
 - **SESSION_SECRET**: Session encryption key
 - **NODE_ENV**: Environment mode (development/production)
 
 ### Hosting Requirements
 - Node.js runtime environment
-- PostgreSQL database (Neon serverless recommended)
+- SQLite database file (local storage)
 - WebSocket support for real-time features
 - Static file serving for frontend assets
 
