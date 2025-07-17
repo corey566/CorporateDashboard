@@ -1,10 +1,12 @@
 import { 
   users, agents, teams, sales, cashOffers, mediaSlides, announcements, newsTicker, fileUploads, systemSettings, soundEffects,
+  agentTargetHistory, teamTargetHistory,
   type User, type InsertUser, type Agent, type InsertAgent, type Team, type InsertTeam,
   type Sale, type InsertSale, type CashOffer, type InsertCashOffer, type MediaSlide,
   type InsertMediaSlide, type Announcement, type InsertAnnouncement, type NewsTicker,
   type InsertNewsTicker, type FileUpload, type InsertFileUpload, type SystemSetting, type InsertSystemSetting,
-  type SoundEffect, type InsertSoundEffect
+  type SoundEffect, type InsertSoundEffect, type AgentTargetHistory, type InsertAgentTargetHistory,
+  type TeamTargetHistory, type InsertTeamTargetHistory
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, gte, lte, or } from "drizzle-orm";
@@ -117,6 +119,22 @@ export interface IStorage {
   exportReportAsExcel(reportData: ReportData): Promise<Buffer>;
   exportReportAsPDF(reportData: ReportData): Promise<Buffer>;
   
+  // Currency settings
+  getCurrencySettings(): Promise<any>;
+  
+  // Target cycle management
+  initializeTargetCycles(): Promise<void>;
+  checkAndResetTargetCycles(): Promise<void>;
+  getAgentTargetHistory(agentId: number): Promise<AgentTargetHistory[]>;
+  getTeamTargetHistory(teamId: number): Promise<TeamTargetHistory[]>;
+  getCurrentAgentTargetCycle(agentId: number): Promise<AgentTargetHistory | null>;
+  getCurrentTeamTargetCycle(teamId: number): Promise<TeamTargetHistory | null>;
+  createAgentTargetHistory(history: InsertAgentTargetHistory): Promise<AgentTargetHistory>;
+  createTeamTargetHistory(history: InsertTeamTargetHistory): Promise<TeamTargetHistory>;
+  updateAgentTargetHistory(id: number, history: Partial<InsertAgentTargetHistory>): Promise<AgentTargetHistory>;
+  updateTeamTargetHistory(id: number, history: Partial<InsertTeamTargetHistory>): Promise<TeamTargetHistory>;
+  calculateNextCycleDate(targetCycle: string, resetDay: number, resetMonth?: number): Date;
+  
   sessionStore: session.SessionStore;
 }
 
@@ -221,7 +239,48 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createSale(sale: InsertSale): Promise<Sale> {
-    const [newSale] = await db.insert(sales).values(sale).returning();
+    // Get current agent target cycle
+    const currentAgentCycle = await this.getCurrentAgentTargetCycle(sale.agentId);
+    
+    // Add cycle information to sale
+    const saleWithCycle = {
+      ...sale,
+      cycleStartDate: currentAgentCycle?.cycleStartDate || new Date(),
+      cycleEndDate: currentAgentCycle?.cycleEndDate || new Date(),
+    };
+    
+    const [newSale] = await db.insert(sales).values(saleWithCycle).returning();
+    
+    // Update agent target cycle achievements
+    if (currentAgentCycle) {
+      const newVolumeAchieved = parseFloat(currentAgentCycle.volumeAchieved) + parseFloat(sale.amount);
+      const newUnitsAchieved = currentAgentCycle.unitsAchieved + (sale.units || 1);
+      const newTotalSales = currentAgentCycle.totalSales + 1;
+      
+      await this.updateAgentTargetHistory(currentAgentCycle.id, {
+        volumeAchieved: newVolumeAchieved.toString(),
+        unitsAchieved: newUnitsAchieved,
+        totalSales: newTotalSales
+      });
+    }
+    
+    // Update team target cycle achievements
+    const agent = await this.getAgent(sale.agentId);
+    if (agent) {
+      const currentTeamCycle = await this.getCurrentTeamTargetCycle(agent.teamId);
+      if (currentTeamCycle) {
+        const newVolumeAchieved = parseFloat(currentTeamCycle.volumeAchieved) + parseFloat(sale.amount);
+        const newUnitsAchieved = currentTeamCycle.unitsAchieved + (sale.units || 1);
+        const newTotalSales = currentTeamCycle.totalSales + 1;
+        
+        await this.updateTeamTargetHistory(currentTeamCycle.id, {
+          volumeAchieved: newVolumeAchieved.toString(),
+          unitsAchieved: newUnitsAchieved,
+          totalSales: newTotalSales
+        });
+      }
+    }
+    
     return newSale;
   }
 
@@ -401,6 +460,241 @@ export class DatabaseStorage implements IStorage {
         currencyName: 'US Dollar'
       };
     }
+  }
+
+  // Target cycle management methods
+  async initializeTargetCycles(): Promise<void> {
+    try {
+      // Initialize cycles for all agents
+      const allAgents = await db.select().from(agents);
+      for (const agent of allAgents) {
+        const existingCycle = await this.getCurrentAgentTargetCycle(agent.id);
+        if (!existingCycle) {
+          const now = new Date();
+          const cycleEnd = this.calculateNextCycleDate(
+            agent.targetCycle || 'monthly',
+            agent.resetDay || 1,
+            agent.resetMonth || 1
+          );
+          
+          await this.createAgentTargetHistory({
+            agentId: agent.id,
+            cycleStartDate: now,
+            cycleEndDate: cycleEnd,
+            targetCycle: agent.targetCycle || 'monthly',
+            volumeTarget: agent.volumeTarget || '0',
+            unitsTarget: agent.unitsTarget || 0,
+            volumeAchieved: '0',
+            unitsAchieved: 0,
+            totalSales: 0,
+            isCompleted: false
+          });
+        }
+      }
+
+      // Initialize cycles for all teams
+      const allTeams = await db.select().from(teams);
+      for (const team of allTeams) {
+        const existingCycle = await this.getCurrentTeamTargetCycle(team.id);
+        if (!existingCycle) {
+          const now = new Date();
+          const cycleEnd = this.calculateNextCycleDate(
+            team.targetCycle || 'monthly',
+            team.resetDay || 1,
+            team.resetMonth || 1
+          );
+          
+          await this.createTeamTargetHistory({
+            teamId: team.id,
+            cycleStartDate: now,
+            cycleEndDate: cycleEnd,
+            targetCycle: team.targetCycle || 'monthly',
+            volumeTarget: team.volumeTarget || '0',
+            unitsTarget: team.unitsTarget || 0,
+            volumeAchieved: '0',
+            unitsAchieved: 0,
+            totalSales: 0,
+            isCompleted: false
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error initializing target cycles:", error);
+    }
+  }
+
+  async checkAndResetTargetCycles(): Promise<void> {
+    try {
+      const now = new Date();
+      
+      // Check agent cycles
+      const activeAgentCycles = await db.select()
+        .from(agentTargetHistory)
+        .where(eq(agentTargetHistory.isCompleted, false));
+      
+      for (const cycle of activeAgentCycles) {
+        if (now >= cycle.cycleEndDate) {
+          // Mark current cycle as completed
+          await this.updateAgentTargetHistory(cycle.id, { isCompleted: true });
+          
+          // Get agent details for new cycle
+          const agent = await this.getAgent(cycle.agentId);
+          if (agent) {
+            const nextCycleEnd = this.calculateNextCycleDate(
+              agent.targetCycle || 'monthly',
+              agent.resetDay || 1,
+              agent.resetMonth || 1
+            );
+            
+            // Create new cycle
+            await this.createAgentTargetHistory({
+              agentId: agent.id,
+              cycleStartDate: now,
+              cycleEndDate: nextCycleEnd,
+              targetCycle: agent.targetCycle || 'monthly',
+              volumeTarget: agent.volumeTarget || '0',
+              unitsTarget: agent.unitsTarget || 0,
+              volumeAchieved: '0',
+              unitsAchieved: 0,
+              totalSales: 0,
+              isCompleted: false
+            });
+          }
+        }
+      }
+      
+      // Check team cycles
+      const activeTeamCycles = await db.select()
+        .from(teamTargetHistory)
+        .where(eq(teamTargetHistory.isCompleted, false));
+      
+      for (const cycle of activeTeamCycles) {
+        if (now >= cycle.cycleEndDate) {
+          // Mark current cycle as completed
+          await this.updateTeamTargetHistory(cycle.id, { isCompleted: true });
+          
+          // Get team details for new cycle
+          const team = await this.getTeam(cycle.teamId);
+          if (team) {
+            const nextCycleEnd = this.calculateNextCycleDate(
+              team.targetCycle || 'monthly',
+              team.resetDay || 1,
+              team.resetMonth || 1
+            );
+            
+            // Create new cycle
+            await this.createTeamTargetHistory({
+              teamId: team.id,
+              cycleStartDate: now,
+              cycleEndDate: nextCycleEnd,
+              targetCycle: team.targetCycle || 'monthly',
+              volumeTarget: team.volumeTarget || '0',
+              unitsTarget: team.unitsTarget || 0,
+              volumeAchieved: '0',
+              unitsAchieved: 0,
+              totalSales: 0,
+              isCompleted: false
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error checking and resetting target cycles:", error);
+    }
+  }
+
+  calculateNextCycleDate(targetCycle: string, resetDay: number, resetMonth?: number): Date {
+    const now = new Date();
+    let nextDate: Date;
+    
+    if (targetCycle === 'monthly') {
+      // Monthly cycle: next reset is on the specified day of next month
+      nextDate = new Date(now.getFullYear(), now.getMonth() + 1, resetDay);
+      
+      // If reset day is today or has passed this month, set to next month
+      if (now.getDate() >= resetDay) {
+        nextDate = new Date(now.getFullYear(), now.getMonth() + 1, resetDay);
+      } else {
+        nextDate = new Date(now.getFullYear(), now.getMonth(), resetDay);
+      }
+    } else {
+      // Yearly cycle: next reset is on the specified day and month of next year
+      const month = (resetMonth || 1) - 1; // Convert to 0-indexed
+      nextDate = new Date(now.getFullYear(), month, resetDay);
+      
+      // If the date has passed this year, set to next year
+      if (now > nextDate) {
+        nextDate = new Date(now.getFullYear() + 1, month, resetDay);
+      }
+    }
+    
+    return nextDate;
+  }
+
+  async getAgentTargetHistory(agentId: number): Promise<AgentTargetHistory[]> {
+    return await db.select()
+      .from(agentTargetHistory)
+      .where(eq(agentTargetHistory.agentId, agentId))
+      .orderBy(desc(agentTargetHistory.cycleStartDate));
+  }
+
+  async getTeamTargetHistory(teamId: number): Promise<TeamTargetHistory[]> {
+    return await db.select()
+      .from(teamTargetHistory)
+      .where(eq(teamTargetHistory.teamId, teamId))
+      .orderBy(desc(teamTargetHistory.cycleStartDate));
+  }
+
+  async getCurrentAgentTargetCycle(agentId: number): Promise<AgentTargetHistory | null> {
+    const [currentCycle] = await db.select()
+      .from(agentTargetHistory)
+      .where(and(
+        eq(agentTargetHistory.agentId, agentId),
+        eq(agentTargetHistory.isCompleted, false)
+      ))
+      .orderBy(desc(agentTargetHistory.cycleStartDate))
+      .limit(1);
+    
+    return currentCycle || null;
+  }
+
+  async getCurrentTeamTargetCycle(teamId: number): Promise<TeamTargetHistory | null> {
+    const [currentCycle] = await db.select()
+      .from(teamTargetHistory)
+      .where(and(
+        eq(teamTargetHistory.teamId, teamId),
+        eq(teamTargetHistory.isCompleted, false)
+      ))
+      .orderBy(desc(teamTargetHistory.cycleStartDate))
+      .limit(1);
+    
+    return currentCycle || null;
+  }
+
+  async createAgentTargetHistory(history: InsertAgentTargetHistory): Promise<AgentTargetHistory> {
+    const [created] = await db.insert(agentTargetHistory).values(history).returning();
+    return created;
+  }
+
+  async createTeamTargetHistory(history: InsertTeamTargetHistory): Promise<TeamTargetHistory> {
+    const [created] = await db.insert(teamTargetHistory).values(history).returning();
+    return created;
+  }
+
+  async updateAgentTargetHistory(id: number, history: Partial<InsertAgentTargetHistory>): Promise<AgentTargetHistory> {
+    const [updated] = await db.update(agentTargetHistory)
+      .set({ ...history, updatedAt: new Date() })
+      .where(eq(agentTargetHistory.id, id))
+      .returning();
+    return updated;
+  }
+
+  async updateTeamTargetHistory(id: number, history: Partial<InsertTeamTargetHistory>): Promise<TeamTargetHistory> {
+    const [updated] = await db.update(teamTargetHistory)
+      .set({ ...history, updatedAt: new Date() })
+      .where(eq(teamTargetHistory.id, id))
+      .returning();
+    return updated;
   }
 
   async deleteSystemSetting(key: string): Promise<void> {

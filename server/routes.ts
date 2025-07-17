@@ -930,6 +930,77 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Target cycle management endpoints
+  app.get("/api/agents/:id/target-history", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const agentId = parseInt(req.params.id);
+      const history = await storage.getAgentTargetHistory(agentId);
+      res.json(history);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch agent target history" });
+    }
+  });
+
+  app.get("/api/teams/:id/target-history", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const teamId = parseInt(req.params.id);
+      const history = await storage.getTeamTargetHistory(teamId);
+      res.json(history);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch team target history" });
+    }
+  });
+
+  app.get("/api/agents/:id/current-cycle", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const agentId = parseInt(req.params.id);
+      const currentCycle = await storage.getCurrentAgentTargetCycle(agentId);
+      res.json(currentCycle);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch current agent cycle" });
+    }
+  });
+
+  app.get("/api/teams/:id/current-cycle", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const teamId = parseInt(req.params.id);
+      const currentCycle = await storage.getCurrentTeamTargetCycle(teamId);
+      res.json(currentCycle);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch current team cycle" });
+    }
+  });
+
+  app.post("/api/target-cycles/initialize", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      await storage.initializeTargetCycles();
+      res.json({ message: "Target cycles initialized successfully" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to initialize target cycles" });
+    }
+  });
+
+  app.post("/api/target-cycles/reset", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      await storage.checkAndResetTargetCycles();
+      res.json({ message: "Target cycles reset successfully" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to reset target cycles" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // Setup WebSocket server

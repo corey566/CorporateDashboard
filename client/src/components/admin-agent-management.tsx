@@ -20,10 +20,15 @@ const agentFormSchema = insertAgentSchema.omit({
   teamId: true,
   volumeTarget: true,
   unitsTarget: true,
+  resetDay: true,
+  resetMonth: true,
 }).extend({
   teamId: z.string().min(1, "Team is required").transform(val => parseInt(val)),
   volumeTarget: z.string().min(1, "Volume target is required").transform(val => parseFloat(val)),
   unitsTarget: z.string().min(1, "Units target is required").transform(val => parseInt(val)),
+  targetCycle: z.enum(["monthly", "yearly"]).default("monthly"),
+  resetDay: z.string().min(1, "Reset day is required").transform(val => parseInt(val)),
+  resetMonth: z.string().optional().transform(val => val ? parseInt(val) : undefined),
   username: z.string().optional(),
   password: z.string().optional(),
   canSelfReport: z.boolean().default(false),
@@ -54,6 +59,9 @@ export default function AdminAgentManagement() {
       category: "",
       volumeTarget: "",
       unitsTarget: "",
+      targetCycle: "monthly",
+      resetDay: "1",
+      resetMonth: "1",
       username: "",
       password: "",
       canSelfReport: false,
@@ -149,6 +157,9 @@ export default function AdminAgentManagement() {
       category: agent.category,
       volumeTarget: agent.volumeTarget.toString(),
       unitsTarget: agent.unitsTarget.toString(),
+      targetCycle: agent.targetCycle || "monthly",
+      resetDay: agent.resetDay?.toString() || "1",
+      resetMonth: agent.resetMonth?.toString() || "1",
       username: agent.username || "",
       password: "",
       canSelfReport: agent.canSelfReport || false,
@@ -307,6 +318,101 @@ export default function AdminAgentManagement() {
                   </div>
                 </div>
                 
+                {/* Target Cycle Configuration */}
+                <div className="border-t pt-4">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Target Cycle Settings</h3>
+                    <p className="text-sm text-gray-600">Configure how often targets reset for this agent</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="targetCycle">Target Cycle</Label>
+                      <Select
+                        value={form.watch("targetCycle")}
+                        onValueChange={(value) => form.setValue("targetCycle", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select cycle" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="yearly">Yearly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {form.formState.errors.targetCycle && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.targetCycle.message}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="resetDay">
+                        {form.watch("targetCycle") === "yearly" ? "Day of Year" : "Day of Month"}
+                      </Label>
+                      <Input
+                        id="resetDay"
+                        type="number"
+                        min="1"
+                        max={form.watch("targetCycle") === "yearly" ? "366" : "31"}
+                        {...form.register("resetDay")}
+                        placeholder="1"
+                      />
+                      {form.formState.errors.resetDay && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.resetDay.message}
+                        </p>
+                      )}
+                    </div>
+                    
+                    {form.watch("targetCycle") === "yearly" && (
+                      <div>
+                        <Label htmlFor="resetMonth">Month</Label>
+                        <Select
+                          value={form.watch("resetMonth")}
+                          onValueChange={(value) => form.setValue("resetMonth", value)}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select month" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">January</SelectItem>
+                            <SelectItem value="2">February</SelectItem>
+                            <SelectItem value="3">March</SelectItem>
+                            <SelectItem value="4">April</SelectItem>
+                            <SelectItem value="5">May</SelectItem>
+                            <SelectItem value="6">June</SelectItem>
+                            <SelectItem value="7">July</SelectItem>
+                            <SelectItem value="8">August</SelectItem>
+                            <SelectItem value="9">September</SelectItem>
+                            <SelectItem value="10">October</SelectItem>
+                            <SelectItem value="11">November</SelectItem>
+                            <SelectItem value="12">December</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {form.formState.errors.resetMonth && (
+                          <p className="text-sm text-destructive">
+                            {form.formState.errors.resetMonth.message}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="mt-2 text-sm text-gray-500">
+                    {form.watch("targetCycle") === "monthly" 
+                      ? `Targets will reset on day ${form.watch("resetDay") || 1} of each month`
+                      : `Targets will reset on day ${form.watch("resetDay") || 1} of ${
+                          ["", "January", "February", "March", "April", "May", "June", 
+                           "July", "August", "September", "October", "November", "December"][
+                            parseInt(form.watch("resetMonth")) || 1
+                          ]
+                        } each year`
+                    }
+                  </div>
+                </div>
+                
                 {/* Mobile Authentication Section */}
                 <div className="border-t pt-4">
                   <div className="mb-4">
@@ -394,6 +500,7 @@ export default function AdminAgentManagement() {
                 <TableHead>Category</TableHead>
                 <TableHead>Volume Target</TableHead>
                 <TableHead>Units Target</TableHead>
+                <TableHead>Target Cycle</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -423,6 +530,22 @@ export default function AdminAgentManagement() {
                     <TableCell>{agent.category}</TableCell>
                     <TableCell>${parseFloat(agent.volumeTarget).toLocaleString()}</TableCell>
                     <TableCell>{agent.unitsTarget}</TableCell>
+                    <TableCell>
+                      <div className="text-sm">
+                        <div className="font-medium capitalize">{agent.targetCycle || "Monthly"}</div>
+                        <div className="text-gray-500">
+                          {agent.targetCycle === "yearly" 
+                            ? `Reset: Day ${agent.resetDay || 1} of ${
+                                ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][
+                                  agent.resetMonth || 1
+                                ]
+                              }`
+                            : `Reset: Day ${agent.resetDay || 1}`
+                          }
+                        </div>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Button

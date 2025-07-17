@@ -17,6 +17,9 @@ export const teams = pgTable("teams", {
   color: text("color").notNull().default("#2563eb"),
   volumeTarget: decimal("volume_target", { precision: 10, scale: 2 }).notNull().default("0"),
   unitsTarget: integer("units_target").notNull().default(0),
+  targetCycle: text("target_cycle").notNull().default("monthly"), // 'monthly' or 'yearly'
+  resetDay: integer("reset_day").notNull().default(1), // Day of month (1-31) for monthly, day of year (1-366) for yearly
+  resetMonth: integer("reset_month").default(1), // Month (1-12) for yearly cycles only
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -29,6 +32,9 @@ export const agents = pgTable("agents", {
   category: text("category").notNull(),
   volumeTarget: decimal("volume_target", { precision: 10, scale: 2 }).notNull().default("0"),
   unitsTarget: integer("units_target").notNull().default(0),
+  targetCycle: text("target_cycle").notNull().default("monthly"), // 'monthly' or 'yearly'
+  resetDay: integer("reset_day").notNull().default(1), // Day of month (1-31) for monthly, day of year (1-366) for yearly
+  resetMonth: integer("reset_month").default(1), // Month (1-12) for yearly cycles only
   isActive: boolean("is_active").notNull().default(true),
   // Mobile auth fields
   username: text("username").unique(),
@@ -47,7 +53,43 @@ export const sales = pgTable("sales", {
   clientName: text("client_name").notNull(),
   description: text("description"),
   subscriptionPeriod: text("subscription_period"),
+  cycleStartDate: timestamp("cycle_start_date").notNull(), // Start date of the target cycle when this sale was made
+  cycleEndDate: timestamp("cycle_end_date").notNull(), // End date of the target cycle when this sale was made
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Target History table for agents
+export const agentTargetHistory = pgTable("agent_target_history", {
+  id: serial("id").primaryKey(),
+  agentId: integer("agent_id").references(() => agents.id).notNull(),
+  cycleStartDate: timestamp("cycle_start_date").notNull(),
+  cycleEndDate: timestamp("cycle_end_date").notNull(),
+  targetCycle: text("target_cycle").notNull(), // 'monthly' or 'yearly'
+  volumeTarget: decimal("volume_target", { precision: 10, scale: 2 }).notNull(),
+  unitsTarget: integer("units_target").notNull(),
+  volumeAchieved: decimal("volume_achieved", { precision: 10, scale: 2 }).notNull().default("0"),
+  unitsAchieved: integer("units_achieved").notNull().default(0),
+  totalSales: integer("total_sales").notNull().default(0),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Target History table for teams
+export const teamTargetHistory = pgTable("team_target_history", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id").references(() => teams.id).notNull(),
+  cycleStartDate: timestamp("cycle_start_date").notNull(),
+  cycleEndDate: timestamp("cycle_end_date").notNull(),
+  targetCycle: text("target_cycle").notNull(), // 'monthly' or 'yearly'
+  volumeTarget: decimal("volume_target", { precision: 10, scale: 2 }).notNull(),
+  unitsTarget: integer("units_target").notNull(),
+  volumeAchieved: decimal("volume_achieved", { precision: 10, scale: 2 }).notNull().default("0"),
+  unitsAchieved: integer("units_achieved").notNull().default(0),
+  totalSales: integer("total_sales").notNull().default(0),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 // Cash offers table
@@ -132,6 +174,7 @@ export const soundEffects = pgTable("sound_effects", {
 // Relations
 export const teamsRelations = relations(teams, ({ many }) => ({
   agents: many(agents),
+  targetHistory: many(teamTargetHistory),
 }));
 
 export const agentsRelations = relations(agents, ({ one, many }) => ({
@@ -140,12 +183,27 @@ export const agentsRelations = relations(agents, ({ one, many }) => ({
     references: [teams.id],
   }),
   sales: many(sales),
+  targetHistory: many(agentTargetHistory),
 }));
 
 export const salesRelations = relations(sales, ({ one }) => ({
   agent: one(agents, {
     fields: [sales.agentId],
     references: [agents.id],
+  }),
+}));
+
+export const agentTargetHistoryRelations = relations(agentTargetHistory, ({ one }) => ({
+  agent: one(agents, {
+    fields: [agentTargetHistory.agentId],
+    references: [agents.id],
+  }),
+}));
+
+export const teamTargetHistoryRelations = relations(teamTargetHistory, ({ one }) => ({
+  team: one(teams, {
+    fields: [teamTargetHistory.teamId],
+    references: [teams.id],
   }),
 }));
 
@@ -174,6 +232,18 @@ export const agentLoginSchema = z.object({
 export const insertSaleSchema = createInsertSchema(sales).omit({
   id: true,
   createdAt: true,
+});
+
+export const insertAgentTargetHistorySchema = createInsertSchema(agentTargetHistory).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTeamTargetHistorySchema = createInsertSchema(teamTargetHistory).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertCashOfferSchema = createInsertSchema(cashOffers).omit({
@@ -237,3 +307,7 @@ export type SystemSetting = typeof systemSettings.$inferSelect;
 export type InsertSystemSetting = z.infer<typeof insertSystemSettingSchema>;
 export type SoundEffect = typeof soundEffects.$inferSelect;
 export type InsertSoundEffect = z.infer<typeof insertSoundEffectSchema>;
+export type AgentTargetHistory = typeof agentTargetHistory.$inferSelect;
+export type InsertAgentTargetHistory = z.infer<typeof insertAgentTargetHistorySchema>;
+export type TeamTargetHistory = typeof teamTargetHistory.$inferSelect;
+export type InsertTeamTargetHistory = z.infer<typeof insertTeamTargetHistorySchema>;
