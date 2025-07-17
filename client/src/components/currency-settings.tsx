@@ -37,18 +37,14 @@ export default function CurrencySettings() {
   const queryClient = useQueryClient();
 
   const { data: currentSettings } = useQuery({
-    queryKey: ["/api/system-settings"],
+    queryKey: ["/api/currency-settings"],
   });
 
   const getCurrentCurrency = (): CurrencySettings => {
-    const symbolSetting = currentSettings?.find((s: any) => s.key === "currencySymbol");
-    const codeSetting = currentSettings?.find((s: any) => s.key === "currencyCode");
-    const nameSetting = currentSettings?.find((s: any) => s.key === "currencyName");
-    
     return {
-      symbol: symbolSetting?.value || "$",
-      code: codeSetting?.value || "USD",
-      name: nameSetting?.value || "US Dollar",
+      symbol: currentSettings?.currencySymbol || "$",
+      code: currentSettings?.currencyCode || "USD",
+      name: currentSettings?.currencyName || "US Dollar",
     };
   };
 
@@ -70,6 +66,7 @@ export default function CurrencySettings() {
       });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-settings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/system-settings"] });
       toast({
         title: "Currency Updated",

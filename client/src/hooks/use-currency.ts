@@ -1,23 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 
 export function useCurrency() {
-  const { data: settings } = useQuery({
-    queryKey: ["/api/system-settings"],
+  const { data: currencySettings } = useQuery({
+    queryKey: ["/api/currency-settings"],
   });
 
   const getCurrencySymbol = (): string => {
-    const symbolSetting = settings?.find((s: any) => s.key === "currencySymbol");
-    return symbolSetting?.value || "$";
+    return currencySettings?.currencySymbol || "$";
   };
 
   const getCurrencyCode = (): string => {
-    const codeSetting = settings?.find((s: any) => s.key === "currencyCode");
-    return codeSetting?.value || "USD";
+    return currencySettings?.currencyCode || "USD";
   };
 
   const getCurrencyName = (): string => {
-    const nameSetting = settings?.find((s: any) => s.key === "currencyName");
-    return nameSetting?.value || "US Dollar";
+    return currencySettings?.currencyName || "US Dollar";
   };
 
   const formatCurrency = (amount: number | string): string => {

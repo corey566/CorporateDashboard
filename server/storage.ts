@@ -7,7 +7,7 @@ import {
   type SoundEffect, type InsertSoundEffect
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql, gte, lte } from "drizzle-orm";
+import { eq, desc, and, sql, gte, lte, or } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -361,11 +361,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateSystemSetting(key: string, value: string): Promise<SystemSetting> {
-    const [updatedSetting] = await db.update(systemSettings).set({ 
-      value, 
-      updatedAt: new Date() 
-    }).where(eq(systemSettings.key, key)).returning();
-    return updatedSetting;
+    console.log(`Updating system setting: ${key} = ${value}`);
+    try {
+      const [updatedSetting] = await db.update(systemSettings).set({ 
+        value, 
+        updatedAt: new Date() 
+      }).where(eq(systemSettings.key, key)).returning();
+      
+      console.log(`Successfully updated setting:`, updatedSetting);
+      return updatedSetting;
+    } catch (error) {
+      console.error(`Failed to update system setting ${key}:`, error);
+      throw error;
+    }
+  }
+
+  async getCurrencySettings(): Promise<any> {
+    try {
+      const settings = await db.select().from(systemSettings).where(
+        or(
+          eq(systemSettings.key, 'currencySymbol'),
+          eq(systemSettings.key, 'currencyCode'),
+          eq(systemSettings.key, 'currencyName')
+        )
+      );
+      
+      const currencyData = {
+        currencySymbol: settings.find(s => s.key === 'currencySymbol')?.value || '$',
+        currencyCode: settings.find(s => s.key === 'currencyCode')?.value || 'USD',
+        currencyName: settings.find(s => s.key === 'currencyName')?.value || 'US Dollar'
+      };
+      
+      return currencyData;
+    } catch (error) {
+      console.error("Error fetching currency settings:", error);
+      return {
+        currencySymbol: '$',
+        currencyCode: 'USD',
+        currencyName: 'US Dollar'
+      };
+    }
   }
 
   async deleteSystemSetting(key: string): Promise<void> {

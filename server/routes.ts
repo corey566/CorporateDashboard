@@ -665,6 +665,17 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Public currency settings endpoint (no authentication required)
+  app.get("/api/currency-settings", async (req, res) => {
+    try {
+      const currencySettings = await storage.getCurrencySettings();
+      res.json(currencySettings);
+    } catch (error) {
+      console.error("Currency settings error:", error);
+      res.status(500).json({ error: "Failed to fetch currency settings" });
+    }
+  });
+
   app.get("/api/system-settings/:key", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
