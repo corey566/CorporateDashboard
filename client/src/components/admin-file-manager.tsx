@@ -24,10 +24,7 @@ export default function AdminFileManager() {
       const formData = new FormData();
       formData.append('file', file);
       
-      return apiRequest("/api/files", {
-        method: "POST",
-        body: formData,
-      });
+      return apiRequest("POST", "/api/files", formData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/files"] });
@@ -50,9 +47,7 @@ export default function AdminFileManager() {
 
   const deleteMutation = useMutation({
     mutationFn: async (fileId: number) => {
-      return apiRequest(`/api/files/${fileId}`, {
-        method: "DELETE",
-      });
+      return apiRequest("DELETE", `/api/files/${fileId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/files"] });
