@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Calendar, Download, FileText, TrendingUp, Users, DollarSign, Target, Filter } from "lucide-react";
 import { format } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 interface ReportFilters {
   startDate: string;
@@ -41,7 +42,21 @@ export default function AdminReports() {
   });
 
   const [isGenerating, setIsGenerating] = useState(false);
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, refetchCurrency } = useCurrency();
+  const { lastMessage } = useWebSocket();
+  const queryClient = useQueryClient();
+
+  // Handle currency updates from WebSocket
+  useEffect(() => {
+    if (lastMessage?.type === "currency_updated") {
+      console.log("Currency update received in reports, refreshing data...");
+      // Refetch currency settings immediately
+      refetchCurrency();
+      // Invalidate and refetch all report data
+      queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
+      queryClient.refetchQueries({ queryKey: ["/api/reports"] });
+    }
+  }, [lastMessage, refetchCurrency, queryClient]);
 
   const { data: agents } = useQuery({
     queryKey: ["/api/agents"],

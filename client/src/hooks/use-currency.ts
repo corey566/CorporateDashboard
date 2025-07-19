@@ -4,10 +4,10 @@ export function useCurrency() {
   const { data: currencySettings, refetch } = useQuery({
     queryKey: ["/api/currency-settings"],
     staleTime: 0, // Always consider data stale to refetch when needed
-    cacheTime: 0, // Don't cache data to force fresh fetches
+    gcTime: 0, // Don't cache data to force fresh fetches (updated from cacheTime in v5)
     refetchOnWindowFocus: true,
     refetchOnMount: true,
-    refetchInterval: 5000, // Refetch every 5 seconds to catch changes
+    refetchInterval: 2000, // Refetch every 2 seconds to catch changes faster
   });
 
   const getCurrencySymbol = (): string => {

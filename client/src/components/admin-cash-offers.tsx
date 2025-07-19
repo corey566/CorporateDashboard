@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,11 +11,12 @@ import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertCashOfferSchema } from "@shared/schema";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Gift, Trash2, Clock, DollarSign } from "lucide-react";
 import { z } from "zod";
 import { useCurrency } from "@/hooks/use-currency";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 const cashOfferFormSchema = insertCashOfferSchema.extend({
   reward: z.union([
@@ -34,7 +35,21 @@ type CashOfferFormData = z.infer<typeof cashOfferFormSchema>;
 export default function AdminCashOffers() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, refetchCurrency } = useCurrency();
+  const { lastMessage } = useWebSocket();
+  const queryClient = useQueryClient();
+
+  // Handle currency updates from WebSocket
+  useEffect(() => {
+    if (lastMessage?.type === "currency_updated") {
+      console.log("Currency update received in cash offers, refreshing data...");
+      // Refetch currency settings immediately
+      refetchCurrency();
+      // Invalidate and refetch cash offers data
+      queryClient.invalidateQueries({ queryKey: ["/api/cash-offers"] });
+      queryClient.refetchQueries({ queryKey: ["/api/cash-offers"] });
+    }
+  }, [lastMessage, refetchCurrency, queryClient]);
 
   const { data: cashOffers, isLoading } = useQuery({
     queryKey: ["/api/cash-offers"],

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,13 +9,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertSaleSchema } from "@shared/schema";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, DollarSign, Package, Edit, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { useCurrency } from "@/hooks/use-currency";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 const saleFormSchema = insertSaleSchema.extend({
   amount: z.string().min(1, "Amount is required"),
@@ -32,9 +33,23 @@ type SaleFormData = z.infer<typeof saleFormSchema>;
 export default function AdminSalesEntry() {
   const [editingSale, setEditingSale] = useState<any>(null);
   const { toast } = useToast();
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, refetchCurrency } = useCurrency();
   const { user } = useAuth();
   const [, navigate] = useLocation();
+  const { lastMessage } = useWebSocket();
+  const queryClient = useQueryClient();
+
+  // Handle currency updates from WebSocket
+  useEffect(() => {
+    if (lastMessage?.type === "currency_updated") {
+      console.log("Currency update received in sales entry, refreshing data...");
+      // Refetch currency settings immediately
+      refetchCurrency();
+      // Invalidate and refetch sales data
+      queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
+      queryClient.refetchQueries({ queryKey: ["/api/sales"] });
+    }
+  }, [lastMessage, refetchCurrency, queryClient]);
 
   const { data: agents } = useQuery({
     queryKey: ["/api/agents"],

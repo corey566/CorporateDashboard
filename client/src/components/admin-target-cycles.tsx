@@ -1,20 +1,37 @@
-import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { RefreshCcw, History, RotateCcw, Calendar } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useCurrency } from "@/hooks/use-currency";
+import { useWebSocket } from "@/hooks/use-websocket";
 
 export default function AdminTargetCycles() {
   const { toast } = useToast();
-  const { formatCurrency } = useCurrency();
+  const { formatCurrency, refetchCurrency } = useCurrency();
+  const { lastMessage } = useWebSocket();
+  const queryClient = useQueryClient();
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
+
+  // Handle currency updates from WebSocket
+  useEffect(() => {
+    if (lastMessage?.type === "currency_updated") {
+      console.log("Currency update received in target cycles, refreshing data...");
+      // Refetch currency settings immediately
+      refetchCurrency();
+      // Invalidate and refetch all related data
+      queryClient.invalidateQueries({ queryKey: ["/api/agents"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+      queryClient.refetchQueries({ queryKey: ["/api/agents"] });
+      queryClient.refetchQueries({ queryKey: ["/api/teams"] });
+    }
+  }, [lastMessage, refetchCurrency, queryClient]);
 
   const { data: agents, isLoading: agentsLoading } = useQuery({
     queryKey: ["/api/agents"],
