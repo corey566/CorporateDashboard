@@ -71,9 +71,14 @@ export default function AdminSalesEntry() {
       setEditingSale(null);
     },
     onError: (error) => {
+      console.error("Sale creation error:", error);
+      let errorMessage = error.message;
+      if (error.message.includes("Unauthorized") || error.message.includes("401")) {
+        errorMessage = "You need to be logged in to create sales. Please refresh the page and log in to the admin panel.";
+      }
       toast({
         title: "Error",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -149,6 +154,9 @@ export default function AdminSalesEntry() {
   };
 
   const handleSubmit = (data: SaleFormData) => {
+    console.log("Form submitted with data:", data);
+    console.log("Form errors:", form.formState.errors);
+    
     if (editingSale) {
       updateMutation.mutate({ id: editingSale.id, data });
     } else {
