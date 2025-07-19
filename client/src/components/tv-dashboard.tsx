@@ -120,7 +120,7 @@ export default function TvDashboard() {
     
     // Calculate current volume and units
     const currentVolume = agentSales.reduce((sum: number, sale: any) => sum + (parseFloat(sale.amount) || 0), 0);
-    const currentUnits = agentSales.length;
+    const currentUnits = agentSales.reduce((sum: number, sale: any) => sum + (sale.units || 0), 0);
     
     // Find associated team
     const team = teams.find((t: any) => t.id === agent.teamId);

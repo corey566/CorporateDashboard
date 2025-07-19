@@ -298,14 +298,19 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
+      console.log("Sale creation request body:", req.body);
       const saleData = insertSaleSchema.parse(req.body);
+      console.log("Parsed sale data:", saleData);
       const sale = await storage.createSale(saleData);
+      console.log("Created sale:", sale);
       
       // Broadcast real-time sale update
+      console.log("Broadcasting sale_created event to clients");
       broadcastToClients({ type: "sale_created", data: sale });
       
       res.status(201).json(sale);
     } catch (error) {
+      console.error("Sale creation error:", error);
       res.status(400).json({ error: "Invalid sale data" });
     }
   });
