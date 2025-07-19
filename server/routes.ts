@@ -299,7 +299,16 @@ export function registerRoutes(app: Express): Server {
     
     try {
       console.log("Sale creation request body:", req.body);
-      const saleData = insertSaleSchema.parse(req.body);
+      
+      // Parse date strings to Date objects for cycle dates
+      const requestData = {
+        ...req.body,
+        cycleStartDate: new Date(req.body.cycleStartDate),
+        cycleEndDate: new Date(req.body.cycleEndDate),
+      };
+      
+      console.log("Request data with parsed dates:", requestData);
+      const saleData = insertSaleSchema.parse(requestData);
       console.log("Parsed sale data:", saleData);
       const sale = await storage.createSale(saleData);
       console.log("Created sale:", sale);
@@ -311,7 +320,7 @@ export function registerRoutes(app: Express): Server {
       res.status(201).json(sale);
     } catch (error) {
       console.error("Sale creation error:", error);
-      res.status(400).json({ error: "Invalid sale data" });
+      res.status(400).json({ error: "Invalid sale data", details: error.message });
     }
   });
 

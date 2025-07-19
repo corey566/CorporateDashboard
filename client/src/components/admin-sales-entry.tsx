@@ -21,6 +21,7 @@ const saleFormSchema = insertSaleSchema.extend({
   amount: z.string().min(1, "Amount is required"),
   units: z.string().min(1, "Units is required"),
   agentId: z.string().min(1, "Agent is required"),
+  clientName: z.string().min(1, "Client name is required"),
 }).omit({
   cycleStartDate: true,
   cycleEndDate: true,
@@ -69,12 +70,21 @@ export default function AdminSalesEntry() {
         agentId: parseInt(data.agentId),
         amount: data.amount,
         units: parseInt(data.units),
-        cycleStartDate: cycleStartDate.toISOString(),
-        cycleEndDate: cycleEndDate.toISOString(),
+        cycleStartDate: cycleStartDate,
+        cycleEndDate: cycleEndDate,
       };
       
       console.log("Sending sale data to API:", saleData);
-      return apiRequest("POST", "/api/sales", saleData);
+      
+      // Convert dates to ISO strings for JSON serialization
+      const requestData = {
+        ...saleData,
+        cycleStartDate: saleData.cycleStartDate.toISOString(),
+        cycleEndDate: saleData.cycleEndDate.toISOString(),
+      };
+      
+      console.log("Final request data:", requestData);
+      return apiRequest("POST", "/api/sales", requestData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
