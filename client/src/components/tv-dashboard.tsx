@@ -164,16 +164,22 @@ export default function TvDashboard() {
     }
   }, [lastMessage, dashboardData?.agents]);
 
-  // Media presentation timer - every 10 seconds
+  // Media presentation timer - uses dashboard duration setting
   useEffect(() => {
     if (mediaSlides.length > 0) {
+      // Get dashboard duration from system settings (default 30 seconds)
+      const dashboardDuration = parseInt(systemSettings?.find((s: any) => s.key === "dashboardDuration")?.value) || 30;
+      const durationMs = dashboardDuration * 1000; // Convert to milliseconds
+      
+      console.log(`Dashboard will transition to media slides every ${dashboardDuration} seconds`);
+      
       const interval = setInterval(() => {
         setShowMediaPresentation(true);
-      }, 10000); // Every 10 seconds
+      }, durationMs);
 
       return () => clearInterval(interval);
     }
-  }, [mediaSlides]);
+  }, [mediaSlides, systemSettings]);
 
   // Auto-close announcement popup after 5 seconds
   useEffect(() => {

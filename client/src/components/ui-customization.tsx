@@ -42,6 +42,7 @@ const uiCustomizationSchema = z.object({
   fontSize: z.string().min(1, "Font size is required"),
   enableHighContrast: z.boolean(),
   enableReducedMotion: z.boolean(),
+  dashboardDuration: z.number().min(5).max(300).default(30),
 });
 
 type UICustomizationData = z.infer<typeof uiCustomizationSchema>;
@@ -73,6 +74,7 @@ export default function UICustomization() {
       accentColor: systemSettings?.find((s: any) => s.key === "accentColor")?.value || "#10B981",
       fontFamily: systemSettings?.find((s: any) => s.key === "fontFamily")?.value || "Inter, sans-serif",
       fontSize: systemSettings?.find((s: any) => s.key === "fontSize")?.value || "16px",
+      dashboardDuration: parseInt(systemSettings?.find((s: any) => s.key === "dashboardDuration")?.value) || 30,
       enableHighContrast: systemSettings?.find((s: any) => s.key === "enableHighContrast")?.value === "true",
       enableReducedMotion: systemSettings?.find((s: any) => s.key === "enableReducedMotion")?.value === "true",
     },
@@ -412,6 +414,33 @@ export default function UICustomization() {
                       <SelectItem value="20px">Extra Large (20px)</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* Dashboard Settings */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold flex items-center gap-2">
+                <Monitor className="w-4 h-4" />
+                Dashboard Settings
+              </Label>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Dashboard Display Duration</Label>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      type="number"
+                      min="5"
+                      max="300"
+                      value={form.watch("dashboardDuration")}
+                      onChange={(e) => form.setValue("dashboardDuration", parseInt(e.target.value) || 30)}
+                      className="w-24"
+                    />
+                    <span className="text-sm text-muted-foreground">seconds</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    How long the main dashboard displays before transitioning to media slides (5-300 seconds)
+                  </p>
                 </div>
               </div>
             </div>
