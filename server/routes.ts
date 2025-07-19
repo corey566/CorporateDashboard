@@ -749,6 +749,19 @@ export function registerRoutes(app: Express): Server {
     try {
       const { value } = req.body;
       const setting = await storage.updateSystemSetting(req.params.key, value);
+      
+      // Broadcast currency changes to all clients immediately
+      if (req.params.key.includes('currency')) {
+        broadcastToClients({ 
+          type: "currency_updated", 
+          data: { 
+            key: req.params.key, 
+            value: value,
+            setting: setting
+          } 
+        });
+      }
+      
       res.json(setting);
     } catch (error) {
       res.status(400).json({ error: "Failed to update system setting" });

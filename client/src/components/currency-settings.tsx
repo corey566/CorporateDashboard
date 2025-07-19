@@ -76,12 +76,17 @@ export default function CurrencySettings() {
       queryClient.invalidateQueries({ queryKey: ["/api/cash-offers"] });
       queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
       
-      // Refetch all to immediately update UI
-      queryClient.refetchQueries();
+      // Clear all queries to force refetch
+      queryClient.clear();
+      
+      // Force page reload to ensure all components refresh with new currency
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
       
       toast({
         title: "Currency Updated",
-        description: "Currency settings have been successfully updated throughout the application.",
+        description: "Currency settings updated. The page will refresh to apply changes throughout the application.",
       });
     },
     onError: () => {

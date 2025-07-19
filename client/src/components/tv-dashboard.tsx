@@ -133,7 +133,7 @@ export default function TvDashboard() {
     };
   });
 
-  // Handle WebSocket messages for sale notifications
+  // Handle WebSocket messages for sale notifications and currency updates
   useEffect(() => {
     if (lastMessage?.type === "sale_created" && lastMessage.data && dashboardData?.agents) {
       // Play sound effect immediately
@@ -155,6 +155,12 @@ export default function TvDashboard() {
     } else if (lastMessage?.type === "cash_offer_created" && lastMessage.data) {
       playEventSound("cash_offer");
       setCashOfferPopup(lastMessage.data);
+    } else if (lastMessage?.type === "currency_updated" && lastMessage.data) {
+      // Force refresh all components by reloading the page
+      console.log("Currency update received via WebSocket, refreshing page...");
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     }
   }, [lastMessage, dashboardData?.agents]);
 
