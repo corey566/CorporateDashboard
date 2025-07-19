@@ -204,14 +204,30 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      const teamData = insertTeamSchema.parse(req.body);
+      console.log("Team creation request body:", req.body);
+      
+      // Create a server-side schema that handles string-to-number conversion
+      const serverTeamSchema = insertTeamSchema.extend({
+        volumeTarget: z.union([z.number(), z.string().transform(val => parseFloat(val))]),
+        unitsTarget: z.union([z.number(), z.string().transform(val => parseInt(val))]),
+        resetDay: z.union([z.number(), z.string().transform(val => parseInt(val))]),
+        resetMonth: z.union([z.number(), z.string().transform(val => parseInt(val))]).optional(),
+      });
+      
+      const teamData = serverTeamSchema.parse(req.body);
+      console.log("Parsed team data:", teamData);
+      
       const team = await storage.createTeam(teamData);
       
       broadcastToClients({ type: "team_created", data: team });
       
       res.status(201).json(team);
     } catch (error) {
-      res.status(400).json({ error: "Invalid team data" });
+      console.error("Team creation error:", error);
+      res.status(400).json({ 
+        error: "Invalid team data",
+        details: error instanceof z.ZodError ? error.errors : error.message 
+      });
     }
   });
 
