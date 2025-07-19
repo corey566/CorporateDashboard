@@ -14,6 +14,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, DollarSign, Package, Edit, Trash2 } from "lucide-react";
 import { z } from "zod";
 import { useCurrency } from "@/hooks/use-currency";
+import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 
 const saleFormSchema = insertSaleSchema.extend({
   amount: z.string().min(1, "Amount is required"),
@@ -27,6 +29,8 @@ export default function AdminSalesEntry() {
   const [editingSale, setEditingSale] = useState<any>(null);
   const { toast } = useToast();
   const { formatCurrency } = useCurrency();
+  const { user } = useAuth();
+  const [, navigate] = useLocation();
 
   const { data: agents } = useQuery({
     queryKey: ["/api/agents"],
@@ -177,6 +181,67 @@ export default function AdminSalesEntry() {
   const totalUnits = todaysSales.reduce((sum: number, sale: any) => {
     return sum + sale.units;
   }, 0);
+
+  // Check if user is authenticated
+  if (!user) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-destructive">Authentication Required</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center py-8">
+            <div className="mb-6">
+              <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Plus className="w-8 h-8 text-destructive" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Sales Entry Access Denied</h3>
+              <p className="text-muted-foreground mb-4">
+                You need to be logged in to the admin panel to create and manage sales entries.
+              </p>
+            </div>
+            <Button 
+              onClick={() => navigate("/auth")}
+              className="w-full max-w-sm"
+            >
+              Go to Admin Login
+            </Button>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Instructions</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                <div>
+                  <h4 className="font-medium">Login to Admin Panel</h4>
+                  <p className="text-sm text-muted-foreground">Click the button above to access the admin login page</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                <div>
+                  <h4 className="font-medium">Enter Credentials</h4>
+                  <p className="text-sm text-muted-foreground">Use your admin username and password to log in</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <div className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                <div>
+                  <h4 className="font-medium">Access Admin Features</h4>
+                  <p className="text-sm text-muted-foreground">Once logged in, you'll have full access to sales entry and all admin features</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
