@@ -206,6 +206,17 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log("Team creation request body:", req.body);
       
+      // Process and set defaults for undefined values
+      const processedData = {
+        ...req.body,
+        volumeTarget: req.body.volumeTarget !== undefined ? req.body.volumeTarget.toString() : "0",
+        unitsTarget: req.body.unitsTarget !== undefined ? parseInt(req.body.unitsTarget) : 0,
+        resetDay: req.body.resetDay !== undefined ? parseInt(req.body.resetDay) : 1,
+        resetMonth: req.body.resetMonth !== undefined ? parseInt(req.body.resetMonth) : 1,
+      };
+      
+      console.log("Processed team data before validation:", processedData);
+      
       // Create a server-side schema that handles string-to-number conversion
       const serverTeamSchema = insertTeamSchema.extend({
         volumeTarget: z.union([z.number(), z.string().transform(val => parseFloat(val))]),
@@ -214,7 +225,7 @@ export function registerRoutes(app: Express): Server {
         resetMonth: z.union([z.number(), z.string().transform(val => parseInt(val))]).optional(),
       });
       
-      const teamData = serverTeamSchema.parse(req.body);
+      const teamData = serverTeamSchema.parse(processedData);
       console.log("Parsed team data:", teamData);
       
       const team = await storage.createTeam(teamData);

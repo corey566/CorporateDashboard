@@ -13,11 +13,15 @@ import { insertTeamSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2, Users, Trophy, Target } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { z } from "zod";
 
 const teamFormSchema = insertTeamSchema.extend({
   volumeTarget: z.string().min(1, "Volume target is required").transform(val => parseFloat(val)),
   unitsTarget: z.string().min(1, "Units target is required").transform(val => parseInt(val)),
+  targetCycle: z.string().default("monthly"),
+  resetDay: z.string().default("1").transform(val => parseInt(val)),
+  resetMonth: z.string().optional().transform(val => val ? parseInt(val) : 1),
 });
 
 type TeamFormData = z.infer<typeof teamFormSchema>;
@@ -43,6 +47,9 @@ export default function AdminTeamManagement() {
       color: "#3B82F6",
       volumeTarget: "",
       unitsTarget: "",
+      targetCycle: "monthly",
+      resetDay: "1",
+      resetMonth: "1",
     },
   });
 
@@ -131,6 +138,9 @@ export default function AdminTeamManagement() {
       color: team.color,
       volumeTarget: team.volumeTarget.toString(),
       unitsTarget: team.unitsTarget.toString(),
+      targetCycle: team.targetCycle || "monthly",
+      resetDay: (team.resetDay || 1).toString(),
+      resetMonth: (team.resetMonth || 1).toString(),
     });
     setIsDialogOpen(true);
   };
@@ -258,6 +268,75 @@ export default function AdminTeamManagement() {
                       <p className="text-sm text-destructive">
                         {form.formState.errors.unitsTarget.message}
                       </p>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Target Cycle Configuration */}
+                <div className="border-t pt-4">
+                  <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Target Cycle Settings</h3>
+                    <p className="text-sm text-gray-600">Configure how often targets reset for this team</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label htmlFor="targetCycle">Target Cycle</Label>
+                      <Select
+                        value={form.watch("targetCycle")}
+                        onValueChange={(value) => form.setValue("targetCycle", value)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select cycle" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="monthly">Monthly</SelectItem>
+                          <SelectItem value="yearly">Yearly</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {form.formState.errors.targetCycle && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.targetCycle.message}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="resetDay">
+                        {form.watch("targetCycle") === "yearly" ? "Day of Year" : "Day of Month"}
+                      </Label>
+                      <Input
+                        id="resetDay"
+                        type="number"
+                        min="1"
+                        max={form.watch("targetCycle") === "yearly" ? "366" : "31"}
+                        {...form.register("resetDay")}
+                        placeholder="1"
+                      />
+                      {form.formState.errors.resetDay && (
+                        <p className="text-sm text-destructive">
+                          {form.formState.errors.resetDay.message}
+                        </p>
+                      )}
+                    </div>
+                    
+                    {form.watch("targetCycle") === "yearly" && (
+                      <div>
+                        <Label htmlFor="resetMonth">Month</Label>
+                        <Input
+                          id="resetMonth"
+                          type="number"
+                          min="1"
+                          max="12"
+                          {...form.register("resetMonth")}
+                          placeholder="1"
+                        />
+                        {form.formState.errors.resetMonth && (
+                          <p className="text-sm text-destructive">
+                            {form.formState.errors.resetMonth.message}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
