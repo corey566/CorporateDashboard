@@ -293,15 +293,17 @@ export default function TvDashboard() {
             <Card className="h-full bg-card border-border shadow-md">
               <CardHeader className="pb-3 flex-shrink-0 border-b border-border">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl text-foreground">Sales Agents</CardTitle>
-                  <Badge variant="secondary" className="bg-accent text-accent-foreground">
-                    <Users className="w-4 h-4 mr-1" />
-                    {agents.length} Active
+                  <CardTitle className="text-2xl lg:text-3xl font-black text-foreground flex items-center gap-3">
+                    👥 Sales Agents Performance
+                  </CardTitle>
+                  <Badge variant="secondary" className="bg-accent text-accent-foreground px-4 py-2 text-base lg:text-lg font-bold">
+                    <Users className="w-5 h-5 mr-2" />
+                    {agents.length} ACTIVE AGENTS
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent className="p-4 h-[calc(100%-5rem)] overflow-y-auto custom-scrollbar">
-                <div className="space-y-3">
+              <CardContent className="p-2 lg:p-4 h-[calc(100%-5rem)] overflow-y-auto custom-scrollbar">
+                <div className="space-y-2 lg:space-y-4">
                   {agents.map((agent: any) => (
                     <AgentCard key={agent.id} agent={agent} />
                   ))}
