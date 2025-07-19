@@ -923,6 +923,8 @@ export function registerRoutes(app: Express): Server {
     try {
       const { startDate, endDate, agentId, teamId, reportType } = req.query;
       
+      console.log("Reports API called with query params:", { startDate, endDate, agentId, teamId, reportType });
+      
       if (!startDate || !endDate) {
         return res.status(400).json({ error: "Start date and end date are required" });
       }
@@ -933,6 +935,14 @@ export function registerRoutes(app: Express): Server {
         agentId: agentId ? parseInt(agentId as string) : undefined,
         teamId: teamId ? parseInt(teamId as string) : undefined,
         reportType: reportType as string || "sales"
+      });
+
+      console.log("Generated report data:", {
+        totalSales: reportData.totalSales,
+        totalVolume: reportData.totalVolume,
+        salesByAgent: reportData.salesByAgent.length,
+        salesByTeam: reportData.salesByTeam.length,
+        salesByDate: reportData.salesByDate.length
       });
 
       res.json(reportData);

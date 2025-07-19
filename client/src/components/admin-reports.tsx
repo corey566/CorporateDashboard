@@ -68,6 +68,27 @@ export default function AdminReports() {
 
   const { data: reportData, isLoading } = useQuery<ReportData>({
     queryKey: ["/api/reports", filters],
+    queryFn: async () => {
+      const searchParams = new URLSearchParams();
+      searchParams.set('startDate', filters.startDate);
+      searchParams.set('endDate', filters.endDate);
+      searchParams.set('reportType', filters.reportType);
+      
+      if (filters.agentId) {
+        searchParams.set('agentId', filters.agentId);
+      }
+      if (filters.teamId) {
+        searchParams.set('teamId', filters.teamId);
+      }
+      
+      const response = await fetch(`/api/reports?${searchParams.toString()}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      return response.json();
+    },
     enabled: !!filters.startDate && !!filters.endDate,
   });
 
