@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -36,18 +36,32 @@ import AdminSoundEffects from "@/components/admin-sound-effects";
 import AdminReports from "@/components/admin-reports";
 import AdminTargetCycles from "@/components/admin-target-cycles";
 import UICustomization from "@/components/ui-customization";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWebSocket } from "@/hooks/use-websocket";
 
 export default function AdminPage() {
   const [, navigate] = useLocation();
   const { user, logoutMutation } = useAuth();
-  const { isConnected } = useWebSocket();
+  const { isConnected, lastMessage } = useWebSocket();
+  const queryClient = useQueryClient();
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["/api/dashboard"],
     refetchInterval: 5000,
   });
+
+  // Handle WebSocket currency updates
+  useEffect(() => {
+    if (lastMessage?.type === "currency_updated") {
+      console.log("Currency update received in admin panel, refreshing...");
+      // Invalidate all relevant queries
+      queryClient.invalidateQueries();
+      // Force page reload to ensure all components refresh
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    }
+  }, [lastMessage, queryClient]);
 
   const handleLogout = async () => {
     await logoutMutation.mutateAsync();

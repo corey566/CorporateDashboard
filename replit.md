@@ -63,6 +63,12 @@ Preferred communication style: Simple, everyday language.
 ✓ Created deployment documentation with multiple platform options (Vercel, Apache, Nginx, Docker)
 ✓ Added environment variable configuration and security considerations
 ✓ Included troubleshooting guide and scaling recommendations for production deployment
+✓ Fixed file upload functionality by switching from apiRequest wrapper to native fetch API for multipart form handling
+✓ Enhanced currency system with WebSocket broadcasting for immediate updates across all connected clients
+✓ Added aggressive cache invalidation and automatic page refresh when currency settings change to ensure propagation
+✓ Updated backend export functions to include proper currency formatting in reports (CSV, Excel, PDF)
+✓ Implemented comprehensive currency refresh system in both TV dashboard and admin panel components
+✓ Added WebSocket currency update handlers to force page refresh and ensure all components show new currency immediately
 
 ## System Architecture
 

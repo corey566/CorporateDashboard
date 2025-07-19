@@ -866,13 +866,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async exportReportAsCSV(reportData: ReportData): Promise<string> {
+    // Get current currency settings
+    const currencySettings = await this.getCurrencySettings();
+    const symbol = currencySettings.currencySymbol || '$';
+    
     const headers = ['Agent', 'Team', 'Total Sales', 'Sales Count', 'Average Sale'];
     const rows = reportData.salesByAgent.map(agent => [
       agent.name,
       agent.team,
-      agent.totalVolume.toFixed(2),
+      `${symbol}${agent.totalVolume.toFixed(2)}`,
       agent.salesCount.toString(),
-      (agent.totalVolume / agent.salesCount).toFixed(2)
+      `${symbol}${(agent.totalVolume / agent.salesCount).toFixed(2)}`
     ]);
     
     const csvContent = [headers, ...rows]
