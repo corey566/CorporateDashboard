@@ -21,6 +21,9 @@ const saleFormSchema = insertSaleSchema.extend({
   amount: z.string().min(1, "Amount is required"),
   units: z.string().min(1, "Units is required"),
   agentId: z.string().min(1, "Agent is required"),
+}).omit({
+  cycleStartDate: true,
+  cycleEndDate: true,
 });
 
 type SaleFormData = z.infer<typeof saleFormSchema>;
@@ -56,12 +59,21 @@ export default function AdminSalesEntry() {
 
   const createMutation = useMutation({
     mutationFn: async (data: SaleFormData) => {
+      // Calculate cycle dates based on current date and monthly cycle
+      const now = new Date();
+      const cycleStartDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      const cycleEndDate = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      
       const saleData = {
         ...data,
         agentId: parseInt(data.agentId),
         amount: data.amount,
         units: parseInt(data.units),
+        cycleStartDate: cycleStartDate.toISOString(),
+        cycleEndDate: cycleEndDate.toISOString(),
       };
+      
+      console.log("Sending sale data to API:", saleData);
       return apiRequest("POST", "/api/sales", saleData);
     },
     onSuccess: () => {
