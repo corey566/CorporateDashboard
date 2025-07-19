@@ -158,14 +158,29 @@ export default function AdminSalesEntry() {
   };
 
   const handleSubmit = (data: SaleFormData) => {
+    console.log("=== SALES FORM SUBMISSION ===");
     console.log("Form submitted with data:", data);
     console.log("Form errors:", form.formState.errors);
+    console.log("User authenticated:", !!user);
+    console.log("Available agents:", agents?.length);
+    console.log("Editing sale:", editingSale);
     
     if (editingSale) {
+      console.log("Updating existing sale:", editingSale.id);
       updateMutation.mutate({ id: editingSale.id, data });
     } else {
+      console.log("Creating new sale");
       createMutation.mutate(data);
     }
+  };
+
+  // Add form validation debug
+  const debugForm = () => {
+    console.log("=== FORM DEBUG ===");
+    console.log("Form values:", form.getValues());
+    console.log("Form errors:", form.formState.errors);
+    console.log("Form valid:", form.formState.isValid);
+    console.log("Form dirty:", form.formState.isDirty);
   };
 
   const todaysSales = sales?.filter((sale: any) => {
@@ -383,16 +398,35 @@ export default function AdminSalesEntry() {
                 </Button>
               )}
               <Button
+                type="button"
+                variant="outline"
+                onClick={debugForm}
+                className="px-3"
+              >
+                Debug
+              </Button>
+              <Button
                 type="submit"
                 className="flex-1"
                 disabled={createMutation.isPending || updateMutation.isPending}
+                onClick={(e) => {
+                  console.log("Submit button clicked!");
+                  console.log("Form data before submit:", form.getValues());
+                }}
               >
-                {editingSale ? (
-                  <Edit className="w-4 h-4 mr-2" />
+                {createMutation.isPending || updateMutation.isPending ? (
+                  "Submitting..."
+                ) : editingSale ? (
+                  <>
+                    <Edit className="w-4 h-4 mr-2" />
+                    Update Sale
+                  </>
                 ) : (
-                  <Plus className="w-4 h-4 mr-2" />
+                  <>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Record Sale
+                  </>
                 )}
-                {editingSale ? "Update Sale" : "Record Sale"}
               </Button>
             </div>
           </form>
