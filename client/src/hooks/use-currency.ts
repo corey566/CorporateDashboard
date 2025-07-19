@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 
 export function useCurrency() {
-  const { data: currencySettings } = useQuery({
+  const { data: currencySettings, refetch } = useQuery({
     queryKey: ["/api/currency-settings"],
+    staleTime: 0, // Always consider data stale to refetch when needed
+    refetchOnWindowFocus: true,
   });
 
   const getCurrencySymbol = (): string => {
@@ -56,5 +58,6 @@ export function useCurrency() {
     name: getCurrencyName(),
     formatCurrency,
     formatCurrencyCompact,
+    refetchCurrency: refetch,
   };
 }

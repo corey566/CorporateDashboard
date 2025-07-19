@@ -66,11 +66,22 @@ export default function CurrencySettings() {
       });
     },
     onSuccess: () => {
+      // Invalidate all currency and dashboard related queries to force refresh
       queryClient.invalidateQueries({ queryKey: ["/api/currency-settings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/system-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/sales"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/agents"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/cash-offers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reports"] });
+      
+      // Refetch all to immediately update UI
+      queryClient.refetchQueries();
+      
       toast({
         title: "Currency Updated",
-        description: "Currency settings have been successfully updated.",
+        description: "Currency settings have been successfully updated throughout the application.",
       });
     },
     onError: () => {

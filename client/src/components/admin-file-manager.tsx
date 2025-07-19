@@ -24,7 +24,19 @@ export default function AdminFileManager() {
       const formData = new FormData();
       formData.append('file', file);
       
-      return apiRequest("POST", "/api/files", formData);
+      // Use fetch directly for file upload to avoid content-type conflicts
+      const response = await fetch('/api/files', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload failed');
+      }
+      
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/files"] });
