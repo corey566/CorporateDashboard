@@ -53,13 +53,11 @@ export default function AdminPage() {
   // Handle WebSocket currency updates
   useEffect(() => {
     if (lastMessage?.type === "currency_updated") {
-      console.log("Currency update received in admin panel, refreshing...");
-      // Invalidate all relevant queries
-      queryClient.invalidateQueries();
-      // Force page reload to ensure all components refresh
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      console.log("Currency update received in admin panel, refreshing data...");
+      // Invalidate all relevant queries without page reload
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/system-settings"] });
     }
   }, [lastMessage, queryClient]);
 

@@ -188,11 +188,10 @@ export default function TvDashboard() {
       playEventSound("cash_offer");
       setCashOfferPopup(lastMessage.data);
     } else if (lastMessage?.type === "currency_updated" && lastMessage.data) {
-      // Force refresh all components by reloading the page
-      console.log("Currency update received via WebSocket, refreshing page...");
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
+      // Invalidate currency-related queries to refresh data without page reload
+      console.log("Currency update received via WebSocket, refreshing data...");
+      queryClient.invalidateQueries({ queryKey: ["/api/currency-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
     }
   }, [lastMessage, rawAgents]);
 
