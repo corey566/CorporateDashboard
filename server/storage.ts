@@ -463,15 +463,32 @@ export class DatabaseStorage implements IStorage {
   async updateSystemSetting(key: string, value: string): Promise<SystemSetting> {
     console.log(`Updating system setting: ${key} = ${value}`);
     try {
+      // First try to update existing setting
       const [updatedSetting] = await db.update(systemSettings).set({ 
         value, 
         updatedAt: new Date() 
       }).where(eq(systemSettings.key, key)).returning();
       
-      console.log(`Successfully updated setting:`, updatedSetting);
-      return updatedSetting;
+      if (updatedSetting) {
+        console.log(`Successfully updated setting:`, updatedSetting);
+        return updatedSetting;
+      }
+      
+      // If no existing setting found, create a new one
+      console.log(`Setting ${key} not found, creating new setting`);
+      const [newSetting] = await db.insert(systemSettings).values({
+        key,
+        value,
+        type: 'string',
+        description: `Auto-created setting for ${key}`,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }).returning();
+      
+      console.log(`Successfully created setting:`, newSetting);
+      return newSetting;
     } catch (error) {
-      console.error(`Failed to update system setting ${key}:`, error);
+      console.error(`Failed to update/create system setting ${key}:`, error);
       throw error;
     }
   }
