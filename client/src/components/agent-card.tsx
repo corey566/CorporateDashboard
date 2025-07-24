@@ -43,31 +43,31 @@ export default function AgentCard({ agent }: AgentCardProps) {
       </div>
 
       {/* Scoreboard Stats */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         {/* Volume Score */}
-        <div className="text-center bg-primary/10 rounded-lg p-3">
-          <div className="text-xs font-bold text-muted-foreground mb-1">VOLUME</div>
-          <div className="text-2xl font-black text-primary mb-1">
+        <div className="text-center bg-primary/10 rounded-lg p-2 min-h-[120px] flex flex-col justify-between">
+          <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">VOLUME</div>
+          <div className="text-lg font-black text-primary leading-tight break-all">
             {formatCurrency(agent.currentVolume || 0)}
           </div>
-          <div className="text-xs text-muted-foreground mb-1">
+          <div className="text-[9px] text-muted-foreground leading-tight">
             Target: {formatCurrency(agent.volumeTarget)}
           </div>
-          <div className="text-lg font-black text-accent">
+          <div className="text-sm font-black text-accent">
             {Math.round(volumeProgress)}%
           </div>
         </div>
 
         {/* Units Score */}
-        <div className="text-center bg-accent/10 rounded-lg p-3">
-          <div className="text-xs font-bold text-muted-foreground mb-1">UNITS</div>
-          <div className="text-2xl font-black text-accent mb-1">
+        <div className="text-center bg-accent/10 rounded-lg p-2 min-h-[120px] flex flex-col justify-between">
+          <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">UNITS</div>
+          <div className="text-lg font-black text-accent leading-tight">
             {agent.currentUnits || 0}
           </div>
-          <div className="text-xs text-muted-foreground mb-1">
+          <div className="text-[9px] text-muted-foreground leading-tight">
             Target: {agent.unitsTarget}
           </div>
-          <div className="text-lg font-black text-primary">
+          <div className="text-sm font-black text-primary">
             {Math.round(unitsProgress)}%
           </div>
         </div>

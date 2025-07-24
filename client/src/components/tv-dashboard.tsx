@@ -173,6 +173,7 @@ export default function TvDashboard() {
       const dashboardDuration = parseInt(systemSettingsArray.find((s: any) => s?.key === "dashboardDuration")?.value) || 30;
       const durationMs = dashboardDuration * 1000; // Convert to milliseconds
       
+      // Only log once when setting up the timer
       console.log(`Dashboard will transition to media slides every ${dashboardDuration} seconds`);
       
       const interval = setInterval(() => {
@@ -181,7 +182,7 @@ export default function TvDashboard() {
 
       return () => clearInterval(interval);
     }
-  }, [mediaSlides.length, systemSettingsArray]);
+  }, [mediaSlides.length]);
 
   // Auto-close announcement popup after 5 seconds
   useEffect(() => {
