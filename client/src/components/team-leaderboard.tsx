@@ -66,44 +66,53 @@ export default function TeamLeaderboard({ teams, agents }: TeamLeaderboardProps)
   };
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3 flex-shrink-0">
-        <CardTitle className="text-lg flex items-center">
-          <Users className="w-5 h-5 text-primary mr-2" />
-          Team Rankings
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-4 h-[calc(100%-4rem)] overflow-y-auto">
-        <div className="space-y-2">
-          {teamPerformance.map((team) => (
-            <div
-              key={team.id}
-              className={`flex items-center justify-between p-2 bg-gradient-to-r ${getTeamGradient(team.rank)} rounded-lg border`}
-            >
-              <div className="flex items-center space-x-2">
-                <Badge className={`${getTeamBadgeColor(team.rank)} w-6 h-6 rounded-full flex items-center justify-center font-bold text-xs`}>
-                  {team.rank}
-                </Badge>
+    <div>
+      <div className="mb-6">
+        <h2 className="text-5xl font-black text-foreground mb-4">TEAM RANKINGS</h2>
+        <div className="text-2xl font-bold text-muted-foreground">
+          Real-time Team Performance Leaderboard
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-1 gap-6">
+        {teamPerformance.map((team) => (
+          <div
+            key={team.id}
+            className={`bg-card border-2 border-border rounded-2xl p-8 shadow-lg transition-all duration-300 ${team.rank === 1 ? 'ring-4 ring-primary/50' : ''}`}
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-8">
+                <div className={`w-20 h-20 rounded-full flex items-center justify-center font-black text-3xl ${getTeamBadgeColor(team.rank)}`}>
+                  #{team.rank}
+                </div>
                 <div>
-                  <div className="flex items-center space-x-1">
-                    <h3 className="font-semibold text-corporate-800 text-sm">{team.name}</h3>
-                    {getTeamIcon(team.rank)}
+                  <div className="flex items-center space-x-4 mb-2">
+                    <h3 className="font-black text-5xl text-foreground">{team.name}</h3>
+                    <div className="text-4xl">
+                      {team.rank === 1 ? <Crown className="w-12 h-12 text-yellow-500" /> : 
+                       team.rank === 2 ? <TrendingUp className="w-12 h-12 text-green-500" /> :
+                       <Target className="w-12 h-12 text-blue-500" />}
+                    </div>
                   </div>
-                  <p className="text-xs text-corporate-500">{team.memberCount} members</p>
+                  <p className="text-2xl font-bold text-muted-foreground">{team.memberCount} Team Members</p>
                 </div>
               </div>
+              
               <div className="text-right">
-                <p className={`font-bold text-sm ${team.rank === 1 ? 'text-primary' : team.rank === 2 ? 'text-accent' : 'text-purple-500'}`}>
+                <div className={`text-6xl font-black mb-2 ${team.rank === 1 ? 'text-primary' : team.rank === 2 ? 'text-accent' : 'text-purple-500'}`}>
                   {formatCurrency(team.totalSales)}
-                </p>
-                <p className="text-xs text-corporate-500">
-                  {team.percentage.toFixed(0)}% of target
-                </p>
+                </div>
+                <div className="text-2xl font-bold text-muted-foreground mb-1">
+                  Target: {formatCurrency(team.targetSales)}
+                </div>
+                <div className={`text-3xl font-black ${team.rank === 1 ? 'text-primary' : team.rank === 2 ? 'text-accent' : 'text-purple-500'}`}>
+                  {team.percentage.toFixed(0)}% COMPLETE
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
