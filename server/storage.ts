@@ -381,9 +381,50 @@ export class DatabaseStorage implements IStorage {
       this.getActiveAnnouncements()
     ]);
     
+    // Calculate current sales performance for each agent
+    const agentSalesQuery = await db.select({
+      agentId: sales.agentId,
+      totalVolume: sql<string>`SUM(${sales.amount})`,
+      totalUnits: sql<number>`COUNT(*)`
+    }).from(sales).groupBy(sales.agentId);
+    
+    // Create a map for quick lookup
+    const agentSalesMap = new Map();
+    agentSalesQuery.forEach(item => {
+      agentSalesMap.set(item.agentId, {
+        currentVolume: parseFloat(item.totalVolume || '0'),
+        currentUnits: item.totalUnits || 0
+      });
+    });
+    
+    // Enhance agents data with current performance
+    const enhancedAgents = agentsData.map(agent => {
+      const salesData = agentSalesMap.get(agent.id);
+      return {
+        ...agent,
+        currentVolume: salesData?.currentVolume || 0,
+        currentUnits: salesData?.currentUnits || 0,
+        team: teamsData.find(team => team.id === agent.teamId)
+      };
+    });
+    
+    // Calculate team performance
+    const enhancedTeams = teamsData.map(team => {
+      const teamAgents = enhancedAgents.filter(agent => agent.teamId === team.id);
+      const totalVolume = teamAgents.reduce((sum, agent) => sum + (agent.currentVolume || 0), 0);
+      const totalUnits = teamAgents.reduce((sum, agent) => sum + (agent.currentUnits || 0), 0);
+      
+      return {
+        ...team,
+        currentVolume: totalVolume,
+        currentUnits: totalUnits,
+        memberCount: teamAgents.length
+      };
+    });
+    
     return {
-      agents: agentsData,
-      teams: teamsData,
+      agents: enhancedAgents,
+      teams: enhancedTeams,
       sales: salesData,
       cashOffers: offersData,
       mediaSlides: slidesData,
