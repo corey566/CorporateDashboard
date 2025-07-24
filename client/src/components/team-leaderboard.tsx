@@ -66,48 +66,62 @@ export default function TeamLeaderboard({ teams, agents }: TeamLeaderboardProps)
   };
 
   return (
-    <div>
-      <div className="mb-6">
-        <h2 className="text-5xl font-black text-foreground mb-4">TEAM RANKINGS</h2>
-        <div className="text-2xl font-bold text-muted-foreground">
-          Real-time Team Performance Leaderboard
+    <div className="h-full">
+      <div className="mb-4">
+        <h2 className="text-2xl font-black text-foreground mb-2">TEAM SCOREBOARD</h2>
+        <div className="text-sm font-bold text-muted-foreground">
+          Live Team Rankings
         </div>
       </div>
       
-      <div className="grid grid-cols-1 gap-6">
+      <div className="space-y-3 h-[calc(100%-80px)] overflow-y-auto">
         {teamPerformance.map((team) => (
           <div
             key={team.id}
-            className={`bg-card border-2 border-border rounded-2xl p-8 shadow-lg transition-all duration-300 ${team.rank === 1 ? 'ring-4 ring-primary/50' : ''}`}
+            className={`bg-card border-2 border-border rounded-xl p-4 shadow-lg transition-all duration-300 ${team.rank === 1 ? 'ring-2 ring-primary/50 bg-primary/5' : ''}`}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-8">
-                <div className={`w-20 h-20 rounded-full flex items-center justify-center font-black text-3xl ${getTeamBadgeColor(team.rank)}`}>
+            {/* Team Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-lg ${getTeamBadgeColor(team.rank)}`}>
                   #{team.rank}
                 </div>
                 <div>
-                  <div className="flex items-center space-x-4 mb-2">
-                    <h3 className="font-black text-5xl text-foreground">{team.name}</h3>
-                    <div className="text-4xl">
-                      {team.rank === 1 ? <Crown className="w-12 h-12 text-yellow-500" /> : 
-                       team.rank === 2 ? <TrendingUp className="w-12 h-12 text-green-500" /> :
-                       <Target className="w-12 h-12 text-blue-500" />}
-                    </div>
-                  </div>
-                  <p className="text-2xl font-bold text-muted-foreground">{team.memberCount} Team Members</p>
+                  <h3 className="font-black text-xl text-foreground">{team.name}</h3>
+                  <p className="text-xs font-semibold text-muted-foreground">{team.memberCount} Players</p>
                 </div>
               </div>
-              
-              <div className="text-right">
-                <div className={`text-6xl font-black mb-2 ${team.rank === 1 ? 'text-primary' : team.rank === 2 ? 'text-accent' : 'text-purple-500'}`}>
-                  {formatCurrency(team.totalSales)}
-                </div>
-                <div className="text-2xl font-bold text-muted-foreground mb-1">
-                  Target: {formatCurrency(team.targetSales)}
-                </div>
-                <div className={`text-3xl font-black ${team.rank === 1 ? 'text-primary' : team.rank === 2 ? 'text-accent' : 'text-purple-500'}`}>
-                  {team.percentage.toFixed(0)}% COMPLETE
-                </div>
+              <div className="text-lg">
+                {team.rank === 1 ? <Crown className="w-6 h-6 text-yellow-500" /> : 
+                 team.rank === 2 ? <TrendingUp className="w-6 h-6 text-green-500" /> :
+                 <Target className="w-6 h-6 text-blue-500" />}
+              </div>
+            </div>
+            
+            {/* Team Stats */}
+            <div className="text-center">
+              <div className={`text-3xl font-black mb-1 ${team.rank === 1 ? 'text-primary' : team.rank === 2 ? 'text-accent' : 'text-purple-500'}`}>
+                {formatCurrency(team.totalSales)}
+              </div>
+              <div className="text-xs font-semibold text-muted-foreground mb-1">
+                Target: {formatCurrency(team.targetSales)}
+              </div>
+              <div className={`text-lg font-black ${team.rank === 1 ? 'text-primary' : team.rank === 2 ? 'text-accent' : 'text-purple-500'}`}>
+                {team.percentage.toFixed(0)}% COMPLETE
+              </div>
+            </div>
+            
+            {/* Performance Bar */}
+            <div className="mt-3">
+              <div className="w-full bg-muted rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-500 ${
+                    team.rank === 1 ? 'bg-primary' : 
+                    team.rank === 2 ? 'bg-accent' : 
+                    'bg-purple-500'
+                  }`}
+                  style={{ width: `${Math.min(100, team.percentage)}%` }}
+                />
               </div>
             </div>
           </div>

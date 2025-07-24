@@ -181,7 +181,7 @@ export default function TvDashboard() {
 
       return () => clearInterval(interval);
     }
-  }, [mediaSlides, systemSettingsArray]);
+  }, [mediaSlides.length, systemSettingsArray]);
 
   // Auto-close announcement popup after 5 seconds
   useEffect(() => {
@@ -246,28 +246,29 @@ export default function TvDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-6">
-      {/* Cash Offers Banner - Top of screen */}
-      <div className="mb-6">
-        <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-3xl p-8 shadow-2xl">
+    <div className="min-h-screen bg-background text-foreground p-4">
+      {/* Cash Offers Banner - Compact at top */}
+      <div className="mb-4">
+        <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-4 shadow-xl">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center">
-                <span className="text-green-600 text-3xl font-black">$</span>
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                <span className="text-green-600 text-2xl font-black">$</span>
               </div>
               <div>
-                <h2 className="text-4xl font-black text-white mb-2">CASH OFFERS ACTIVE</h2>
-                <p className="text-2xl text-green-100 font-bold">{cashOffers.length} Active Promotions</p>
+                <h2 className="text-2xl font-black text-white">ACTIVE CASH OFFERS</h2>
+                <p className="text-lg text-green-100 font-bold">{cashOffers.length} Promotions Live</p>
               </div>
             </div>
-            <div className="flex space-x-6">
-              {cashOffers.slice(0, 3).map((offer: any) => (
-                <div key={offer.id} className="bg-white/20 rounded-2xl p-4 text-center min-w-[200px]">
-                  <div className="text-3xl font-black text-white mb-2">
+            <div className="flex space-x-4">
+              {cashOffers.slice(0, 4).map((offer: any) => (
+                <div key={offer.id} className="bg-white/20 rounded-xl p-3 text-center min-w-[180px]">
+                  <div className="text-2xl font-black text-white mb-1">
                     {formatCurrency(offer.reward)}
                   </div>
-                  <div className="text-xl font-bold text-green-100 mb-1">{offer.title}</div>
-                  <div className="text-lg text-green-200">Target: {offer.target} sales</div>
+                  <div className="text-sm font-bold text-green-100 mb-1">{offer.title}</div>
+                  <div className="text-xs text-green-200">Target: {offer.target} sales</div>
+                  <div className="text-xs text-green-200">Expires: {new Date(offer.expiresAt).toLocaleDateString()}</div>
                 </div>
               ))}
             </div>
@@ -275,25 +276,29 @@ export default function TvDashboard() {
         </div>
       </div>
 
-      {/* Main Sales Agents Grid */}
-      <div className="mb-8">
-        <div className="mb-6">
-          <h2 className="text-5xl font-black text-foreground mb-4">SALES AGENTS</h2>
-          <div className="text-2xl font-bold text-muted-foreground">
-            {agents.length} Active Agents • Live Performance Data
+      {/* Football Scoreboard Style Layout */}
+      <div className="grid grid-cols-12 gap-4 h-[calc(100vh-200px)]">
+        
+        {/* Main Sales Agents - Football Style Grid (4 per row) */}
+        <div className="col-span-8">
+          <div className="mb-4">
+            <h2 className="text-3xl font-black text-foreground mb-2">SALES AGENTS PERFORMANCE</h2>
+            <div className="text-lg font-bold text-muted-foreground">
+              Live Scoreboard • {agents.length} Active Players
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-4 gap-3 h-[calc(100%-100px)] overflow-y-auto">
+            {agents.slice(0, 16).map((agent: any) => (
+              <AgentCard key={agent.id} agent={agent} />
+            ))}
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 gap-6">
-          {agents.slice(0, 10).map((agent: any) => (
-            <AgentCard key={agent.id} agent={agent} />
-          ))}
-        </div>
-      </div>
 
-      {/* Team Rankings - Below Sales Agents */}
-      <div className="mb-8">
-        <TeamLeaderboard teams={teams} agents={agents} />
+        {/* Team Rankings - Side Panel */}
+        <div className="col-span-4">
+          <TeamLeaderboard teams={teams} agents={agents} />
+        </div>
       </div>
 
       {/* Bottom News Ticker */}
