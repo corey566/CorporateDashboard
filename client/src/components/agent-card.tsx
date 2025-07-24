@@ -61,10 +61,10 @@ export default function AgentCard({ agent }: AgentCardProps) {
           <div className="text-[7px] font-bold text-muted-foreground uppercase tracking-wide">
             VOLUME
           </div>
-          <div className="text-xs font-black text-primary leading-tight truncate px-1">
+          <div className="text-lg font-black text-primary leading-tight break-all">
             {formatCurrency(agent.currentVolume || 0)}
           </div>
-          <div className="text-[8px] text-muted-foreground leading-tight truncate px-1">
+          <div className="text-[6px] text-muted-foreground leading-tight">
             Target: {formatCurrency(agent.volumeTarget)}
           </div>
           <div className="text-sm font-black text-accent">
@@ -77,10 +77,10 @@ export default function AgentCard({ agent }: AgentCardProps) {
           <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">
             UNITS
           </div>
-          <div className="text-base font-black text-accent leading-tight truncate px-1">
+          <div className="text-lg font-black text-accent leading-tight">
             {agent.currentUnits || 0}
           </div>
-          <div className="text-[8px] text-muted-foreground leading-tight truncate px-1">
+          <div className="text-[9px] text-muted-foreground leading-tight">
             Target: {agent.unitsTarget}
           </div>
           <div className="text-sm font-black text-primary">
