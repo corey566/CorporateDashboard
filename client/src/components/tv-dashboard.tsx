@@ -20,7 +20,9 @@ export default function TvDashboard() {
   const [announcementPopup, setAnnouncementPopup] = useState<any>(null);
   const [cashOfferPopup, setCashOfferPopup] = useState<any>(null);
   const [showMediaPresentation, setShowMediaPresentation] = useState(false);
-  const [soundEffectCache, setSoundEffectCache] = useState<{[key: string]: any}>({});
+  const [soundEffectCache, setSoundEffectCache] = useState<{
+    [key: string]: any;
+  }>({});
   const { isConnected, lastMessage } = useWebSocket();
   const { formatCurrency } = useCurrency();
 
@@ -38,15 +40,15 @@ export default function TvDashboard() {
   useEffect(() => {
     const preloadSoundEffects = async () => {
       const eventTypes = ["sale", "announcement", "cash_offer"];
-      
+
       for (const eventType of eventTypes) {
         try {
           const response = await fetch(`/api/sound-effects/event/${eventType}`);
           if (response.ok) {
             const soundEffect = await response.json();
-            setSoundEffectCache(prev => ({
+            setSoundEffectCache((prev) => ({
               ...prev,
-              [eventType]: soundEffect
+              [eventType]: soundEffect,
             }));
           }
         } catch (error) {
@@ -54,48 +56,50 @@ export default function TvDashboard() {
         }
       }
     };
-    
+
     preloadSoundEffects();
   }, []);
 
   // Function to play event sound (optimized with cache)
   const playEventSound = async (eventType: string) => {
     try {
-      console.log(`${eventType.charAt(0).toUpperCase() + eventType.slice(1)} sound effect triggered`);
-      
+      console.log(
+        `${eventType.charAt(0).toUpperCase() + eventType.slice(1)} sound effect triggered`,
+      );
+
       // Use cached sound effect if available
       let soundEffect = soundEffectCache[eventType];
-      
+
       // If not cached, fetch it
       if (!soundEffect) {
         const response = await fetch(`/api/sound-effects/event/${eventType}`);
         if (response.ok) {
           soundEffect = await response.json();
           // Cache it for future use
-          setSoundEffectCache(prev => ({
+          setSoundEffectCache((prev) => ({
             ...prev,
-            [eventType]: soundEffect
+            [eventType]: soundEffect,
           }));
         }
       }
-      
+
       if (soundEffect) {
         // Create and play audio immediately
         const audio = new Audio(soundEffect.fileUrl);
         audio.volume = soundEffect.volume || 0.5;
-        
+
         // Pre-load and play
         audio.load();
         const playPromise = audio.play();
-        
+
         if (playPromise !== undefined) {
-          playPromise.catch(error => {
-            console.error('Error playing sound:', error);
+          playPromise.catch((error) => {
+            console.error("Error playing sound:", error);
           });
         }
       }
     } catch (error) {
-      console.error('Error playing sound effect:', error);
+      console.error("Error playing sound effect:", error);
     }
   };
 
@@ -110,48 +114,74 @@ export default function TvDashboard() {
   const allSales = dashboardDataSafe.sales || [];
 
   // Extract system settings with proper defaults
-  const systemSettingsArray = Array.isArray(systemSettings) ? systemSettings : [];
-  const companyName = systemSettingsArray.find((s: any) => s?.key === "companyName")?.value || "Sales Dashboard";
-  const logoUrl = systemSettingsArray.find((s: any) => s?.key === "logoUrl")?.value || "";
-  const primaryColor = systemSettingsArray.find((s: any) => s?.key === "primaryColor")?.value || "#3B82F6";
-  const accentColor = systemSettingsArray.find((s: any) => s?.key === "accentColor")?.value || "#10B981";
+  const systemSettingsArray = Array.isArray(systemSettings)
+    ? systemSettings
+    : [];
+  const companyName =
+    systemSettingsArray.find((s: any) => s?.key === "companyName")?.value ||
+    "Sales Dashboard";
+  const logoUrl =
+    systemSettingsArray.find((s: any) => s?.key === "logoUrl")?.value || "";
+  const primaryColor =
+    systemSettingsArray.find((s: any) => s?.key === "primaryColor")?.value ||
+    "#3B82F6";
+  const accentColor =
+    systemSettingsArray.find((s: any) => s?.key === "accentColor")?.value ||
+    "#10B981";
 
   // Process agents with their current sales calculations
   const agents = rawAgents.map((agent: any) => {
-    const agentSales = allSales.filter((sale: any) => sale.agentId === agent.id);
-    
+    const agentSales = allSales.filter(
+      (sale: any) => sale.agentId === agent.id,
+    );
+
     // Calculate current volume and units
-    const currentVolume = agentSales.reduce((sum: number, sale: any) => sum + (parseFloat(sale.amount) || 0), 0);
-    const currentUnits = agentSales.reduce((sum: number, sale: any) => sum + (sale.units || 0), 0);
-    
+    const currentVolume = agentSales.reduce(
+      (sum: number, sale: any) => sum + (parseFloat(sale.amount) || 0),
+      0,
+    );
+    const currentUnits = agentSales.reduce(
+      (sum: number, sale: any) => sum + (sale.units || 0),
+      0,
+    );
+
     // Find associated team
     const team = teams.find((t: any) => t.id === agent.teamId);
-    
+
     return {
       ...agent,
       currentVolume: currentVolume.toString(),
       currentUnits: currentUnits,
-      team: team
+      team: team,
     };
   });
 
   // Handle WebSocket messages for sale notifications and currency updates
   useEffect(() => {
-    if (lastMessage?.type === "sale_created" && lastMessage.data && rawAgents.length > 0) {
+    if (
+      lastMessage?.type === "sale_created" &&
+      lastMessage.data &&
+      rawAgents.length > 0
+    ) {
       // Play sound effect immediately
       playEventSound("sale");
-      
+
       // Find the agent who made the sale
-      const saleAgent = rawAgents.find((agent: any) => agent.id === lastMessage.data.agentId);
+      const saleAgent = rawAgents.find(
+        (agent: any) => agent.id === lastMessage.data.agentId,
+      );
       if (saleAgent) {
         const saleWithAgent = {
           ...lastMessage.data,
           agentName: saleAgent.name,
-          agentPhoto: saleAgent.photo
+          agentPhoto: saleAgent.photo,
         };
         setSalePopup(saleWithAgent);
       }
-    } else if (lastMessage?.type === "announcement_created" && lastMessage.data) {
+    } else if (
+      lastMessage?.type === "announcement_created" &&
+      lastMessage.data
+    ) {
       playEventSound("announcement");
       setAnnouncementPopup(lastMessage.data);
     } else if (lastMessage?.type === "cash_offer_created" && lastMessage.data) {
@@ -170,12 +200,18 @@ export default function TvDashboard() {
   useEffect(() => {
     if (mediaSlides.length > 0) {
       // Get dashboard duration from system settings (default 30 seconds)
-      const dashboardDuration = parseInt(systemSettingsArray.find((s: any) => s?.key === "dashboardDuration")?.value) || 30;
+      const dashboardDuration =
+        parseInt(
+          systemSettingsArray.find((s: any) => s?.key === "dashboardDuration")
+            ?.value,
+        ) || 30;
       const durationMs = dashboardDuration * 1000; // Convert to milliseconds
-      
+
       // Only log once when setting up the timer
-      console.log(`Dashboard will transition to media slides every ${dashboardDuration} seconds`);
-      
+      console.log(
+        `Dashboard will transition to media slides every ${dashboardDuration} seconds`,
+      );
+
       const interval = setInterval(() => {
         setShowMediaPresentation(true);
       }, durationMs);
@@ -257,19 +293,32 @@ export default function TvDashboard() {
                 <span className="text-green-600 text-2xl font-black">$</span>
               </div>
               <div>
-                <h2 className="text-2xl font-black text-white">ACTIVE CASH OFFERS</h2>
-                <p className="text-lg text-green-100 font-bold">{cashOffers.length} Promotions Live</p>
+                <h2 className="text-2xl font-black text-white">
+                  ACTIVE CASH OFFERS
+                </h2>
+                <p className="text-lg text-green-100 font-bold">
+                  {cashOffers.length} Promotions Live
+                </p>
               </div>
             </div>
             <div className="flex space-x-4">
               {cashOffers.slice(0, 4).map((offer: any) => (
-                <div key={offer.id} className="bg-white/20 rounded-xl p-3 text-center min-w-[180px]">
+                <div
+                  key={offer.id}
+                  className="bg-white/20 rounded-xl p-3 text-center min-w-[180px]"
+                >
                   <div className="text-2xl font-black text-white mb-1">
                     {formatCurrency(offer.reward)}
                   </div>
-                  <div className="text-sm font-bold text-green-100 mb-1">{offer.title}</div>
-                  <div className="text-xs text-green-200">Target: {offer.target} sales</div>
-                  <div className="text-xs text-green-200">Expires: {new Date(offer.expiresAt).toLocaleDateString()}</div>
+                  <div className="text-sm font-bold text-green-100 mb-1">
+                    {offer.title}
+                  </div>
+                  <div className="text-xs text-green-200">
+                    Target: {offer.target} sales
+                  </div>
+                  <div className="text-xs text-green-200">
+                    Expires: {new Date(offer.expiresAt).toLocaleDateString()}
+                  </div>
                 </div>
               ))}
             </div>
@@ -279,16 +328,17 @@ export default function TvDashboard() {
 
       {/* Football Scoreboard Style Layout */}
       <div className="grid grid-cols-12 gap-4 h-[calc(100vh-200px)]">
-        
         {/* Main Sales Agents - Football Style Grid (4 per row) */}
         <div className="col-span-8">
           <div className="mb-4">
-            <h2 className="text-3xl font-black text-foreground mb-2">SALES AGENTS PERFORMANCE</h2>
+            <h2 className="text-3xl font-black text-foreground mb-2">
+              SALES AGENTS PERFORMANCE
+            </h2>
             <div className="text-lg font-bold text-muted-foreground">
-              Live Scoreboard • {agents.length} Active Players
+              Live Scoreboard • {agents.length} Active Agents
             </div>
           </div>
-          
+
           <div className="grid grid-cols-4 gap-3 h-[calc(100%-100px)] overflow-y-auto">
             {agents.slice(0, 16).map((agent: any) => (
               <AgentCard key={agent.id} agent={agent} />
@@ -306,13 +356,10 @@ export default function TvDashboard() {
       <div className="fixed bottom-0 left-0 right-0 z-10">
         <NewsTicker />
       </div>
-      
+
       {/* Sale Popup */}
       {salePopup && (
-        <SalePopup
-          sale={salePopup}
-          onClose={() => setSalePopup(null)}
-        />
+        <SalePopup sale={salePopup} onClose={() => setSalePopup(null)} />
       )}
 
       {/* Announcement Popup */}
@@ -337,7 +384,6 @@ export default function TvDashboard() {
         isVisible={showMediaPresentation}
         onComplete={() => setShowMediaPresentation(false)}
       />
-
     </div>
   );
 }
