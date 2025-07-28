@@ -21,10 +21,10 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 border-b-2 border-border">
-              <TableHead className="text-4xl font-black text-foreground py-4 px-6">
+              <TableHead className="text-4xl font-black text-foreground py-2 px-6">
                 AGENT
               </TableHead>
-              <TableHead className="text-4xl font-black text-foreground py-4 px-6 text-center">
+              <TableHead className="text-4xl font-black text-foreground py-2 px-6 text-center">
                 VOLUME/UNITS
               </TableHead>
             </TableRow>
@@ -39,7 +39,7 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                   }`}
                 >
                   {/* Agent Info */}
-                  <TableCell className="py-3 px-6">
+                  <TableCell className="py-1 px-6">
                     <div className="flex items-center space-x-6">
                       <div className="relative">
                         {agent.photo ? (
@@ -73,8 +73,8 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                   </TableCell>
 
                   {/* Combined Volume/Units */}
-                  <TableCell className="py-3 px-6 text-center">
-                    <div className="space-y-4">
+                  <TableCell className="py-1 px-6 text-center">
+                    <div className="space-y-1">
                       <div className="text-3xl font-black text-foreground">
                         {formatCurrency(agent.currentVolume || "0")} / {agent.currentUnits || 0}
                       </div>
