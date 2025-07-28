@@ -16,7 +16,7 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
   const { formatCurrency } = useCurrency();
 
   return (
-    <div className="w-full mb-8">
+    <div className="w-full">
       <div className="bg-card rounded-2xl border-2 border-border shadow-2xl overflow-hidden">
         <Table>
           <TableHeader>

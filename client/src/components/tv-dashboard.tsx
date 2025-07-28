@@ -344,7 +344,7 @@ export default function TvDashboard() {
       )}
 
       {/* Main Dashboard Layout - Fixed height to prevent overlap with news ticker */}
-      <div className={`grid gap-4 ${showTeamRankings && enableTeams ? 'grid-cols-12' : 'grid-cols-1'} pb-20`} style={{ height: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+      <div className={`grid gap-4 ${showTeamRankings && enableTeams ? 'grid-cols-12' : 'grid-cols-1'}`} style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
         {/* Main Sales Scoreboard Table */}
         <div className={showTeamRankings && enableTeams ? 'col-span-8' : 'col-span-1'}>
           <ScoreboardTable agents={agents} />
