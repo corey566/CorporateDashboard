@@ -69,6 +69,14 @@ Preferred communication style: Simple, everyday language.
 ✓ Updated backend export functions to include proper currency formatting in reports (CSV, Excel, PDF)
 ✓ Implemented comprehensive currency refresh system in both TV dashboard and admin panel components
 ✓ Added WebSocket currency update handlers to force page refresh and ensure all components show new currency immediately
+✓ Fixed WebSocket system_settings_updated handler to make team visibility controls work instantly
+✓ Transformed scoreboard from grid layout to football-style table with doubled text sizes
+✓ Removed "LIVE SCOREBOARD" header and subtitle for cleaner presentation
+✓ Combined Volume/Units columns into single display without progress bars
+✓ Removed category column to prevent overcrowding and improve readability
+✓ Made Active Cash Offers section visible only when promotions are available
+✓ Fixed table alignment issues to prevent overlap with news ticker at bottom
+✓ Enhanced scoreboard with larger agent photos and team information display
 
 ## System Architecture
 
