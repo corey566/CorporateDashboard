@@ -36,6 +36,7 @@ import AdminSoundEffects from "@/components/admin-sound-effects";
 import AdminReports from "@/components/admin-reports";
 import AdminTargetCycles from "@/components/admin-target-cycles";
 import UICustomization from "@/components/ui-customization";
+import AdminDisplaySettings from "@/components/admin-display-settings";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWebSocket } from "@/hooks/use-websocket";
 
@@ -218,7 +219,7 @@ export default function AdminPage() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="teams" className="w-full">
-          <TabsList className="grid w-full grid-cols-11">
+          <TabsList className="grid w-full grid-cols-12">
             <TabsTrigger value="teams">Teams</TabsTrigger>
             <TabsTrigger value="agents">Agents</TabsTrigger>
             <TabsTrigger value="sales">Sales Entry</TabsTrigger>
@@ -229,6 +230,7 @@ export default function AdminPage() {
             <TabsTrigger value="sounds">Sounds</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="cycles">Target Cycles</TabsTrigger>
+            <TabsTrigger value="display">Display</TabsTrigger>
             <TabsTrigger value="customization">UI</TabsTrigger>
           </TabsList>
 
@@ -270,6 +272,10 @@ export default function AdminPage() {
 
           <TabsContent value="cycles" className="space-y-6">
             <AdminTargetCycles />
+          </TabsContent>
+
+          <TabsContent value="display" className="space-y-6">
+            <AdminDisplaySettings />
           </TabsContent>
 
           <TabsContent value="customization" className="space-y-6">

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Users, Wifi, TrendingUp, Settings, Building } from "lucide-react";
 import AgentCard from "./agent-card";
 import TeamLeaderboard from "./team-leaderboard";
+import ScoreboardTable from "./scoreboard-table";
 import NewsTicker from "./news-ticker";
 import SalePopup from "./sale-popup";
 import AnnouncementPopup from "./announcement-popup";
@@ -35,6 +36,15 @@ export default function TvDashboard() {
     queryKey: ["/api/system-settings"],
     refetchInterval: 30000, // Refresh every 30 seconds
   });
+  
+  // Get display settings
+  const getSystemSetting = (key: string, defaultValue: string = "true") => {
+    const setting = systemSettings?.find((s: any) => s.key === key);
+    return setting?.value === "true";
+  };
+  
+  const showTeamRankings = getSystemSetting("showTeamRankings");
+  const enableTeams = getSystemSetting("enableTeams");
 
   // Pre-load sound effects on component mount
   useEffect(() => {
@@ -325,30 +335,19 @@ export default function TvDashboard() {
         </div>
       </div>
 
-      {/* Football Scoreboard Style Layout */}
-      <div className="grid grid-cols-12 gap-4 h-[calc(100vh-200px)]">
-        {/* Main Sales Agents - Football Style Grid (4 per row) */}
-        <div className="col-span-8">
-          <div className="mb-4">
-            <h2 className="text-3xl font-black text-foreground mb-2">
-              SALES AGENTS PERFORMANCE
-            </h2>
-            <div className="text-lg font-bold text-muted-foreground">
-              Live Scoreboard • {agents.length} Active Agents
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 gap-3 h-[calc(100%-100px)] overflow-y-auto">
-            {agents.slice(0, 16).map((agent: any) => (
-              <AgentCard key={agent.id} agent={agent} />
-            ))}
-          </div>
+      {/* Main Dashboard Layout */}
+      <div className={`grid gap-4 h-[calc(100vh-200px)] ${showTeamRankings && enableTeams ? 'grid-cols-12' : 'grid-cols-1'}`}>
+        {/* Main Sales Scoreboard Table */}
+        <div className={showTeamRankings && enableTeams ? 'col-span-8' : 'col-span-1'}>
+          <ScoreboardTable agents={agents} />
         </div>
 
-        {/* Team Rankings - Side Panel */}
-        <div className="col-span-4">
-          <TeamLeaderboard teams={teams} agents={agents} />
-        </div>
+        {/* Team Rankings - Conditional Side Panel */}
+        {showTeamRankings && enableTeams && (
+          <div className="col-span-4">
+            <TeamLeaderboard teams={teams} agents={agents} />
+          </div>
+        )}
       </div>
 
       {/* Bottom News Ticker */}
