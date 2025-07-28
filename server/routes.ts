@@ -762,6 +762,18 @@ export function registerRoutes(app: Express): Server {
         });
       }
       
+      // Broadcast system settings changes (team visibility, etc.) to all clients
+      if (req.params.key === "showTeamRankings" || req.params.key === "enableTeams") {
+        broadcastToClients({ 
+          type: "system_settings_updated", 
+          data: { 
+            key: req.params.key, 
+            value: value,
+            setting: setting
+          } 
+        });
+      }
+      
       res.json(setting);
     } catch (error) {
       res.status(400).json({ error: "Failed to update system setting" });

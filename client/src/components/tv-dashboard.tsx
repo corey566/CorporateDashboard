@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,7 @@ export default function TvDashboard() {
   }>({});
   const { isConnected, lastMessage } = useWebSocket();
   const { formatCurrency } = useCurrency();
+  const queryClient = useQueryClient();
 
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ["/api/dashboard"],
@@ -201,6 +202,11 @@ export default function TvDashboard() {
       // Invalidate currency-related queries to refresh data without page reload
       console.log("Currency update received via WebSocket, refreshing data...");
       queryClient.invalidateQueries({ queryKey: ["/api/currency-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+    } else if (lastMessage?.type === "system_settings_updated" && lastMessage.data) {
+      // Handle system settings updates (team visibility, etc.)
+      console.log("System settings update received via WebSocket, refreshing display settings...");
+      queryClient.invalidateQueries({ queryKey: ["/api/system-settings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
     }
   }, [lastMessage, rawAgents]);
