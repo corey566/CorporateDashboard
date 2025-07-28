@@ -158,6 +158,11 @@ export function useWebSocket() {
         }
         break;
 
+      case "system_settings_updated":
+        queryClient.invalidateQueries({ queryKey: ["/api/system-settings"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+        break;
+
       default:
         console.log("Unknown message type:", message.type);
     }

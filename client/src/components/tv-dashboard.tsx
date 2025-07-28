@@ -299,50 +299,52 @@ export default function TvDashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4">
-      {/* Cash Offers Banner - Compact at top */}
-      <div className="mb-4">
-        <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-4 shadow-xl">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                <span className="text-green-600 text-2xl font-black">$</span>
-              </div>
-              <div>
-                <h2 className="text-2xl font-black text-white">
-                  ACTIVE CASH OFFERS
-                </h2>
-                <p className="text-lg text-green-100 font-bold">
-                  {cashOffers.length} Promotions Live
-                </p>
-              </div>
-            </div>
-            <div className="flex space-x-4">
-              {cashOffers.slice(0, 4).map((offer: any) => (
-                <div
-                  key={offer.id}
-                  className="bg-white/20 rounded-xl p-3 text-center min-w-[180px]"
-                >
-                  <div className="text-2xl font-black text-white mb-1">
-                    {formatCurrency(offer.reward)}
-                  </div>
-                  <div className="text-sm font-bold text-green-100 mb-1">
-                    {offer.title}
-                  </div>
-                  <div className="text-xs text-green-200">
-                    Target: {offer.target} sales
-                  </div>
-                  <div className="text-xs text-green-200">
-                    Expires: {new Date(offer.expiresAt).toLocaleDateString()}
-                  </div>
+      {/* Cash Offers Banner - Only show when promotions are active */}
+      {cashOffers && cashOffers.length > 0 && (
+        <div className="mb-4">
+          <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-4 shadow-xl">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
+                  <span className="text-green-600 text-2xl font-black">$</span>
                 </div>
-              ))}
+                <div>
+                  <h2 className="text-2xl font-black text-white">
+                    ACTIVE CASH OFFERS
+                  </h2>
+                  <p className="text-lg text-green-100 font-bold">
+                    {cashOffers.length} Promotions Live
+                  </p>
+                </div>
+              </div>
+              <div className="flex space-x-4">
+                {cashOffers.slice(0, 4).map((offer: any) => (
+                  <div
+                    key={offer.id}
+                    className="bg-white/20 rounded-xl p-3 text-center min-w-[180px]"
+                  >
+                    <div className="text-2xl font-black text-white mb-1">
+                      {formatCurrency(offer.reward)}
+                    </div>
+                    <div className="text-sm font-bold text-green-100 mb-1">
+                      {offer.title}
+                    </div>
+                    <div className="text-xs text-green-200">
+                      Target: {offer.target} sales
+                    </div>
+                    <div className="text-xs text-green-200">
+                      Expires: {new Date(offer.expiresAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Main Dashboard Layout */}
-      <div className={`grid gap-4 h-[calc(100vh-200px)] ${showTeamRankings && enableTeams ? 'grid-cols-12' : 'grid-cols-1'}`}>
+      {/* Main Dashboard Layout - Fixed height to prevent overlap with news ticker */}
+      <div className={`grid gap-4 ${showTeamRankings && enableTeams ? 'grid-cols-12' : 'grid-cols-1'}`} style={{ height: 'calc(100vh - 180px)' }}>
         {/* Main Sales Scoreboard Table */}
         <div className={showTeamRankings && enableTeams ? 'col-span-8' : 'col-span-1'}>
           <ScoreboardTable agents={agents} />
@@ -356,8 +358,8 @@ export default function TvDashboard() {
         )}
       </div>
 
-      {/* Bottom News Ticker */}
-      <div className="fixed bottom-0 left-0 right-0 z-10">
+      {/* Bottom News Ticker - Fixed position */}
+      <div className="fixed bottom-0 left-0 right-0 z-10 h-16">
         <NewsTicker />
       </div>
 
