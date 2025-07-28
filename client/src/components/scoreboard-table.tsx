@@ -43,16 +43,16 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 border-b-2 border-border">
-              <TableHead className="text-xl font-black text-foreground py-6 px-6">
+              <TableHead className="text-lg font-black text-foreground py-3 px-4">
                 AGENT
               </TableHead>
-              <TableHead className="text-xl font-black text-foreground py-6 px-6 text-center">
+              <TableHead className="text-lg font-black text-foreground py-3 px-4 text-center">
                 VOLUME PROGRESS
               </TableHead>
-              <TableHead className="text-xl font-black text-foreground py-6 px-6 text-center">
+              <TableHead className="text-lg font-black text-foreground py-3 px-4 text-center">
                 UNITS PROGRESS
               </TableHead>
-              <TableHead className="text-xl font-black text-foreground py-6 px-6 text-center">
+              <TableHead className="text-lg font-black text-foreground py-3 px-4 text-center">
                 CATEGORY
               </TableHead>
             </TableRow>
@@ -76,33 +76,33 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                   }`}
                 >
                   {/* Agent Info */}
-                  <TableCell className="py-6 px-6">
-                    <div className="flex items-center space-x-4">
+                  <TableCell className="py-3 px-4">
+                    <div className="flex items-center space-x-3">
                       <div className="relative">
                         {agent.photo ? (
                           <img
                             src={agent.photo}
                             alt={agent.name}
-                            className="w-16 h-16 rounded-full object-cover border-4 border-primary/20"
+                            className="w-12 h-12 rounded-full object-cover border-2 border-primary/20"
                           />
                         ) : (
-                          <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center border-4 border-primary/20">
-                            <span className="text-2xl font-black text-primary">
+                          <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center border-2 border-primary/20">
+                            <span className="text-lg font-black text-primary">
                               {agent.name?.charAt(0) || "?"}
                             </span>
                           </div>
                         )}
                         <div
-                          className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-2 border-background ${
+                          className={`absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full border-2 border-background ${
                             agent.isActive ? "bg-green-500" : "bg-red-500"
                           }`}
                         ></div>
                       </div>
                       <div>
-                        <h3 className="text-2xl font-black text-foreground">
+                        <h3 className="text-lg font-black text-foreground">
                           {agent.name}
                         </h3>
-                        <p className="text-lg font-bold text-muted-foreground">
+                        <p className="text-sm font-bold text-muted-foreground">
                           ID: {agent.id}
                         </p>
                       </div>
@@ -110,30 +110,30 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                   </TableCell>
 
                   {/* Volume Progress */}
-                  <TableCell className="py-6 px-6">
-                    <div className="space-y-3">
+                  <TableCell className="py-3 px-4">
+                    <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-foreground">
+                        <span className="text-sm font-bold text-foreground">
                           {formatCurrency(agent.currentVolume || "0")}
                         </span>
-                        <span className="text-lg font-bold text-muted-foreground">
+                        <span className="text-sm font-bold text-muted-foreground">
                           / {formatCurrency(agent.volumeTarget || "0")}
                         </span>
                       </div>
                       <div className="relative">
                         <Progress
                           value={volumeProgress}
-                          className="h-4 bg-muted"
+                          className="h-3 bg-muted"
                         />
                         <div
-                          className={`absolute top-0 left-0 h-4 rounded-full transition-all duration-300 ${getProgressColor(
+                          className={`absolute top-0 left-0 h-3 rounded-full transition-all duration-300 ${getProgressColor(
                             volumeProgress
                           )}`}
                           style={{ width: `${volumeProgress}%` }}
                         ></div>
                       </div>
                       <div className="text-center">
-                        <span className="text-lg font-black text-foreground">
+                        <span className="text-sm font-black text-foreground">
                           {volumeProgress.toFixed(1)}%
                         </span>
                       </div>
@@ -141,30 +141,30 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                   </TableCell>
 
                   {/* Units Progress */}
-                  <TableCell className="py-6 px-6">
-                    <div className="space-y-3">
+                  <TableCell className="py-3 px-4">
+                    <div className="space-y-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-lg font-bold text-foreground">
+                        <span className="text-sm font-bold text-foreground">
                           {agent.currentUnits || 0}
                         </span>
-                        <span className="text-lg font-bold text-muted-foreground">
+                        <span className="text-sm font-bold text-muted-foreground">
                           / {agent.unitsTarget || 0}
                         </span>
                       </div>
                       <div className="relative">
                         <Progress
                           value={unitsProgress}
-                          className="h-4 bg-muted"
+                          className="h-3 bg-muted"
                         />
                         <div
-                          className={`absolute top-0 left-0 h-4 rounded-full transition-all duration-300 ${getProgressColor(
+                          className={`absolute top-0 left-0 h-3 rounded-full transition-all duration-300 ${getProgressColor(
                             unitsProgress
                           )}`}
                           style={{ width: `${unitsProgress}%` }}
                         ></div>
                       </div>
                       <div className="text-center">
-                        <span className="text-lg font-black text-foreground">
+                        <span className="text-sm font-black text-foreground">
                           {unitsProgress.toFixed(1)}%
                         </span>
                       </div>
@@ -172,9 +172,9 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                   </TableCell>
 
                   {/* Category */}
-                  <TableCell className="py-6 px-6 text-center">
+                  <TableCell className="py-3 px-4 text-center">
                     <div
-                      className={`inline-flex items-center px-4 py-2 rounded-full text-lg font-black ${
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-black ${
                         agent.category === "Hardware"
                           ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                           : agent.category === "Software"
