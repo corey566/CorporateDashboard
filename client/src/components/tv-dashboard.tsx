@@ -354,7 +354,7 @@ export default function TvDashboard() {
         {/* Right Side Panel */}
         <div className="col-span-4 space-y-4">
           {/* Daily Targets Table */}
-          <DailyTargetsTable teams={teams} />
+          <DailyTargetsTable teams={teams} agents={agents} />
           
           {/* Team Rankings - Conditional display */}
           {showTeamRankings && enableTeams && (
