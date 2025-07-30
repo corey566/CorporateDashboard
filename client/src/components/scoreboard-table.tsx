@@ -6,6 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
 import { useCurrency } from "@/hooks/use-currency";
 
 interface ScoreboardTableProps {
@@ -23,6 +24,9 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
             <TableRow className="bg-muted/50 border-b-2 border-border">
               <TableHead className="text-4xl font-black text-foreground py-2 px-6">
                 AGENT
+              </TableHead>
+              <TableHead className="text-4xl font-black text-foreground py-2 px-6 text-center">
+                PROGRESS
               </TableHead>
               <TableHead className="text-4xl font-black text-foreground py-2 px-6 text-center">
                 VOLUME/UNITS
@@ -72,7 +76,35 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                     </div>
                   </TableCell>
 
-                  {/* Combined Volume/Units */}
+                  {/* Progress Bars */}
+                  <TableCell className="py-1 px-6">
+                    <div className="space-y-2">
+                      {/* Volume Progress */}
+                      <div>
+                        <div className="flex justify-between text-sm font-bold text-foreground mb-1">
+                          <span>Volume</span>
+                          <span>{Math.round((parseFloat(agent.currentVolume || "0") / parseFloat(agent.volumeTarget || "1")) * 100)}%</span>
+                        </div>
+                        <Progress 
+                          value={Math.min((parseFloat(agent.currentVolume || "0") / parseFloat(agent.volumeTarget || "1")) * 100, 100)} 
+                          className="h-3" 
+                        />
+                      </div>
+                      {/* Units Progress */}
+                      <div>
+                        <div className="flex justify-between text-sm font-bold text-foreground mb-1">
+                          <span>Units</span>
+                          <span>{Math.round(((agent.currentUnits || 0) / (agent.unitsTarget || 1)) * 100)}%</span>
+                        </div>
+                        <Progress 
+                          value={Math.min(((agent.currentUnits || 0) / (agent.unitsTarget || 1)) * 100, 100)} 
+                          className="h-3" 
+                        />
+                      </div>
+                    </div>
+                  </TableCell>
+
+                  {/* Current Volume/Units */}
                   <TableCell className="py-1 px-6 text-center">
                     <div className="space-y-1">
                       <div className="text-3xl font-black text-foreground">

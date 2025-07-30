@@ -6,6 +6,7 @@ import { Users, Wifi, TrendingUp, Settings, Building } from "lucide-react";
 import AgentCard from "./agent-card";
 import TeamLeaderboard from "./team-leaderboard";
 import ScoreboardTable from "./scoreboard-table";
+import DailyTargetsTable from "./daily-targets-table";
 import NewsTicker from "./news-ticker";
 import SalePopup from "./sale-popup";
 import AnnouncementPopup from "./announcement-popup";
@@ -344,18 +345,22 @@ export default function TvDashboard() {
       )}
 
       {/* Main Dashboard Layout - Fixed height to prevent overlap with news ticker */}
-      <div className={`grid gap-4 ${showTeamRankings && enableTeams ? 'grid-cols-12' : 'grid-cols-1'}`} style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
+      <div className="grid grid-cols-12 gap-4" style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
         {/* Main Sales Scoreboard Table */}
-        <div className={showTeamRankings && enableTeams ? 'col-span-8' : 'col-span-1'}>
+        <div className="col-span-8">
           <ScoreboardTable agents={agents} />
         </div>
 
-        {/* Team Rankings - Conditional Side Panel */}
-        {showTeamRankings && enableTeams && (
-          <div className="col-span-4">
+        {/* Right Side Panel */}
+        <div className="col-span-4 space-y-4">
+          {/* Daily Targets Table */}
+          <DailyTargetsTable teams={teams} />
+          
+          {/* Team Rankings - Conditional display */}
+          {showTeamRankings && enableTeams && (
             <TeamLeaderboard teams={teams} agents={agents} />
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Bottom News Ticker - Fixed position */}
