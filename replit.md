@@ -100,7 +100,10 @@ Preferred communication style: Simple, everyday language.
 ✓ Redesigned WebSocket status indicator with clean pill-shaped design
 ✓ Enhanced news ticker with gradient news badge and professional typography
 ✓ Applied consistent color-coded progress bars (green/blue/yellow/red) for visual hierarchy
-✓ Maintained all existing text sizes while improving overall visual polish and professionalism
+✓ Doubled all font sizes across the dashboard for 50-meter TV viewing distance readability
+✓ Implemented intelligent auto-scrolling system for agent rows when more than 2 agents are present
+✓ Added visual auto-scroll indicator with pause-on-hover functionality for manual navigation
+✓ Enhanced scoreboard with larger agent names, progress labels, and volume/units data for TV display
 
 ## System Architecture
 
