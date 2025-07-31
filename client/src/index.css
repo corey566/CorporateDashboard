@@ -280,6 +280,38 @@
   .auto-scroll-container:hover {
     scroll-behavior: auto;
   }
+
+  /* CSS-based auto-scroll animation */
+  @keyframes autoScroll {
+    0% {
+      scroll-behavior: smooth;
+      scrollbar-gutter: stable;
+    }
+    25% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-30%);
+    }
+    75% {
+      transform: translateY(-60%);
+    }
+    100% {
+      transform: translateY(0);
+    }
+  }
+
+  .auto-scroll-active {
+    overflow-y: hidden;
+  }
+
+  .auto-scroll-active tbody {
+    animation: autoScroll 20s linear infinite;
+  }
+
+  .auto-scroll-active:hover tbody {
+    animation-play-state: paused;
+  }
   
   /* Pulse animation for live indicators */
   @keyframes pulse-dot {

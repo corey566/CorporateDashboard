@@ -19,88 +19,48 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
 
-  // Auto-scroll functionality when there are many agents
+  // Simple auto-scroll functionality
   useEffect(() => {
     const container = scrollContainerRef.current;
+    
     if (!container || agents.length <= 2) {
       setIsAutoScrolling(false);
       return;
     }
 
     setIsAutoScrolling(true);
-    let scrollTimeout: NodeJS.Timeout;
-    let scrollDirection = 1; // 1 for down, -1 for up
-    let isScrolling = false;
-    let isPaused = false;
-
-    const performScroll = () => {
-      if (isScrolling || isPaused) return;
-      isScrolling = true;
-
-      // Check if content overflows
+    let scrollPosition = 0;
+    let scrollDirection = 1; // 1 = down, -1 = up
+    
+    const scrollStep = () => {
       const maxScroll = container.scrollHeight - container.clientHeight;
-      if (maxScroll <= 0) {
-        isScrolling = false;
-        scrollTimeout = setTimeout(performScroll, 2000);
-        return;
+      
+      if (maxScroll <= 0) return; // No scrollable content
+      
+      scrollPosition += scrollDirection * 80; // Scroll 80px at a time
+      
+      // Change direction at boundaries
+      if (scrollPosition >= maxScroll) {
+        scrollPosition = maxScroll;
+        scrollDirection = -1;
+      } else if (scrollPosition <= 0) {
+        scrollPosition = 0;
+        scrollDirection = 1;
       }
-
-      const currentScroll = container.scrollTop;
-      const scrollAmount = 150; // Larger scroll amount per step
       
-      let targetScroll;
-      
-      if (scrollDirection === 1) {
-        // Scrolling down
-        targetScroll = Math.min(currentScroll + scrollAmount, maxScroll);
-        if (targetScroll >= maxScroll) {
-          scrollDirection = -1; // Change direction to up
-        }
-      } else {
-        // Scrolling up
-        targetScroll = Math.max(currentScroll - scrollAmount, 0);
-        if (targetScroll <= 0) {
-          scrollDirection = 1; // Change direction to down
-        }
-      }
-
-      container.scrollTo({
-        top: targetScroll,
-        behavior: 'smooth'
-      });
-
-      // Wait longer at top and bottom, shorter for middle scrolls
-      const pauseTime = (targetScroll === 0 || targetScroll === maxScroll) ? 3000 : 2000;
-      
-      setTimeout(() => {
-        isScrolling = false;
-        scrollTimeout = setTimeout(performScroll, pauseTime);
-      }, 1000); // Wait for smooth scroll to complete
+      container.scrollTop = scrollPosition;
     };
 
-    // Pause auto-scroll on hover
-    const handleMouseEnter = () => {
-      isPaused = true;
-    };
-
-    const handleMouseLeave = () => {
-      isPaused = false;
-    };
-
-    container.addEventListener('mouseenter', handleMouseEnter);
-    container.addEventListener('mouseleave', handleMouseLeave);
-
-    // Start auto-scroll after initial delay
-    const initialDelay = setTimeout(() => {
-      performScroll();
+    // Start scrolling after 2 seconds, then every 2.5 seconds
+    let intervalId: NodeJS.Timeout;
+    
+    const startTimeout = setTimeout(() => {
+      intervalId = setInterval(scrollStep, 2500);
     }, 2000);
 
     return () => {
-      container.removeEventListener('mouseenter', handleMouseEnter);
-      container.removeEventListener('mouseleave', handleMouseLeave);
-      clearTimeout(initialDelay);
-      clearTimeout(scrollTimeout);
-      isScrolling = false;
+      clearTimeout(startTimeout);
+      if (intervalId) clearInterval(intervalId);
       setIsAutoScrolling(false);
     };
   }, [agents.length]);
