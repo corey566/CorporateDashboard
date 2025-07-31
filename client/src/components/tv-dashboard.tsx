@@ -15,6 +15,11 @@ import FullscreenMediaPresentation from "./fullscreen-media-presentation";
 import { useWebSocket } from "@/hooks/use-websocket";
 import { useState, useEffect } from "react";
 import { useCurrency } from "@/hooks/use-currency";
+import { BackgroundBeams } from "@/components/ui/aceternity/background-beams";
+import { Spotlight } from "@/components/ui/aceternity/spotlight";
+import { GradientBackground } from "@/components/ui/aceternity/gradient-bg";
+import { AnimatedCard } from "@/components/ui/aceternity/animated-card";
+import { Meteors } from "@/components/ui/aceternity/meteors";
 
 export default function TvDashboard() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -41,7 +46,8 @@ export default function TvDashboard() {
   
   // Get display settings
   const getSystemSetting = (key: string, defaultValue: string = "true") => {
-    const setting = systemSettings?.find((s: any) => s.key === key);
+    if (!systemSettings || !Array.isArray(systemSettings)) return defaultValue === "true";
+    const setting = systemSettings.find((s: any) => s.key === key);
     return setting?.value === "true";
   };
   
@@ -299,48 +305,71 @@ export default function TvDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-foreground p-4">
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background Effects */}
+      <GradientBackground />
+      <BackgroundBeams className="opacity-30" />
+      <Spotlight className="opacity-20" fill="#3b82f6" />
+      <div className="absolute inset-0 pointer-events-none">
+        <Meteors number={15} />
+      </div>
+      
+      <div className="relative z-10 bg-background/80 backdrop-blur-sm text-foreground p-4 min-h-screen">
+      
+      {/* WebSocket Status Indicator with Aceternity styling */}
+      {isConnected && (
+        <div className="fixed top-4 right-4 z-50">
+          <AnimatedCard delay={0} className="border-0 bg-green-500/90 backdrop-blur-md animate-float">
+            <div className="px-3 py-2 flex items-center space-x-2">
+              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+              <span className="text-white text-sm font-bold">LIVE</span>
+            </div>
+          </AnimatedCard>
+        </div>
+      )}
       {/* Cash Offers Banner - Only show when promotions are active */}
       {cashOffers && cashOffers.length > 0 && (
         <div className="mb-4">
-          <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-2xl p-4 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-                  <span className="text-green-600 text-2xl font-black">$</span>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-black text-white">
-                    ACTIVE CASH OFFERS
-                  </h2>
-                  <p className="text-lg text-green-100 font-bold">
-                    {cashOffers.length} Promotions Live
-                  </p>
-                </div>
-              </div>
-              <div className="flex space-x-4">
-                {cashOffers.slice(0, 4).map((offer: any) => (
-                  <div
-                    key={offer.id}
-                    className="bg-white/20 rounded-xl p-3 text-center min-w-[180px]"
-                  >
-                    <div className="text-2xl font-black text-white mb-1">
-                      {formatCurrency(offer.reward)}
-                    </div>
-                    <div className="text-sm font-bold text-green-100 mb-1">
-                      {offer.title}
-                    </div>
-                    <div className="text-xs text-green-200">
-                      Target: {offer.target} sales
-                    </div>
-                    <div className="text-xs text-green-200">
-                      Expires: {new Date(offer.expiresAt).toLocaleDateString()}
-                    </div>
+          <AnimatedCard delay={0} className="border-0 bg-gradient-to-r from-green-600/90 to-green-700/90 backdrop-blur-md">
+            <div className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center animate-float">
+                    <span className="text-green-600 text-2xl font-black">$</span>
                   </div>
-                ))}
+                  <div>
+                    <h2 className="text-2xl font-black text-white">
+                      ACTIVE CASH OFFERS
+                    </h2>
+                    <p className="text-lg text-green-100 font-bold">
+                      {cashOffers.length} Promotions Live
+                    </p>
+                  </div>
+                </div>
+                <div className="flex space-x-4">
+                  {cashOffers.slice(0, 4).map((offer: any) => (
+                    <div
+                      key={offer.id}
+                      className="bg-white/20 rounded-xl p-3 text-center min-w-[180px] backdrop-blur-sm"
+                    >
+                      <div className="text-2xl font-black text-white mb-1">
+                        {formatCurrency(offer.reward)}
+                      </div>
+                      <div className="text-sm font-bold text-green-100 mb-1">
+                        {offer.title}
+                      </div>
+                      <div className="text-xs text-green-200">
+                        Target: {offer.target} sales
+                      </div>
+                      <div className="text-xs text-green-200">
+                        Expires: {new Date(offer.expiresAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          </AnimatedCard>
         </div>
       )}
 
@@ -348,17 +377,23 @@ export default function TvDashboard() {
       <div className="grid grid-cols-12 gap-4" style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
         {/* Main Sales Scoreboard Table */}
         <div className="col-span-8">
-          <ScoreboardTable agents={agents} />
+          <AnimatedCard delay={0.1} className="h-full border-0 bg-background/90 backdrop-blur-md">
+            <ScoreboardTable agents={agents} />
+          </AnimatedCard>
         </div>
 
         {/* Right Side Panel */}
         <div className="col-span-4 space-y-4">
           {/* Daily Targets Table */}
-          <DailyTargetsTable teams={teams} agents={agents} />
+          <AnimatedCard delay={0.2} direction="right" className="border-0 bg-background/90 backdrop-blur-md">
+            <DailyTargetsTable teams={teams} agents={agents} />
+          </AnimatedCard>
           
           {/* Team Rankings - Conditional display */}
           {showTeamRankings && enableTeams && (
-            <TeamLeaderboard teams={teams} agents={agents} />
+            <AnimatedCard delay={0.3} direction="right" className="border-0 bg-background/90 backdrop-blur-md">
+              <TeamLeaderboard teams={teams} agents={agents} />
+            </AnimatedCard>
           )}
         </div>
       </div>
@@ -395,6 +430,7 @@ export default function TvDashboard() {
         isVisible={showMediaPresentation}
         onComplete={() => setShowMediaPresentation(false)}
       />
+      </div>
     </div>
   );
 }

@@ -20,21 +20,42 @@ interface DailyTargetsTableProps {
   agents: any[];
 }
 
-export default function DailyTargetsTable({ teams, agents }: DailyTargetsTableProps) {
+export default function DailyTargetsTable({
+  teams,
+  agents,
+}: DailyTargetsTableProps) {
   const { formatCurrency } = useCurrency();
   const [showSettings, setShowSettings] = useState(false);
   const [alertMessages, setAlertMessages] = useState<string[]>([]);
 
   // Handle target alerts
   const handleTargetAlert = (message: string, teamName: string) => {
-    setAlertMessages(prev => [...prev.slice(-4), `${new Date().toLocaleTimeString()}: ${message}`]);
+    setAlertMessages((prev) => [
+      ...prev.slice(-4),
+      `${new Date().toLocaleTimeString()}: ${message}`,
+    ]);
   };
 
   // Use the daily target manager
-  const targetManager = DailyTargetManager({ teams, agents, onTargetAlert: handleTargetAlert });
-  const { dailyTargets, workingHours, setWorkingHours, alertTime, setAlertTime, remainingWorkingDays, totalWorkingDays } = targetManager;
+  const targetManager = DailyTargetManager({
+    teams,
+    agents,
+    onTargetAlert: handleTargetAlert,
+  });
+  const {
+    dailyTargets,
+    workingHours,
+    setWorkingHours,
+    alertTime,
+    setAlertTime,
+    remainingWorkingDays,
+    totalWorkingDays,
+  } = targetManager;
 
-  const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const currentMonth = new Date().toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
   return (
     <div className="w-full space-y-4">
@@ -49,7 +70,10 @@ export default function DailyTargetsTable({ teams, agents }: DailyTargetsTablePr
           </CardHeader>
           <CardContent>
             {alertMessages.slice(-3).map((message, index) => (
-              <p key={index} className="text-sm text-red-600 dark:text-red-400 mb-1">
+              <p
+                key={index}
+                className="text-sm text-red-600 dark:text-red-400 mb-1"
+              >
                 {message}
               </p>
             ))}
@@ -63,10 +87,11 @@ export default function DailyTargetsTable({ teams, agents }: DailyTargetsTablePr
           <div className="flex justify-between items-center">
             <div className="text-center flex-1">
               <h2 className="text-2xl font-black text-foreground">
-                DYNAMIC DAILY TARGETS - {currentMonth.toUpperCase()}
+                DAILY TARGETS - {currentMonth.toUpperCase()}
               </h2>
               <p className="text-lg font-bold text-muted-foreground">
-                {remainingWorkingDays} Days Remaining / {totalWorkingDays} Total Days
+                {remainingWorkingDays} Days Remaining / {totalWorkingDays} Total
+                Days
               </p>
             </div>
             <Button
@@ -78,7 +103,7 @@ export default function DailyTargetsTable({ teams, agents }: DailyTargetsTablePr
               <Settings className="w-4 h-4" />
             </Button>
           </div>
-          
+
           {/* Settings Panel */}
           {showSettings && (
             <div className="mt-4 p-4 bg-background rounded-lg border grid grid-cols-2 gap-4">
@@ -90,7 +115,12 @@ export default function DailyTargetsTable({ teams, agents }: DailyTargetsTablePr
                   min="0"
                   max="23"
                   value={workingHours.start}
-                  onChange={(e) => setWorkingHours(prev => ({ ...prev, start: parseInt(e.target.value) }))}
+                  onChange={(e) =>
+                    setWorkingHours((prev) => ({
+                      ...prev,
+                      start: parseInt(e.target.value),
+                    }))
+                  }
                   className="mt-1"
                 />
               </div>
@@ -102,7 +132,12 @@ export default function DailyTargetsTable({ teams, agents }: DailyTargetsTablePr
                   min="0"
                   max="23"
                   value={workingHours.end}
-                  onChange={(e) => setWorkingHours(prev => ({ ...prev, end: parseInt(e.target.value) }))}
+                  onChange={(e) =>
+                    setWorkingHours((prev) => ({
+                      ...prev,
+                      end: parseInt(e.target.value),
+                    }))
+                  }
                   className="mt-1"
                 />
               </div>
@@ -142,14 +177,17 @@ export default function DailyTargetsTable({ teams, agents }: DailyTargetsTablePr
                 <TableRow
                   key={target.id}
                   className={`border-b border-border hover:bg-muted/30 transition-colors ${
-                    target.isBehindSchedule ? "bg-red-50 dark:bg-red-950/20" : 
-                    index % 2 === 0 ? "bg-background" : "bg-muted/10"
+                    target.isBehindSchedule
+                      ? "bg-red-50 dark:bg-red-950/20"
+                      : index % 2 === 0
+                        ? "bg-background"
+                        : "bg-muted/10"
                   }`}
                 >
                   {/* Team Info */}
                   <TableCell className="py-2 px-4">
                     <div className="flex items-center space-x-3">
-                      <div 
+                      <div
                         className="w-4 h-4 rounded-full border-2 border-white shadow-md"
                         style={{ backgroundColor: target.color }}
                       ></div>
@@ -157,7 +195,7 @@ export default function DailyTargetsTable({ teams, agents }: DailyTargetsTablePr
                         <div className="text-xl font-black text-foreground">
                           {target.name}
                         </div>
-                        <div className="text-sm font-bold text-muted-foreground">
+                        <div className="text-xl font-bold text-foreground">
                           {remainingWorkingDays} days left
                         </div>
                       </div>
@@ -170,45 +208,57 @@ export default function DailyTargetsTable({ teams, agents }: DailyTargetsTablePr
                       {/* Targets on one line */}
                       <div className="flex justify-center items-center gap-4">
                         <div className="text-lg font-black text-foreground">
-                          {formatCurrency(target.adjustedDailyVolumeTarget.toFixed(2))}
+                          {formatCurrency(
+                            target.adjustedDailyVolumeTarget.toFixed(2),
+                          )}
                         </div>
                         <div className="text-lg font-black text-foreground">
                           {Math.round(target.adjustedDailyUnitsTarget)} units
                         </div>
                       </div>
-                      
+
                       {/* Progress bars below */}
                       <div className="grid grid-cols-2 gap-2">
                         {/* Volume Progress */}
                         <div>
                           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div 
+                            <div
                               className={`h-2 rounded-full transition-all duration-300 ${
-                                target.volumeProgress >= 90 ? 'bg-green-500' : 
-                                target.volumeProgress >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                                target.volumeProgress >= 90
+                                  ? "bg-green-500"
+                                  : target.volumeProgress >= 70
+                                    ? "bg-yellow-500"
+                                    : "bg-red-500"
                               }`}
-                              style={{ width: `${Math.min(target.volumeProgress, 100)}%` }}
+                              style={{
+                                width: `${Math.min(target.volumeProgress, 100)}%`,
+                              }}
                             ></div>
                           </div>
-                          <div className="text-xs font-bold text-muted-foreground mt-1">
+                          {/* <div className="text-xl font-bold text-muted-foreground mt-1">
                             {target.volumeProgress.toFixed(1)}% Volume
-                          </div>
+                          </div> */}
                         </div>
-                        
+
                         {/* Units Progress */}
                         <div>
                           <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                            <div 
+                            <div
                               className={`h-2 rounded-full transition-all duration-300 ${
-                                target.unitsProgress >= 90 ? 'bg-green-500' : 
-                                target.unitsProgress >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                                target.unitsProgress >= 90
+                                  ? "bg-green-500"
+                                  : target.unitsProgress >= 70
+                                    ? "bg-yellow-500"
+                                    : "bg-red-500"
                               }`}
-                              style={{ width: `${Math.min(target.unitsProgress, 100)}%` }}
+                              style={{
+                                width: `${Math.min(target.unitsProgress, 100)}%`,
+                              }}
                             ></div>
                           </div>
-                          <div className="text-xs font-bold text-muted-foreground mt-1">
+                          {/* <div className="text-xl font-bold text-foreground mt-1">
                             {target.unitsProgress.toFixed(1)}% Units
-                          </div>
+                          </div> */}
                         </div>
                       </div>
                     </div>

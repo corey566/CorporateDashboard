@@ -132,6 +132,80 @@
   animation: marquee 30s linear infinite;
 }
 
+/* Aceternity UI Animations */
+@keyframes spotlight {
+  0% {
+    opacity: 0;
+    transform: translate(-72%, -62%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -40%) scale(1);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes grid-pattern {
+  0% {
+    opacity: 0.1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0.1;
+  }
+}
+
+.animate-spotlight {
+  animation: spotlight 2s ease-out forwards;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-gradient-x {
+  animation: gradient-x 3s ease infinite;
+  background-size: 400% 400%;
+}
+
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 20px 20px;
+  animation: grid-pattern 4s ease-in-out infinite;
+}
+
+@keyframes meteor-effect {
+  to {
+    transform: rotate(215deg) translateX(500px);
+    opacity: 0;
+  }
+}
+
+.animate-meteor-effect {
+  animation: meteor-effect linear infinite;
+}
+
 /* Enhanced component styling */
 .card-hover {
   transition: transform 0.3s ease, box-shadow 0.3s ease;
