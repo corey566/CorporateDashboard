@@ -270,6 +270,16 @@
   .animate-marquee {
     animation: marquee 30s linear infinite;
   }
+
+  /* Auto-scroll container styling */
+  .auto-scroll-container {
+    scroll-behavior: smooth;
+  }
+
+  /* Pause auto-scroll on hover */
+  .auto-scroll-container:hover {
+    scroll-behavior: auto;
+  }
   
   /* Pulse animation for live indicators */
   @keyframes pulse-dot {

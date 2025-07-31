@@ -63,8 +63,8 @@ export default function DailyTargetsTable({
       {alertMessages.length > 0 && (
         <Card className="border-red-500 bg-red-50 dark:bg-red-950">
           <CardHeader className="pb-2">
-            <CardTitle className="text-red-700 dark:text-red-300 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5" />
+            <CardTitle className="text-red-700 dark:text-red-300 flex items-center gap-2 text-xl">
+              <AlertTriangle className="w-6 h-6" />
               Target Alerts
             </CardTitle>
           </CardHeader>
@@ -72,7 +72,7 @@ export default function DailyTargetsTable({
             {alertMessages.slice(-3).map((message, index) => (
               <p
                 key={index}
-                className="text-sm text-red-600 dark:text-red-400 mb-1"
+                className="text-lg text-red-600 dark:text-red-400 mb-1"
               >
                 {message}
               </p>
@@ -86,10 +86,10 @@ export default function DailyTargetsTable({
         <div className="bg-primary/10 p-4 border-b-2 border-border">
           <div className="flex justify-between items-center">
             <div className="text-center flex-1">
-              <h2 className="text-2xl font-black text-foreground">
+              <h2 className="text-4xl font-black text-foreground">
                 DAILY TARGETS - {currentMonth.toUpperCase()}
               </h2>
-              <p className="text-lg font-bold text-muted-foreground">
+              <p className="text-2xl font-bold text-muted-foreground">
                 {remainingWorkingDays} Days Remaining / {totalWorkingDays} Total
                 Days
               </p>

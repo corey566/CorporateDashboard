@@ -29,7 +29,7 @@ export default function NewsTicker() {
             <span className="mr-2">📢</span>
             NEWS
           </div>
-          <span className="text-lg font-medium text-gray-900 dark:text-white">📈 Welcome to the Sales Leaderboard Dashboard!</span>
+          <span className="text-2xl font-medium text-gray-900 dark:text-white">📈 Welcome to the Sales Leaderboard Dashboard!</span>
         </div>
       </div>
     );
@@ -43,7 +43,7 @@ export default function NewsTicker() {
           NEWS
         </div>
         {messages.map((message: any, index: number) => (
-          <span key={`${message.id}-${index}`} className="whitespace-nowrap text-lg font-medium text-gray-900 dark:text-white">
+          <span key={`${message.id}-${index}`} className="whitespace-nowrap text-2xl font-medium text-gray-900 dark:text-white">
             {message.message}
           </span>
         ))}
