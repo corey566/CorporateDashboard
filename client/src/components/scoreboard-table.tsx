@@ -23,37 +23,45 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
   const [visibleAgents, setVisibleAgents] = useState(agents);
 
   useEffect(() => {
-    if (agents.length <= 2) {
+    setVisibleAgents(agents);
+  }, [agents]);
+
+  useEffect(() => {
+    if (visibleAgents.length <= 2) {
       setIsAutoScrolling(false);
-      setVisibleAgents(agents);
       return;
     }
 
     setIsAutoScrolling(true);
-    setVisibleAgents(agents);
+    console.log('Starting row rotation with', visibleAgents.length, 'agents');
     
     const rotateRows = () => {
+      console.log('Rotating rows...');
       setVisibleAgents(prevAgents => {
         if (prevAgents.length <= 1) return prevAgents;
         
         // Move first row to last position
         const [firstAgent, ...restAgents] = prevAgents;
-        return [...restAgents, firstAgent];
+        const newOrder = [...restAgents, firstAgent];
+        console.log('New order:', newOrder.map(a => a.name));
+        return newOrder;
       });
     };
 
     // Start rotation after 3 seconds, then every 3 seconds
     let intervalId: NodeJS.Timeout;
     const startTimeout = setTimeout(() => {
+      console.log('Starting interval for row rotation');
       intervalId = setInterval(rotateRows, 3000);
     }, 3000);
 
     return () => {
+      console.log('Cleaning up row rotation');
       clearTimeout(startTimeout);
       if (intervalId) clearInterval(intervalId);
       setIsAutoScrolling(false);
     };
-  }, [agents]);
+  }, [visibleAgents.length]);
 
   return (
     <div className="h-full">
@@ -79,7 +87,7 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
 
       <div
         ref={scrollContainerRef}
-        className="overflow-y-auto custom-scrollbar auto-scroll-container"
+        className="overflow-hidden custom-scrollbar"
         style={{ height: "calc(100% - 80px)" }}
       >
         <Table>
@@ -100,8 +108,8 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
             {visibleAgents.map((agent: any, index: number) => {
               return (
                 <TableRow
-                  key={agent.id}
-                  className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all duration-200"
+                  key={`${agent.id}-${index}`}
+                  className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all duration-500"
                 >
                   {/* Agent Info */}
                   <TableCell className="py-4 px-6">
