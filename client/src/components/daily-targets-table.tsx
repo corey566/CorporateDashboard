@@ -128,17 +128,11 @@ export default function DailyTargetsTable({ teams, agents }: DailyTargetsTablePr
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/50 border-b-2 border-border">
-              <TableHead className="text-xl font-black text-foreground py-2 px-4">
+              <TableHead className="text-3xl font-black text-foreground py-3 px-6">
                 TEAM
               </TableHead>
-              <TableHead className="text-xl font-black text-foreground py-2 px-4 text-center">
-                TODAY'S PROGRESS
-              </TableHead>
-              <TableHead className="text-xl font-black text-foreground py-2 px-4 text-center">
-                ADJUSTED DAILY TARGET
-              </TableHead>
-              <TableHead className="text-xl font-black text-foreground py-2 px-4 text-center">
-                STATUS
+              <TableHead className="text-3xl font-black text-foreground py-3 px-6 text-center">
+                TODAY'S TARGET
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -153,63 +147,63 @@ export default function DailyTargetsTable({ teams, agents }: DailyTargetsTablePr
                   }`}
                 >
                   {/* Team Info */}
-                  <TableCell className="py-2 px-4">
-                    <div className="flex items-center space-x-3">
+                  <TableCell className="py-3 px-6">
+                    <div className="flex items-center space-x-4">
                       <div 
-                        className="w-4 h-4 rounded-full border-2 border-white shadow-md"
+                        className="w-6 h-6 rounded-full border-2 border-white shadow-md"
                         style={{ backgroundColor: target.color }}
                       ></div>
                       <div>
-                        <div className="text-lg font-black text-foreground">
+                        <div className="text-2xl font-black text-foreground">
                           {target.name}
                         </div>
-                        <div className="text-sm font-bold text-muted-foreground">
-                          {remainingWorkingDays} days left
+                        <div className="text-lg font-bold text-muted-foreground">
+                          {remainingWorkingDays} days remaining
                         </div>
                       </div>
                     </div>
                   </TableCell>
 
-                  {/* Today's Progress */}
-                  <TableCell className="py-2 px-4 text-center">
-                    <div className="space-y-1">
-                      <div className="text-sm font-bold text-foreground">
-                        Vol: {formatCurrency(target.currentVolume.toFixed(2))} ({target.volumeProgress.toFixed(1)}%)
+                  {/* Today's Target with Progress Bars */}
+                  <TableCell className="py-3 px-6 text-center">
+                    <div className="space-y-3">
+                      {/* Volume Target */}
+                      <div>
+                        <div className="text-2xl font-black text-foreground mb-2">
+                          {formatCurrency(target.adjustedDailyVolumeTarget.toFixed(2))}
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                          <div 
+                            className={`h-3 rounded-full transition-all duration-300 ${
+                              target.volumeProgress >= 90 ? 'bg-green-500' : 
+                              target.volumeProgress >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                            }`}
+                            style={{ width: `${Math.min(target.volumeProgress, 100)}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-sm font-bold text-muted-foreground mt-1">
+                          {target.volumeProgress.toFixed(1)}% Volume
+                        </div>
                       </div>
-                      <div className="text-sm font-bold text-foreground">
-                        Units: {target.currentUnits} ({target.unitsProgress.toFixed(1)}%)
-                      </div>
-                    </div>
-                  </TableCell>
 
-                  {/* Adjusted Daily Target */}
-                  <TableCell className="py-2 px-4 text-center">
-                    <div className="space-y-1">
-                      <div className="text-sm font-black text-foreground">
-                        {formatCurrency(target.adjustedDailyVolumeTarget.toFixed(2))}
+                      {/* Units Target */}
+                      <div>
+                        <div className="text-2xl font-black text-foreground mb-2">
+                          {Math.round(target.adjustedDailyUnitsTarget)} units
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                          <div 
+                            className={`h-3 rounded-full transition-all duration-300 ${
+                              target.unitsProgress >= 90 ? 'bg-green-500' : 
+                              target.unitsProgress >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                            }`}
+                            style={{ width: `${Math.min(target.unitsProgress, 100)}%` }}
+                          ></div>
+                        </div>
+                        <div className="text-sm font-bold text-muted-foreground mt-1">
+                          {target.unitsProgress.toFixed(1)}% Units
+                        </div>
                       </div>
-                      <div className="text-sm font-black text-foreground">
-                        {Math.round(target.adjustedDailyUnitsTarget)} units
-                      </div>
-                    </div>
-                  </TableCell>
-
-                  {/* Status */}
-                  <TableCell className="py-2 px-4 text-center">
-                    <div className={`flex items-center justify-center gap-1 ${
-                      target.isBehindSchedule ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400"
-                    }`}>
-                      {target.isBehindSchedule ? (
-                        <>
-                          <AlertTriangle className="w-4 h-4" />
-                          <span className="text-xs font-bold">BEHIND</span>
-                        </>
-                      ) : (
-                        <>
-                          <Target className="w-4 h-4" />
-                          <span className="text-xs font-bold">ON TRACK</span>
-                        </>
-                      )}
                     </div>
                   </TableCell>
                 </TableRow>
