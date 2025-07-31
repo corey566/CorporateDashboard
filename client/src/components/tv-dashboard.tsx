@@ -306,62 +306,56 @@ export default function TvDashboard() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Background Effects */}
-      <GradientBackground />
-      <BackgroundBeams className="opacity-30" />
-      <Spotlight className="opacity-20" fill="#3b82f6" />
-      <div className="absolute inset-0 pointer-events-none">
-        <Meteors number={15} />
-      </div>
+      {/* Elegant Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-gray-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900"></div>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]"></div>
       
-      <div className="relative z-10 bg-background/80 backdrop-blur-sm text-foreground p-4 min-h-screen">
+      <div className="relative z-10 p-6 min-h-screen">
       
-      {/* WebSocket Status Indicator with Aceternity styling */}
+      {/* Elegant WebSocket Status Indicator */}
       {isConnected && (
-        <div className="fixed top-4 right-4 z-50">
-          <AnimatedCard delay={0} className="border-0 bg-green-500/90 backdrop-blur-md animate-float">
-            <div className="px-3 py-2 flex items-center space-x-2">
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-              <span className="text-white text-sm font-bold">LIVE</span>
-            </div>
-          </AnimatedCard>
+        <div className="fixed top-6 right-6 z-50">
+          <div className="bg-emerald-500 text-white px-4 py-2 rounded-full shadow-lg flex items-center space-x-2 border border-emerald-400/20">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span className="text-sm font-medium tracking-wide">LIVE</span>
+          </div>
         </div>
       )}
-      {/* Cash Offers Banner - Only show when promotions are active */}
+      {/* Elegant Cash Offers Banner */}
       {cashOffers && cashOffers.length > 0 && (
-        <div className="mb-4">
-          <AnimatedCard delay={0} className="border-0 bg-gradient-to-r from-green-600/90 to-green-700/90 backdrop-blur-md">
-            <div className="p-4">
+        <div className="mb-6">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center animate-float">
-                    <span className="text-green-600 text-2xl font-black">$</span>
+                  <div className="w-12 h-12 bg-white/10 backdrop-blur rounded-xl flex items-center justify-center">
+                    <span className="text-white text-xl font-semibold">💰</span>
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black text-white">
-                      ACTIVE CASH OFFERS
+                    <h2 className="text-xl font-semibold text-white">
+                      Active Cash Offers
                     </h2>
-                    <p className="text-lg text-green-100 font-bold">
-                      {cashOffers.length} Promotions Live
+                    <p className="text-emerald-100 font-medium">
+                      {cashOffers.length} promotions available
                     </p>
                   </div>
                 </div>
-                <div className="flex space-x-4">
+                <div className="flex space-x-3">
                   {cashOffers.slice(0, 4).map((offer: any) => (
                     <div
                       key={offer.id}
-                      className="bg-white/20 rounded-xl p-3 text-center min-w-[180px] backdrop-blur-sm"
+                      className="bg-white/10 backdrop-blur rounded-xl p-4 text-center min-w-[160px] border border-white/20"
                     >
-                      <div className="text-2xl font-black text-white mb-1">
+                      <div className="text-xl font-semibold text-white mb-1">
                         {formatCurrency(offer.reward)}
                       </div>
-                      <div className="text-sm font-bold text-green-100 mb-1">
+                      <div className="text-sm font-medium text-emerald-100 mb-2">
                         {offer.title}
                       </div>
-                      <div className="text-xs text-green-200">
+                      <div className="text-xs text-emerald-200">
                         Target: {offer.target} sales
                       </div>
-                      <div className="text-xs text-green-200">
+                      <div className="text-xs text-emerald-200">
                         Expires: {new Date(offer.expiresAt).toLocaleDateString()}
                       </div>
                     </div>
@@ -369,31 +363,31 @@ export default function TvDashboard() {
                 </div>
               </div>
             </div>
-          </AnimatedCard>
+          </div>
         </div>
       )}
 
-      {/* Main Dashboard Layout - Fixed height to prevent overlap with news ticker */}
-      <div className="grid grid-cols-12 gap-4" style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
+      {/* Main Dashboard Layout */}
+      <div className="grid grid-cols-12 gap-6" style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
         {/* Main Sales Scoreboard Table */}
         <div className="col-span-8">
-          <AnimatedCard delay={0.1} className="h-full border-0 bg-background/90 backdrop-blur-md">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm h-full overflow-hidden">
             <ScoreboardTable agents={agents} />
-          </AnimatedCard>
+          </div>
         </div>
 
         {/* Right Side Panel */}
-        <div className="col-span-4 space-y-4">
+        <div className="col-span-4 space-y-6">
           {/* Daily Targets Table */}
-          <AnimatedCard delay={0.2} direction="right" className="border-0 bg-background/90 backdrop-blur-md">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
             <DailyTargetsTable teams={teams} agents={agents} />
-          </AnimatedCard>
+          </div>
           
           {/* Team Rankings - Conditional display */}
           {showTeamRankings && enableTeams && (
-            <AnimatedCard delay={0.3} direction="right" className="border-0 bg-background/90 backdrop-blur-md">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm overflow-hidden">
               <TeamLeaderboard teams={teams} agents={agents} />
-            </AnimatedCard>
+            </div>
           )}
         </div>
       </div>
