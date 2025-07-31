@@ -345,7 +345,7 @@ export default function TvDashboard() {
       )}
 
       {/* Main Dashboard Layout - Fixed height to prevent overlap with news ticker */}
-      <div className="grid grid-cols-12 gap-4" style={{ height: 'calc(100vh - 128px)', overflowY: 'auto' }}>
+      <div className="grid grid-cols-12 gap-4" style={{ height: 'calc(100vh - 64px)', overflowY: 'auto' }}>
         {/* Main Sales Scoreboard Table */}
         <div className="col-span-8">
           <ScoreboardTable agents={agents} />

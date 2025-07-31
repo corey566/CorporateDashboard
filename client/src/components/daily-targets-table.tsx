@@ -167,41 +167,48 @@ export default function DailyTargetsTable({ teams, agents }: DailyTargetsTablePr
                   {/* Today's Target with Progress Bars */}
                   <TableCell className="py-2 px-4 text-center">
                     <div className="space-y-2">
-                      {/* Volume Target */}
-                      <div>
-                        <div className="text-lg font-black text-foreground mb-1">
+                      {/* Targets on one line */}
+                      <div className="flex justify-center items-center gap-4">
+                        <div className="text-lg font-black text-foreground">
                           {formatCurrency(target.adjustedDailyVolumeTarget.toFixed(2))}
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full transition-all duration-300 ${
-                              target.volumeProgress >= 90 ? 'bg-green-500' : 
-                              target.volumeProgress >= 70 ? 'bg-yellow-500' : 'bg-red-500'
-                            }`}
-                            style={{ width: `${Math.min(target.volumeProgress, 100)}%` }}
-                          ></div>
-                        </div>
-                        <div className="text-xs font-bold text-muted-foreground mt-1">
-                          {target.volumeProgress.toFixed(1)}% Volume
-                        </div>
-                      </div>
-
-                      {/* Units Target */}
-                      <div>
-                        <div className="text-lg font-black text-foreground mb-1">
+                        <div className="text-lg font-black text-foreground">
                           {Math.round(target.adjustedDailyUnitsTarget)} units
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div 
-                            className={`h-2 rounded-full transition-all duration-300 ${
-                              target.unitsProgress >= 90 ? 'bg-green-500' : 
-                              target.unitsProgress >= 70 ? 'bg-yellow-500' : 'bg-red-500'
-                            }`}
-                            style={{ width: `${Math.min(target.unitsProgress, 100)}%` }}
-                          ></div>
+                      </div>
+                      
+                      {/* Progress bars below */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {/* Volume Progress */}
+                        <div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                target.volumeProgress >= 90 ? 'bg-green-500' : 
+                                target.volumeProgress >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                              }`}
+                              style={{ width: `${Math.min(target.volumeProgress, 100)}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-xs font-bold text-muted-foreground mt-1">
+                            {target.volumeProgress.toFixed(1)}% Volume
+                          </div>
                         </div>
-                        <div className="text-xs font-bold text-muted-foreground mt-1">
-                          {target.unitsProgress.toFixed(1)}% Units
+                        
+                        {/* Units Progress */}
+                        <div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div 
+                              className={`h-2 rounded-full transition-all duration-300 ${
+                                target.unitsProgress >= 90 ? 'bg-green-500' : 
+                                target.unitsProgress >= 70 ? 'bg-yellow-500' : 'bg-red-500'
+                              }`}
+                              style={{ width: `${Math.min(target.unitsProgress, 100)}%` }}
+                            ></div>
+                          </div>
+                          <div className="text-xs font-bold text-muted-foreground mt-1">
+                            {target.unitsProgress.toFixed(1)}% Units
+                          </div>
                         </div>
                       </div>
                     </div>
