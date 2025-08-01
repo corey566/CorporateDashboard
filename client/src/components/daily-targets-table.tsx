@@ -9,9 +9,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Settings, Clock, Target } from "lucide-react";
+import { Settings, Clock, Target, ChevronUp, ChevronDown } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import DailyTargetManager from "./daily-target-manager";
 
 interface DailyTargetsTableProps {
@@ -25,6 +25,9 @@ export default function DailyTargetsTable({
 }: DailyTargetsTableProps) {
   const { formatCurrency } = useCurrency();
   const [showSettings, setShowSettings] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isScrolling, setIsScrolling] = useState(true);
+  const tableRef = useRef<HTMLDivElement>(null);
 
 
   // Handle target alerts - only voice, no visual display
@@ -58,8 +61,44 @@ export default function DailyTargetsTable({
     month: "numeric",
   });
 
+  // Carousel functionality for multiple teams
+  const teamsPerPage = 2; // Show 2 teams at a time for TV viewing
+  const totalPages = Math.ceil(dailyTargets.length / teamsPerPage);
+  const displayedTargets = dailyTargets.slice(
+    currentIndex * teamsPerPage,
+    (currentIndex + 1) * teamsPerPage
+  );
+
+  // Auto-scroll carousel every 6 seconds
+  useEffect(() => {
+    if (dailyTargets.length > teamsPerPage && isScrolling) {
+      const interval = setInterval(() => {
+        setCurrentIndex((prevIndex) => 
+          prevIndex >= totalPages - 1 ? 0 : prevIndex + 1
+        );
+      }, 6000);
+
+      return () => clearInterval(interval);
+    }
+  }, [dailyTargets.length, teamsPerPage, totalPages, isScrolling]);
+
+  // Pagination handlers
+  const nextPage = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex >= totalPages - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const prevPage = () => {
+    setCurrentIndex((prevIndex) => 
+      prevIndex <= 0 ? totalPages - 1 : prevIndex - 1
+    );
+  };
+
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4"
+         onMouseEnter={() => setIsScrolling(false)}
+         onMouseLeave={() => setIsScrolling(true)}>
 
 
       <div className="bg-card rounded-2xl border-2 border-border shadow-2xl overflow-hidden">
@@ -84,14 +123,42 @@ export default function DailyTargetsTable({
                 )}
               </p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowSettings(!showSettings)}
-              className="ml-4"
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
+            <div className="flex items-center gap-2 ml-4">
+              {/* Carousel controls - only show if more than 2 teams */}
+              {dailyTargets.length > teamsPerPage && (
+                <div className="flex items-center gap-1 mr-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={prevPage}
+                    className="px-2"
+                  >
+                    <ChevronUp className="w-4 h-4" />
+                  </Button>
+                  <span className="text-sm font-medium px-2">
+                    {currentIndex + 1}/{totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={nextPage}
+                    className="px-2"
+                  >
+                    <ChevronDown className="w-4 h-4" />
+                  </Button>
+                  <div className="ml-2 text-xs text-muted-foreground">
+                    {isScrolling ? "Auto-scrolling" : "Paused"}
+                  </div>
+                </div>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSettings(!showSettings)}
+              >
+                <Settings className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Settings Panel */}
@@ -229,7 +296,7 @@ export default function DailyTargetsTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {dailyTargets.map((target: any, index: number) => {
+            {displayedTargets.map((target: any, index: number) => {
               return (
                 <TableRow
                   key={target.id}

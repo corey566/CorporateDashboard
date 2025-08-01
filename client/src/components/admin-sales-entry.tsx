@@ -51,11 +51,16 @@ export default function AdminSalesEntry() {
     }
   }, [lastMessage, refetchCurrency, queryClient]);
 
-  const { data: agents } = useQuery({
+  const { data: agents = [] } = useQuery({
     queryKey: ["/api/agents"],
   });
 
-  const { data: sales } = useQuery({
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/categories"],
+    refetchInterval: 5000, // Refresh categories dynamically
+  });
+
+  const { data: sales = [] } = useQuery({
     queryKey: ["/api/sales"],
     refetchInterval: 5000,
   });
@@ -374,9 +379,11 @@ export default function AdminSalesEntry() {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Software">Software</SelectItem>
-                    <SelectItem value="Hardware">Hardware</SelectItem>
-                    <SelectItem value="Mixed">Mixed</SelectItem>
+                    {categories?.filter((cat: any) => cat.isActive).map((category: any) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 {form.formState.errors.category && (

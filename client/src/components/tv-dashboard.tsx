@@ -122,7 +122,14 @@ export default function TvDashboard() {
   };
 
   // Extract data from query result with proper defaults
-  const dashboardDataSafe = dashboardData || {};
+  const dashboardDataSafe = dashboardData || {
+    agents: [],
+    teams: [],
+    cashOffers: [],
+    mediaSlides: [],
+    announcements: [],
+    sales: []
+  };
   const rawAgents = dashboardDataSafe.agents || [];
   const teams = dashboardDataSafe.teams || [];
   const cashOffers = dashboardDataSafe.cashOffers || [];
