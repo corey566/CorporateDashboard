@@ -149,7 +149,7 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                           {agent.name}
                         </h3>
                         <p className="text-2xl font-bold text-gray-500 dark:text-gray-400 truncate">
-                          {agent.teamName || "Unassigned"}
+                          {agent.team?.name || ""}
                         </p>
                       </div>
                     </div>
