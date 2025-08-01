@@ -32,7 +32,7 @@ export default function CategoryTargetsForm({
   const [targets, setTargets] = useState<CategoryTarget[]>(initialTargets);
   const { toast } = useToast();
 
-  const { data: categories = [] } = useQuery({
+  const { data: categories = [] } = useQuery<any[]>({
     queryKey: ["/api/categories"],
   });
 
@@ -48,7 +48,7 @@ export default function CategoryTargetsForm({
 
   const addTarget = () => {
     const availableCategories = categories.filter(
-      cat => !targets.some(target => target.categoryId === cat.id)
+      (cat: any) => !targets.some(target => target.categoryId === cat.id)
     );
     
     if (availableCategories.length === 0) {
@@ -81,7 +81,7 @@ export default function CategoryTargetsForm({
             ...target, 
             [field]: value,
             ...(field === 'categoryId' ? {
-              categoryName: categories.find(cat => cat.id === value)?.name
+              categoryName: categories.find((cat: any) => cat.id === value)?.name
             } : {})
           }
         : target
@@ -132,11 +132,11 @@ export default function CategoryTargetsForm({
                       </SelectTrigger>
                       <SelectContent>
                         {categories
-                          .filter(cat => 
+                          .filter((cat: any) => 
                             cat.id === target.categoryId || 
                             !targets.some(t => t.categoryId === cat.id)
                           )
-                          .map((category) => (
+                          .map((category: any) => (
                             <SelectItem key={category.id} value={category.id.toString()}>
                               {category.name}
                             </SelectItem>
