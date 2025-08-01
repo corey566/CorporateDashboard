@@ -45,8 +45,6 @@ export default function AdminCategories() {
       name: "",
       color: "#3B82F6",
       description: "",
-      volumeTarget: "0",
-      unitsTarget: 0,
       isActive: true,
     },
   });
@@ -57,8 +55,6 @@ export default function AdminCategories() {
       name: "",
       color: "#3B82F6",
       description: "",
-      volumeTarget: "0",
-      unitsTarget: 0,
       isActive: true,
     },
   });
@@ -142,8 +138,6 @@ export default function AdminCategories() {
       name: category.name,
       color: category.color,
       description: category.description || "",
-      volumeTarget: category.volumeTarget || "0",
-      unitsTarget: category.unitsTarget || 0,
       isActive: category.isActive,
     });
     setIsEditDialogOpen(true);
