@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users, Crown, TrendingUp, Target } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
+import { useState, useEffect } from "react";
 
 interface TeamLeaderboardProps {
   teams: any[];
@@ -13,6 +14,10 @@ export default function TeamLeaderboard({
   agents,
 }: TeamLeaderboardProps) {
   const { formatCurrency } = useCurrency();
+  const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+
+  // Team carousel functionality - cycles all teams every 6 seconds
+  const [carouselOffset, setCarouselOffset] = useState(0);
 
   // Calculate team performance based on agents' data
   const teamPerformance = teams
@@ -38,6 +43,54 @@ export default function TeamLeaderboard({
       };
     })
     .sort((a, b) => b.totalSales - a.totalSales);
+
+  useEffect(() => {
+    // Only start carousel if we have more than 2 teams
+    if (teamPerformance.length <= 2) {
+      setIsAutoScrolling(false);
+      return;
+    }
+
+    setIsAutoScrolling(true);
+    console.log('Starting team carousel with', teamPerformance.length, 'teams');
+    
+    const cycleTeams = () => {
+      setCarouselOffset(prevOffset => {
+        const nextOffset = (prevOffset + 1) % teamPerformance.length;
+        console.log(`Team carousel cycling: offset ${prevOffset} -> ${nextOffset}`);
+        console.log('Team order:', teamPerformance.map((team, i) => {
+          const position = (i - nextOffset + teamPerformance.length) % teamPerformance.length;
+          return `${team.name} (pos: ${position})`;
+        }).join(', '));
+        return nextOffset;
+      });
+    };
+
+    // Start cycling immediately, then every 6 seconds
+    const intervalId = setInterval(cycleTeams, 6000);
+    console.log('Team carousel started - cycling every 6 seconds');
+
+    return () => {
+      console.log('Cleaning up team carousel');
+      clearInterval(intervalId);
+      setIsAutoScrolling(false);
+    };
+  }, [teamPerformance.length]);
+
+  // Reorder the entire team list based on carousel offset
+  const getTeamOrder = () => {
+    if (teamPerformance.length <= 2) return teamPerformance;
+    
+    // Rotate the entire team list by the offset
+    const rotatedTeams = [];
+    for (let i = 0; i < teamPerformance.length; i++) {
+      const sourceIndex = (i + carouselOffset) % teamPerformance.length;
+      rotatedTeams.push(teamPerformance[sourceIndex]);
+    }
+    
+    console.log('Current team order:', rotatedTeams.map(t => t.name).join(' -> '));
+    return rotatedTeams;
+  };
 
   const getTeamIcon = (rank: number) => {
     switch (rank) {
@@ -79,19 +132,32 @@ export default function TeamLeaderboard({
   return (
     <div className="h-full">
       <div className="mb-4">
-        <h2 className="text-2xl font-black text-foreground mb-2">
-          TEAM SCOREBOARD
-        </h2>
-        <div className="text-sm font-bold text-muted-foreground">
-          Live Team Rankings
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-black text-foreground mb-2">
+              TEAM SCOREBOARD
+            </h2>
+            <div className="text-sm font-bold text-muted-foreground">
+              Live Team Rankings • Team Carousel • {teamPerformance.length} teams
+            </div>
+          </div>
+          {isAutoScrolling && (
+            <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
+              <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="text-lg font-black">Team Carousel</span>
+              <div className="text-md font-bold ml-2">
+                Offset: {carouselOffset}/{teamPerformance.length}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="space-y-3 h-[calc(100%-80px)] overflow-y-auto">
-        {teamPerformance.map((team) => (
+      <div className="space-y-3 h-[calc(100%-80px)] overflow-y-auto carousel-container carousel-transition">
+        {getTeamOrder().map((team, index) => (
           <div
-            key={team.id}
-            className={`bg-card border-2 border-border rounded-xl p-4 shadow-lg transition-all duration-300 ${team.rank === 1 ? "ring-2 ring-primary/50 bg-primary/5" : ""}`}
+            key={`team-${team.id}-${carouselOffset}-${index}`}
+            className={`bg-card border-2 border-border rounded-xl p-4 shadow-lg carousel-row carousel-transition ${team.rank === 1 ? "ring-2 ring-primary/50 bg-primary/5" : ""}`}
           >
             {/* Team Header */}
             <div className="flex items-center justify-between mb-3">
