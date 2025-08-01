@@ -169,17 +169,19 @@ export default function DailyTargetManager({ teams, agents, onTargetAlert }: Dai
       
       targets.forEach((target: any) => {
         if (target.isBehindSchedule) {
-          const message = `Daily target not achieved for team ${target.name}. Volume: ${target.volumeProgress.toFixed(1)}%, Units: ${target.unitsProgress.toFixed(1)}%`;
-          onTargetAlert(message, target.name);
+          const message = `Attention: Daily target not achieved for team ${target.name}. Volume progress is ${target.volumeProgress.toFixed(1)} percent. Units progress is ${target.unitsProgress.toFixed(1)} percent. Please take action to meet today's targets.`;
           
-          // Text-to-speech alert
+          // Only use text-to-speech alert (no visual display)
           if ('speechSynthesis' in window) {
             const utterance = new SpeechSynthesisUtterance(message);
-            utterance.rate = 0.8;
+            utterance.rate = 0.9;
             utterance.pitch = 1.0;
-            utterance.volume = 0.8;
+            utterance.volume = 1.0;
             speechSynthesis.speak(utterance);
           }
+          
+          // Log for debugging but don't show visually
+          console.log(`Voice alert: ${message}`);
         }
       });
     }

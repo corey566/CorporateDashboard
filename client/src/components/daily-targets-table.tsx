@@ -9,8 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, AlertTriangle, Clock, Target } from "lucide-react";
+import { Settings, Clock, Target } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
 import { useState } from "react";
 import DailyTargetManager from "./daily-target-manager";
@@ -26,14 +25,12 @@ export default function DailyTargetsTable({
 }: DailyTargetsTableProps) {
   const { formatCurrency } = useCurrency();
   const [showSettings, setShowSettings] = useState(false);
-  const [alertMessages, setAlertMessages] = useState<string[]>([]);
 
-  // Handle target alerts
+
+  // Handle target alerts - only voice, no visual display
   const handleTargetAlert = (message: string, teamName: string) => {
-    setAlertMessages((prev) => [
-      ...prev.slice(-4),
-      `${new Date().toLocaleTimeString()}: ${message}`,
-    ]);
+    // Do nothing - alerts are handled by voice in the daily target manager
+    console.log(`Voice alert triggered for ${teamName}: ${message}`);
   };
 
   // Use the daily target manager
@@ -63,27 +60,7 @@ export default function DailyTargetsTable({
 
   return (
     <div className="w-full space-y-4">
-      {/* Alert Messages */}
-      {alertMessages.length > 0 && (
-        <Card className="border-red-500 bg-red-50 dark:bg-red-950">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-red-700 dark:text-red-300 flex items-center gap-2 text-xl">
-              <AlertTriangle className="w-6 h-6" />
-              Target Alerts
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {alertMessages.slice(-3).map((message, index) => (
-              <p
-                key={index}
-                className="text-lg text-red-600 dark:text-red-400 mb-1"
-              >
-                {message}
-              </p>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+
 
       <div className="bg-card rounded-2xl border-2 border-border shadow-2xl overflow-hidden">
         {/* Header */}
