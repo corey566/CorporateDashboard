@@ -153,11 +153,11 @@ export interface IStorage {
   setTeamCategoryTargets(teamId: number, targets: InsertTeamCategoryTarget[]): Promise<void>;
   deleteTeamCategoryTargets(teamId: number): Promise<void>;
   
-  sessionStore: session.SessionStore;
+  sessionStore: any;
 }
 
 export class DatabaseStorage implements IStorage {
-  public sessionStore: session.SessionStore;
+  public sessionStore: any;
   
   constructor() {
     this.sessionStore = new PostgresSessionStore({ pool, createTableIfMissing: true });
@@ -946,7 +946,7 @@ export class DatabaseStorage implements IStorage {
     // Group by date
     const dateSales = new Map();
     salesData.forEach(sale => {
-      const date = new Date(sale.createdAt).toISOString().split('T')[0];
+      const date = new Date(sale.createdAt || new Date()).toISOString().split('T')[0];
       if (!dateSales.has(date)) {
         dateSales.set(date, {
           date,
