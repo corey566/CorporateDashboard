@@ -61,10 +61,7 @@ export default function AdminCategories() {
 
   const createMutation = useMutation({
     mutationFn: async (data: CategoryFormData) => {
-      return await apiRequest("/api/categories", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("/api/categories", "POST", data);
     },
     onSuccess: () => {
       toast({
@@ -86,10 +83,7 @@ export default function AdminCategories() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: CategoryFormData) => {
-      return await apiRequest(`/api/categories/${selectedCategory.id}`, {
-        method: "PUT",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest(`/api/categories/${selectedCategory.id}`, "PUT", data);
     },
     onSuccess: () => {
       toast({
@@ -112,9 +106,7 @@ export default function AdminCategories() {
 
   const deleteMutation = useMutation({
     mutationFn: async (categoryId: number) => {
-      return await apiRequest(`/api/categories/${categoryId}`, {
-        method: "DELETE",
-      });
+      return await apiRequest(`/api/categories/${categoryId}`, "DELETE");
     },
     onSuccess: () => {
       toast({
@@ -226,42 +218,14 @@ export default function AdminCategories() {
                     <FormItem>
                       <FormLabel>Description (Optional)</FormLabel>
                       <FormControl>
-                        <Textarea placeholder="Brief description of this category" {...field} />
+                        <Textarea placeholder="Brief description of this category" {...field} value={field.value || ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={createForm.control}
-                    name="volumeTarget"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Volume Target ($)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={createForm.control}
-                    name="unitsTarget"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Units Target</FormLabel>
-                        <FormControl>
-                          <Input type="number" placeholder="0" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
+
                 
                 <DialogFooter>
                   <Button type="submit" disabled={createMutation.isPending}>
@@ -275,7 +239,7 @@ export default function AdminCategories() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {categories?.map((category: any) => (
+        {Array.isArray(categories) && categories.map((category: any) => (
           <Card key={category.id} className="relative">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
@@ -293,14 +257,7 @@ export default function AdminCategories() {
               {category.description && (
                 <CardDescription>{category.description}</CardDescription>
               )}
-              <div className="mt-3 space-y-1">
-                <div className="text-sm text-muted-foreground">
-                  Volume Target: <span className="font-semibold">${category.volumeTarget || 0}</span>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Units Target: <span className="font-semibold">{category.unitsTarget || 0}</span>
-                </div>
-              </div>
+
             </CardHeader>
             
             <CardContent>
@@ -329,7 +286,7 @@ export default function AdminCategories() {
         ))}
       </div>
 
-      {categories?.length === 0 && (
+      {Array.isArray(categories) && categories.length === 0 && (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Tag className="w-12 h-12 text-muted-foreground mb-4" />
@@ -393,42 +350,14 @@ export default function AdminCategories() {
                   <FormItem>
                     <FormLabel>Description (Optional)</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Brief description of this category" {...field} />
+                      <Textarea placeholder="Brief description of this category" {...field} value={field.value || ""} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={editForm.control}
-                  name="volumeTarget"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Volume Target ($)</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={editForm.control}
-                  name="unitsTarget"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Units Target</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="0" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+
               
               <DialogFooter>
                 <Button type="submit" disabled={updateMutation.isPending}>

@@ -1028,10 +1028,15 @@ export class DatabaseStorage implements IStorage {
     if (targets.length > 0) {
       await db.insert(agentCategoryTargets).values(targets);
     }
+    
+    // Auto-calculate and update team targets based on agent targets
+    await this.recalculateTeamTargets(agentId);
   }
 
   async deleteAgentCategoryTargets(agentId: number): Promise<void> {
     await db.delete(agentCategoryTargets).where(eq(agentCategoryTargets.agentId, agentId));
+    // Recalculate team targets after agent target deletion
+    await this.recalculateTeamTargets(agentId);
   }
 
   // Team category targets methods  
@@ -1051,6 +1056,68 @@ export class DatabaseStorage implements IStorage {
 
   async deleteTeamCategoryTargets(teamId: number): Promise<void> {
     await db.delete(teamCategoryTargets).where(eq(teamCategoryTargets.teamId, teamId));
+  }
+
+  // Auto-calculate team targets based on sum of all agents' targets
+  async recalculateTeamTargets(changedAgentId: number): Promise<void> {
+    try {
+      // Get the agent to find which team they belong to
+      const agent = await this.getAgent(changedAgentId);
+      if (!agent || !agent.teamId) return;
+
+      // Get all agents in this team
+      const teamAgents = await db.select()
+        .from(agents)
+        .where(and(
+          eq(agents.teamId, agent.teamId),
+          eq(agents.isActive, true)
+        ));
+
+      // Get all category targets for these agents
+      const agentIds = teamAgents.map(a => a.id);
+      let allAgentTargets: AgentCategoryTarget[] = [];
+      
+      for (const agentId of agentIds) {
+        const targets = await this.getAgentCategoryTargets(agentId);
+        allAgentTargets = allAgentTargets.concat(targets);
+      }
+
+      // Group by category and sum the targets
+      const categoryTotals = new Map<number, { volumeTarget: number; unitsTarget: number }>();
+      
+      allAgentTargets.forEach(target => {
+        const existing = categoryTotals.get(target.categoryId) || { volumeTarget: 0, unitsTarget: 0 };
+        categoryTotals.set(target.categoryId, {
+          volumeTarget: existing.volumeTarget + parseFloat(target.volumeTarget.toString()),
+          unitsTarget: existing.unitsTarget + target.unitsTarget
+        });
+      });
+
+      // Convert to team category targets format
+      const teamTargets: InsertTeamCategoryTarget[] = Array.from(categoryTotals.entries()).map(([categoryId, totals]) => ({
+        teamId: agent.teamId!,
+        categoryId,
+        volumeTarget: totals.volumeTarget.toString(),
+        unitsTarget: totals.unitsTarget
+      }));
+
+      // Update team category targets
+      await this.setTeamCategoryTargets(agent.teamId, teamTargets);
+
+      // Also update the legacy team table for backward compatibility
+      const totalVolume = Array.from(categoryTotals.values()).reduce((sum, cat) => sum + cat.volumeTarget, 0);
+      const totalUnits = Array.from(categoryTotals.values()).reduce((sum, cat) => sum + cat.unitsTarget, 0);
+
+      await db.update(teams)
+        .set({
+          volumeTarget: totalVolume.toString(),
+          unitsTarget: totalUnits
+        })
+        .where(eq(teams.id, agent.teamId));
+
+    } catch (error) {
+      console.error("Error recalculating team targets:", error);
+    }
   }
 }
 
