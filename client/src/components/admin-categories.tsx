@@ -61,7 +61,29 @@ export default function AdminCategories() {
 
   const createMutation = useMutation({
     mutationFn: async (data: CategoryFormData) => {
-      return await apiRequest("/api/categories", "POST", data);
+      console.log("Creating category with data:", data);
+      try {
+        const response = await fetch("/api/categories", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Important for session cookies
+          body: JSON.stringify(data),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: "Failed to create category" }));
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log("Category creation response:", result);
+        return result;
+      } catch (error) {
+        console.error("Category creation error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -73,9 +95,10 @@ export default function AdminCategories() {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
     },
     onError: (error: any) => {
+      console.error("Category creation mutation error:", error);
       toast({
         title: "Error",
-        description: error.details?.[0]?.message || "Failed to create category",
+        description: error.message || error.details?.[0]?.message || "Failed to create category",
         variant: "destructive",
       });
     },
@@ -83,7 +106,30 @@ export default function AdminCategories() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: CategoryFormData) => {
-      return await apiRequest(`/api/categories/${selectedCategory.id}`, "PUT", data);
+      console.log("Updating category with data:", data);
+      console.log("Selected category:", selectedCategory);
+      try {
+        const response = await fetch(`/api/categories/${selectedCategory.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Important for session cookies
+          body: JSON.stringify(data),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: "Failed to update category" }));
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log("Category update response:", result);
+        return result;
+      } catch (error) {
+        console.error("Category update error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -96,9 +142,10 @@ export default function AdminCategories() {
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
     },
     onError: (error: any) => {
+      console.error("Category update mutation error:", error);
       toast({
         title: "Error",
-        description: error.details?.[0]?.message || "Failed to update category",
+        description: error.message || error.details?.[0]?.message || "Failed to update category",
         variant: "destructive",
       });
     },
@@ -106,7 +153,22 @@ export default function AdminCategories() {
 
   const deleteMutation = useMutation({
     mutationFn: async (categoryId: number) => {
-      return await apiRequest(`/api/categories/${categoryId}`, "DELETE");
+      try {
+        const response = await fetch(`/api/categories/${categoryId}`, {
+          method: "DELETE",
+          credentials: "include", // Important for session cookies
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: "Failed to delete category" }));
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+        
+        return { success: true };
+      } catch (error) {
+        console.error("Category delete error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       toast({
@@ -142,10 +204,15 @@ export default function AdminCategories() {
   };
 
   const onCreateSubmit = (data: CategoryFormData) => {
+    console.log("Form data on create submit:", data);
+    console.log("Form errors:", createForm.formState.errors);
     createMutation.mutate(data);
   };
 
   const onEditSubmit = (data: CategoryFormData) => {
+    console.log("Form data on edit submit:", data);
+    console.log("Form errors:", editForm.formState.errors);
+    console.log("Selected category for edit:", selectedCategory);
     updateMutation.mutate(data);
   };
 
