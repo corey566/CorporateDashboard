@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Settings, Clock, Target, ChevronUp, ChevronDown } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import DailyTargetManager from "./daily-target-manager";
 
 interface DailyTargetsTableProps {
@@ -30,11 +30,31 @@ export default function DailyTargetsTable({
   const tableRef = useRef<HTMLDivElement>(null);
 
 
-  // Handle target alerts - only voice, no visual display
-  const handleTargetAlert = (message: string, teamName: string) => {
-    // Do nothing - alerts are handled by voice in the daily target manager
+  // Enhanced target alerts with 15-minute intervals and voice announcements
+  const [lastAlertTime, setLastAlertTime] = useState<{ [teamId: number]: number }>({});
+  
+  const handleTargetAlert = useCallback((message: string, teamName: string) => {
     console.log(`Voice alert triggered for ${teamName}: ${message}`);
-  };
+    
+    // Use text-to-speech for voice alerts
+    if ('speechSynthesis' in window) {
+      const utterance = new SpeechSynthesisUtterance(message);
+      utterance.rate = 0.8;
+      utterance.pitch = 1.0;
+      utterance.volume = 0.8;
+      utterance.lang = 'en-US';
+      
+      // Clear any existing speech
+      window.speechSynthesis.cancel();
+      
+      // Speak the alert
+      window.speechSynthesis.speak(utterance);
+      
+      console.log(`Voice alert spoken: "${message}" for team ${teamName}`);
+    } else {
+      console.warn('Text-to-speech not supported in this browser');
+    }
+  }, []);
 
   // Use the daily target manager
   const targetManager = DailyTargetManager({

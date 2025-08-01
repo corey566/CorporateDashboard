@@ -163,8 +163,8 @@ export default function DailyTargetManager({ teams, agents, onTargetAlert }: Dai
     const now = new Date();
     const currentHour = now.getHours();
     
-    // Only check during working hours and at alert time
-    if (currentHour >= workingHours.start && currentHour <= workingHours.end && currentHour === alertTime) {
+    // Check during working hours (remove specific alert time restriction for 15-minute checks)
+    if (currentHour >= workingHours.start && currentHour <= workingHours.end) {
       const targets = calculateDynamicTargets();
       
       targets.forEach((target: any) => {
@@ -199,10 +199,10 @@ export default function DailyTargetManager({ teams, agents, onTargetAlert }: Dai
     return () => clearInterval(interval);
   }, [calculateDynamicTargets]);
 
-  // Check for alerts every hour
+  // Check for alerts every 15 minutes for behind-schedule teams
   useEffect(() => {
     checkForAlerts();
-    const interval = setInterval(checkForAlerts, 3600000); // Check every hour
+    const interval = setInterval(checkForAlerts, 15 * 60 * 1000); // Check every 15 minutes
     
     return () => clearInterval(interval);
   }, [checkForAlerts]);

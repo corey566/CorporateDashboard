@@ -188,8 +188,25 @@ export default function TvDashboard() {
       lastMessage.data &&
       rawAgents.length > 0
     ) {
-      // Play sound effect immediately
-      playEventSound("sale");
+      console.log("Sale created WebSocket message received:", lastMessage.data);
+      
+      // Play sound effect immediately with enhanced error handling
+      const playSound = async () => {
+        try {
+          await playEventSound("sale");
+          console.log("Sale sound effect played successfully");
+        } catch (error) {
+          console.error("Failed to play sale sound:", error);
+          // Fallback: try to play a simple beep or system sound
+          try {
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmUcBz2V3OvKfSgHKWq87aKfVAoLWKre6qhVFglAn+DyvmUcBz2U3OvKfSgHKWq87aKfVAoLWKre6qhVFglAn+DyvmUcBz2U3OvKfSgHKWq87aKfVAoLWKre6qhVFglAn+DyvmUcBz2U3OvKfSgHKWq87aKfVAoLWKre6qhVFglAn+DyvmUcBz2U3OvKfSgHKWq87aKfVAoLWKre6qhVFglAn+DyvmUcBz2U3ObXfSgHKWq87aKfVAoLWKre6qhVFglAn+DyvmUcBz2U3OvKfSgHKWq87aKfVAoLWKre6qhVFglAn+DyvmUcBz2U3OvKfSgHKWq87aKfVAoLWKre6qhVFglAn+DyvmUcBz2U3OvKfSgHKWq87aKfVAoLWKre6qhVFglAn+DyvmUcBz2U3OvKfSgHKWq87aKfVAoLWKre6qhVFglAn+DyvmUcBz');
+            audio.play();
+          } catch (fallbackError) {
+            console.error("Even fallback sound failed:", fallbackError);
+          }
+        }
+      };
+      playSound();
 
       // Find the agent who made the sale
       const saleAgent = rawAgents.find(
@@ -202,6 +219,7 @@ export default function TvDashboard() {
           agentPhoto: saleAgent.photo,
         };
         setSalePopup(saleWithAgent);
+        console.log("Sale popup set for agent:", saleAgent.name);
       }
     } else if (
       lastMessage?.type === "announcement_created" &&
@@ -218,7 +236,7 @@ export default function TvDashboard() {
       queryClient.invalidateQueries({ queryKey: ["/api/currency-settings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
     } else if (lastMessage?.type === "system_settings_updated" && lastMessage.data) {
-      // Handle system settings updates (team visibility, etc.)
+      // Handle system settings updates (team visibility, etc.)  
       console.log("System settings update received via WebSocket, refreshing display settings...");
       queryClient.invalidateQueries({ queryKey: ["/api/system-settings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });

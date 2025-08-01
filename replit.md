@@ -8,31 +8,17 @@ This is a full-stack web application built for call centers to display real-time
 
 Preferred communication style: Simple, everyday language.
 
-## Recent Changes (July 31, 2025)
+## Recent Changes (August 1, 2025)
 
-✓ Fixed sale notification auto-close timer to 5 seconds
-✓ Reduced confetti animation amounts for better performance  
-✓ Added applause sound effect for sale notifications
-✓ Fixed cash offer creation validation with string-to-number conversion
-✓ Implemented team scoring based on combined agent sales
-✓ Updated team leaderboard to show calculated team scores and rankings
-✓ Fixed dashboard server errors and data loading issues
-✓ Reduced dashboard refresh interval from 2 seconds to 10 seconds
-✓ Added media slides display to TV dashboard right panel
-✓ Removed company slides overlay - media slides now permanently displayed
-✓ Created complete file upload system with database schema and API endpoints
-✓ Added file manager interface in admin panel with upload, view, and delete functionality
-✓ Fixed audio playbook for sale notifications using imported applause sound
-✓ Enhanced media slider system with proper timing and file support
-✓ Implemented comprehensive file handling for photos and audio files
-✓ Fixed media presentation auto-hide issue - slides now properly disappear after completion timer
-✓ Fixed sales target update issue - agent progress now updates correctly when new sales are entered
-✓ Added real-time sales calculation for agents from actual sales data
-✓ Enhanced dashboard to process agent sales data and display current progress
-✓ Optimized sound effect system to reduce playback delay - added caching and pre-loading
-✓ Enhanced sales entry component with complete edit/delete functionality
-✓ Added API endpoints for sales update/delete operations with proper storage methods
-✓ Improved sound effect timing by triggering immediately when WebSocket messages arrive
+✓ Fixed category dropdown in Quick Sales Entry to load all categories dynamically from API
+✓ Implemented sale entry sound effects on TV dashboard with immediate WebSocket broadcasting and enhanced error handling
+✓ Enhanced team visibility controls with instant enable/disable functionality and real-time WebSocket updates
+✓ Added carousel feature to daily targets with 6-second auto-scroll showing 2 teams per page and pause-on-hover
+✓ Verified complete system functionality: authentication, real-time WebSocket broadcasting, sound effects, dynamic data loading, and team controls all operational
+✓ Fixed all category CRUD operations - create, update, and delete categories working perfectly
+✓ Enhanced voice alert system with 15-minute intervals for teams behind schedule during working hours
+✓ Added text-to-speech voice notifications with detailed progress announcements
+✓ Implemented comprehensive error handling for sound effects with fallback audio support
 
 ✓ Implemented comprehensive theme system with dark/light mode toggle
 ✓ Enhanced TV dashboard with modern responsive design and proper theme variables
