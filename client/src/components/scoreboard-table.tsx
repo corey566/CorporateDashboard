@@ -19,55 +19,55 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
 
-  // Carousel-style auto-scroll functionality - infinite loop top to bottom
-  const [visibleAgents, setVisibleAgents] = useState(agents);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Table-wide carousel functionality - cycles all agents every 6 seconds
+  const [carouselOffset, setCarouselOffset] = useState(0);
 
   useEffect(() => {
-    setVisibleAgents(agents);
-    setCurrentIndex(0);
-  }, [agents]);
-
-  useEffect(() => {
-    // Only start auto-scroll if we have more than 2 agents
+    // Only start carousel if we have more than 2 agents
     if (agents.length <= 2) {
       setIsAutoScrolling(false);
       return;
     }
 
     setIsAutoScrolling(true);
-    console.log('Starting carousel scroll with', agents.length, 'agents');
+    console.log('Starting table carousel with', agents.length, 'agents');
     
-    const rotateCarousel = () => {
-      setCurrentIndex(prevIndex => {
-        const nextIndex = (prevIndex + 1) % agents.length;
-        console.log(`Carousel rotating: ${prevIndex} -> ${nextIndex} (${agents[nextIndex]?.name})`);
-        return nextIndex;
+    const cycleTable = () => {
+      setCarouselOffset(prevOffset => {
+        const nextOffset = (prevOffset + 1) % agents.length;
+        console.log(`Table cycling: offset ${prevOffset} -> ${nextOffset}`);
+        console.log('Agent order:', agents.map((agent, i) => {
+          const position = (i - nextOffset + agents.length) % agents.length;
+          return `${agent.name} (pos: ${position})`;
+        }).join(', '));
+        return nextOffset;
       });
     };
 
-    // Start rotation immediately, then every 6 seconds
-    const intervalId = setInterval(rotateCarousel, 6000);
-    console.log('Carousel interval started - rotating every 6 seconds');
+    // Start cycling immediately, then every 6 seconds
+    const intervalId = setInterval(cycleTable, 6000);
+    console.log('Table carousel started - cycling every 6 seconds');
 
     return () => {
-      console.log('Cleaning up carousel interval');
+      console.log('Cleaning up table carousel');
       clearInterval(intervalId);
       setIsAutoScrolling(false);
     };
   }, [agents.length]);
 
-  // Create infinite scrolling effect by reordering agents based on currentIndex
-  const getCarouselAgents = () => {
+  // Reorder the entire agent list based on carousel offset
+  const getTableOrder = () => {
     if (agents.length <= 2) return agents;
     
-    // Create infinite loop by starting from currentIndex
-    const reorderedAgents = [];
+    // Rotate the entire table by the offset
+    const rotatedAgents = [];
     for (let i = 0; i < agents.length; i++) {
-      const index = (currentIndex + i) % agents.length;
-      reorderedAgents.push(agents[index]);
+      const sourceIndex = (i + carouselOffset) % agents.length;
+      rotatedAgents.push(agents[sourceIndex]);
     }
-    return reorderedAgents;
+    
+    console.log('Current table order:', rotatedAgents.map(a => a.name).join(' -> '));
+    return rotatedAgents;
   };
 
   return (
@@ -80,15 +80,15 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
               Sales Leaderboard
             </h2>
             <p className="text-2xl font-bold text-gray-600 dark:text-gray-400 mt-1">
-              Real-time performance tracking • Carousel Mode • {agents.length} agents
+              Real-time performance tracking • Table Carousel • {agents.length} agents
             </p>
           </div>
           {isAutoScrolling && (
             <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
               <div className="w-4 h-4 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="text-2xl font-black">Carousel Mode</span>
+              <span className="text-2xl font-black">Table Carousel</span>
               <div className="text-xl font-bold ml-2">
-                {currentIndex + 1}/{agents.length}
+                Offset: {carouselOffset}/{agents.length}
               </div>
             </div>
           )}
@@ -115,10 +115,10 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody className="transition-all duration-1000 ease-in-out">
-            {getCarouselAgents().map((agent: any, index: number) => {
+            {getTableOrder().map((agent: any, index: number) => {
               return (
                 <TableRow
-                  key={`carousel-${agent.id}-${currentIndex}-${index}`}
+                  key={`table-${agent.id}-${carouselOffset}-${index}`}
                   className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 carousel-row carousel-transition"
                 >
                   {/* Agent Info */}
