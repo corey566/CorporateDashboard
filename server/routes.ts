@@ -76,6 +76,21 @@ const upload = multer({
   }
 });
 
+// Object Storage Service
+let objectStorageService: any = null;
+const initObjectStorage = async () => {
+  try {
+    const { ObjectStorageService } = await import("./objectStorage");
+    objectStorageService = new ObjectStorageService();
+    console.log("Object storage initialized successfully");
+  } catch (error) {
+    console.log("Object storage not available, falling back to local uploads:", error.message);
+  }
+};
+
+// Initialize object storage
+initObjectStorage();
+
 export function registerRoutes(app: Express): Server {
   // Setup authentication routes
   setupAuth(app);
@@ -860,6 +875,43 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Object Storage endpoints for audio file uploads
+  app.post("/api/objects/upload", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      if (!objectStorageService) {
+        // Fallback to traditional file upload form
+        return res.status(503).json({ 
+          error: "Object storage not available. Please use the file upload form instead." 
+        });
+      }
+      
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error generating upload URL:", error);
+      res.status(500).json({ error: "Failed to generate upload URL" });
+    }
+  });
+
+  app.get("/objects/:objectPath(*)", async (req, res) => {
+    try {
+      if (!objectStorageService) {
+        return res.status(404).json({ error: "Object storage not available" });
+      }
+      
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error serving object:", error);
+      if (error.constructor.name === "ObjectNotFoundError") {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
+
   // Sound effects endpoints
   app.get("/api/sound-effects", async (req, res) => {
     if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -945,6 +997,48 @@ export function registerRoutes(app: Express): Server {
       res.sendStatus(204);
     } catch (error) {
       res.status(500).json({ error: "Failed to delete sound effect" });
+    }
+  });
+
+  // Audio file upload completion endpoint
+  app.put("/api/sound-effects/upload-complete", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const { fileUrl, eventType, volume } = req.body;
+      
+      if (!fileUrl || !eventType) {
+        return res.status(400).json({ error: "fileUrl and eventType are required" });
+      }
+
+      // Try to normalize the path for object storage
+      let normalizedPath = fileUrl;
+      if (objectStorageService && fileUrl.includes('storage.googleapis.com')) {
+        normalizedPath = objectStorageService.normalizeObjectEntityPath(fileUrl);
+      }
+
+      // Create or update sound effect
+      const soundEffectData = {
+        eventType,
+        fileUrl: normalizedPath,
+        volume: volume || 0.5,
+        isEnabled: true
+      };
+
+      // Check if sound effect already exists for this event type
+      const existingSoundEffect = await storage.getSoundEffectByEventType(eventType);
+      
+      let soundEffect;
+      if (existingSoundEffect) {
+        soundEffect = await storage.updateSoundEffect(existingSoundEffect.id, soundEffectData);
+      } else {
+        soundEffect = await storage.createSoundEffect(soundEffectData);
+      }
+
+      res.json({ soundEffect, objectPath: normalizedPath });
+    } catch (error) {
+      console.error("Error completing audio upload:", error);
+      res.status(500).json({ error: "Failed to complete audio upload" });
     }
   });
 

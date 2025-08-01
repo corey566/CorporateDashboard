@@ -36,6 +36,8 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Trash2, Volume2, Upload, Play, Pause } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import type { UploadResult } from "@uppy/core";
 
 const soundEffectFormSchema = insertSoundEffectSchema.extend({
   volume: z.number().min(0).max(1).optional(),
@@ -203,7 +205,7 @@ export default function AdminSoundEffects() {
     }
   };
 
-  const playAudio = (url: string, effectId: number) => {
+  const playAudio = async (url: string, effectId: number) => {
     if (currentAudio) {
       currentAudio.pause();
       currentAudio.currentTime = 0;
@@ -217,8 +219,22 @@ export default function AdminSoundEffects() {
 
     try {
       const audio = new Audio(url);
-      audio.volume = form.watch("volume") || 0.5;
-      audio.play();
+      audio.volume = (effectId === -1 ? form.watch("volume") : 0.5) || 0.5;
+      
+      // Wait for audio to load
+      await new Promise((resolve, reject) => {
+        audio.addEventListener('canplaythrough', resolve, { once: true });
+        audio.addEventListener('error', reject, { once: true });
+        audio.load();
+      });
+      
+      // Play the audio
+      const playPromise = audio.play();
+      
+      if (playPromise !== undefined) {
+        await playPromise;
+      }
+      
       setCurrentAudio(audio);
       setCurrentlyPlaying(effectId);
 
@@ -226,10 +242,25 @@ export default function AdminSoundEffects() {
         setCurrentlyPlaying(null);
         setCurrentAudio(null);
       });
+      
+      audio.addEventListener("error", (e) => {
+        console.error("Audio playback error:", e);
+        setCurrentlyPlaying(null);
+        setCurrentAudio(null);
+        toast({
+          title: "Error",
+          description: "Failed to play audio file. File may be corrupted or unsupported.",
+          variant: "destructive",
+        });
+      });
+      
     } catch (error) {
+      console.error("Audio play error:", error);
+      setCurrentlyPlaying(null);
+      setCurrentAudio(null);
       toast({
         title: "Error",
-        description: "Failed to play audio file",
+        description: "Failed to play audio file. Please check the file format.",
         variant: "destructive",
       });
     }
@@ -313,21 +344,65 @@ export default function AdminSoundEffects() {
 
               <div className="space-y-2">
                 <Label htmlFor="fileUrl">Audio File</Label>
-                <Select
-                  value={form.watch("fileUrl")}
-                  onValueChange={(value) => form.setValue("fileUrl", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select audio file" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {audioFiles.map((file: any) => (
-                      <SelectItem key={file.id} value={`/uploads/${file.filename}`}>
-                        {file.originalName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="fileUrl"
+                    {...form.register("fileUrl")}
+                    placeholder="Upload an audio file"
+                    readOnly
+                    className="flex-1"
+                  />
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+
+                      try {
+                        const formData = new FormData();
+                        formData.append('file', file);
+
+                        const response = await fetch('/api/files', {
+                          method: 'POST',
+                          credentials: 'include',
+                          body: formData
+                        });
+
+                        if (!response.ok) {
+                          throw new Error('Failed to upload file');
+                        }
+
+                        const uploadedFile = await response.json();
+                        const fileUrl = `/uploads/${uploadedFile.filename}`;
+                        
+                        // Update the form with the uploaded file URL
+                        form.setValue("fileUrl", fileUrl);
+                        
+                        toast({
+                          title: "Success",
+                          description: "Audio file uploaded successfully!",
+                        });
+                      } catch (error) {
+                        console.error('Upload error:', error);
+                        toast({
+                          title: "Error",
+                          description: "Failed to upload audio file",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    className="hidden"
+                    id="audio-file-upload"
+                  />
+                  <Button 
+                    type="button" 
+                    onClick={() => document.getElementById('audio-file-upload')?.click()}
+                    className="px-3 py-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                  </Button>
+                </div>
                 {form.formState.errors.fileUrl && (
                   <p className="text-sm text-red-500">{form.formState.errors.fileUrl.message}</p>
                 )}
