@@ -127,14 +127,22 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
-      // Create a server-side schema that handles string-to-number conversion
+      console.log("Agent creation request body:", req.body);
+      
+      // Create a flexible server-side schema that handles string-to-number conversion
       const serverAgentSchema = insertAgentSchema.extend({
         teamId: z.union([z.number(), z.string().transform(val => parseInt(val))]),
+        categoryId: z.union([z.number(), z.string().transform(val => parseInt(val))]).optional(),
         volumeTarget: z.union([z.number(), z.string().transform(val => parseFloat(val))]),
         unitsTarget: z.union([z.number(), z.string().transform(val => parseInt(val))]),
+        isActive: z.boolean().optional().default(true),
+        canSelfReport: z.boolean().optional().default(false),
+        username: z.string().optional(),
+        password: z.string().optional(),
       });
       
       const agentData = serverAgentSchema.parse(req.body);
+      console.log("Parsed agent data:", agentData);
       
       // Hash password if provided
       if (agentData.password) {
@@ -165,15 +173,28 @@ export function registerRoutes(app: Express): Server {
     
     try {
       const id = parseInt(req.params.id);
+      console.log("Agent update request body:", req.body);
       
-      // Create a server-side schema that handles string-to-number conversion  
+      // Create a flexible server-side schema that handles string-to-number conversion  
       const serverAgentSchema = insertAgentSchema.extend({
-        teamId: z.union([z.number(), z.string().transform(val => parseInt(val))]),
-        volumeTarget: z.union([z.number(), z.string().transform(val => parseFloat(val))]),
-        unitsTarget: z.union([z.number(), z.string().transform(val => parseInt(val))]),
+        teamId: z.union([z.number(), z.string().transform(val => parseInt(val))]).optional(),
+        categoryId: z.union([z.number(), z.string().transform(val => parseInt(val))]).optional(),
+        volumeTarget: z.union([z.number(), z.string().transform(val => parseFloat(val))]).optional(),
+        unitsTarget: z.union([z.number(), z.string().transform(val => parseInt(val))]).optional(),
+        isActive: z.boolean().optional(),
+        canSelfReport: z.boolean().optional(),
+        username: z.string().optional(),
+        password: z.string().optional(),
+        name: z.string().optional(),
+        photo: z.string().optional(),
+        category: z.string().optional(),
+        targetCycle: z.string().optional(),
+        resetDay: z.number().optional(),
+        resetMonth: z.number().optional(),
       }).partial();
       
       const agentData = serverAgentSchema.parse(req.body);
+      console.log("Parsed agent data:", agentData);
       
       // Hash password if provided
       if (agentData.password) {
@@ -323,13 +344,17 @@ export function registerRoutes(app: Express): Server {
     if (!req.isAuthenticated()) return res.sendStatus(401);
     
     try {
+      console.log("Category creation request body:", req.body);
       const categoryData = insertCategorySchema.parse(req.body);
+      console.log("Parsed category data:", categoryData);
+      
       const category = await storage.createCategory(categoryData);
       
       broadcastToClients({ type: "category_created", data: category });
       
       res.status(201).json(category);
     } catch (error) {
+      console.error("Category creation error:", error);
       res.status(400).json({ 
         error: "Invalid category data",
         details: error instanceof z.ZodError ? error.errors : (error instanceof Error ? error.message : String(error))
@@ -342,14 +367,22 @@ export function registerRoutes(app: Express): Server {
     
     try {
       const id = parseInt(req.params.id);
-      const categoryData = insertCategorySchema.parse(req.body);
+      console.log("Category update request body:", req.body);
+      
+      const categoryData = insertCategorySchema.partial().parse(req.body);
+      console.log("Parsed category data:", categoryData);
+      
       const category = await storage.updateCategory(id, categoryData);
       
       broadcastToClients({ type: "category_updated", data: category });
       
       res.json(category);
     } catch (error) {
-      res.status(400).json({ error: "Invalid category data", details: error instanceof Error ? error.message : String(error) });
+      console.error("Category update error:", error);
+      res.status(400).json({ 
+        error: "Invalid category data", 
+        details: error instanceof z.ZodError ? error.errors : (error instanceof Error ? error.message : String(error))
+      });
     }
   });
 
@@ -358,13 +391,19 @@ export function registerRoutes(app: Express): Server {
     
     try {
       const id = parseInt(req.params.id);
+      console.log("Category delete request for ID:", id);
+      
       await storage.deleteCategory(id);
       
       broadcastToClients({ type: "category_deleted", data: { id } });
       
       res.sendStatus(204);
     } catch (error) {
-      res.status(500).json({ error: "Failed to delete category" });
+      console.error("Category delete error:", error);
+      res.status(500).json({ 
+        error: "Failed to delete category",
+        details: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 
