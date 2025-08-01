@@ -45,6 +45,8 @@ export default function AdminCategories() {
       name: "",
       color: "#3B82F6",
       description: "",
+      volumeTarget: "0",
+      unitsTarget: 0,
       isActive: true,
     },
   });
@@ -55,6 +57,8 @@ export default function AdminCategories() {
       name: "",
       color: "#3B82F6",
       description: "",
+      volumeTarget: "0",
+      unitsTarget: 0,
       isActive: true,
     },
   });
@@ -138,6 +142,8 @@ export default function AdminCategories() {
       name: category.name,
       color: category.color,
       description: category.description || "",
+      volumeTarget: category.volumeTarget || "0",
+      unitsTarget: category.unitsTarget || 0,
       isActive: category.isActive,
     });
     setIsEditDialogOpen(true);
@@ -232,6 +238,36 @@ export default function AdminCategories() {
                     </FormItem>
                   )}
                 />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={createForm.control}
+                    name="volumeTarget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Volume Target ($)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={createForm.control}
+                    name="unitsTarget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Units Target</FormLabel>
+                        <FormControl>
+                          <Input type="number" placeholder="0" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 
                 <DialogFooter>
                   <Button type="submit" disabled={createMutation.isPending}>
@@ -263,6 +299,14 @@ export default function AdminCategories() {
               {category.description && (
                 <CardDescription>{category.description}</CardDescription>
               )}
+              <div className="mt-3 space-y-1">
+                <div className="text-sm text-muted-foreground">
+                  Volume Target: <span className="font-semibold">${category.volumeTarget || 0}</span>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  Units Target: <span className="font-semibold">{category.unitsTarget || 0}</span>
+                </div>
+              </div>
             </CardHeader>
             
             <CardContent>
@@ -361,6 +405,36 @@ export default function AdminCategories() {
                   </FormItem>
                 )}
               />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={editForm.control}
+                  name="volumeTarget"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Volume Target ($)</FormLabel>
+                      <FormControl>
+                        <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={editForm.control}
+                  name="unitsTarget"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Units Target</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="0" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               
               <DialogFooter>
                 <Button type="submit" disabled={updateMutation.isPending}>
