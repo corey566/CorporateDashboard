@@ -12,9 +12,22 @@ export default function DailyTargetManager({ teams, agents, onTargetAlert }: Dai
   const [workingHours, setWorkingHours] = useState({ start: 9, end: 17 }); // 9 AM to 5 PM
   const [alertTime, setAlertTime] = useState(16); // 4 PM alert time
   const [dailyTargets, setDailyTargets] = useState<any[]>([]);
+  const [customWorkingDays, setCustomWorkingDays] = useState<number | null>(null); // Allow manual override
 
-  // Calculate working days remaining in current month
+  // Calculate working days remaining in current month (excluding only Sundays)
   const calculateRemainingWorkingDays = () => {
+    if (customWorkingDays !== null) {
+      // If custom working days is set, calculate proportional remaining days
+      const now = new Date();
+      const totalDaysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      const daysElapsed = now.getDate() - 1; // Days that have already passed
+      const remainingDaysInMonth = totalDaysInMonth - now.getDate() + 1;
+      
+      // Proportional calculation based on custom working days
+      const workingDaysPerRegularDay = customWorkingDays / totalDaysInMonth;
+      return Math.round(remainingDaysInMonth * workingDaysPerRegularDay);
+    }
+    
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
@@ -26,8 +39,8 @@ export default function DailyTargetManager({ teams, agents, onTargetAlert }: Dai
     let remainingWorkingDays = 0;
     for (let day = today; day <= lastDay.getDate(); day++) {
       const checkDate = new Date(year, month, day);
-      // Skip weekends (Saturday = 6, Sunday = 0)
-      if (checkDate.getDay() !== 0 && checkDate.getDay() !== 6) {
+      // Skip only Sundays (Sunday = 0)
+      if (checkDate.getDay() !== 0) {
         remainingWorkingDays++;
       }
     }
@@ -35,8 +48,13 @@ export default function DailyTargetManager({ teams, agents, onTargetAlert }: Dai
     return remainingWorkingDays;
   };
 
-  // Calculate total working days in current month
+  // Calculate total working days in current month (excluding only Sundays)
   const calculateTotalWorkingDays = () => {
+    // Return custom working days if set
+    if (customWorkingDays !== null) {
+      return customWorkingDays;
+    }
+    
     const now = new Date();
     const year = now.getFullYear();
     const month = now.getMonth();
@@ -46,12 +64,32 @@ export default function DailyTargetManager({ teams, agents, onTargetAlert }: Dai
     
     let workingDays = 0;
     for (let day = new Date(firstDay); day <= lastDay; day.setDate(day.getDate() + 1)) {
-      if (day.getDay() !== 0 && day.getDay() !== 6) {
+      // Skip only Sundays (Sunday = 0)
+      if (day.getDay() !== 0) {
         workingDays++;
       }
     }
     
     return workingDays;
+  };
+
+  // Get the total number of Sundays in the current month
+  const getSundaysInMonth = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    
+    let sundays = 0;
+    for (let day = new Date(firstDay); day <= lastDay; day.setDate(day.getDate() + 1)) {
+      if (day.getDay() === 0) {
+        sundays++;
+      }
+    }
+    
+    return sundays;
   };
 
   // Calculate team's current daily progress
@@ -174,6 +212,10 @@ export default function DailyTargetManager({ teams, agents, onTargetAlert }: Dai
     alertTime,
     setAlertTime,
     remainingWorkingDays: calculateRemainingWorkingDays(),
-    totalWorkingDays: calculateTotalWorkingDays()
+    totalWorkingDays: calculateTotalWorkingDays(),
+    customWorkingDays,
+    setCustomWorkingDays,
+    sundaysInMonth: getSundaysInMonth(),
+    totalDaysInMonth: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate()
   };
 }

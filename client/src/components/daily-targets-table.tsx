@@ -50,6 +50,10 @@ export default function DailyTargetsTable({
     setAlertTime,
     remainingWorkingDays,
     totalWorkingDays,
+    customWorkingDays,
+    setCustomWorkingDays,
+    sundaysInMonth,
+    totalDaysInMonth,
   } = targetManager;
 
   const currentMonth = new Date().toLocaleDateString("en-US", {
@@ -90,8 +94,17 @@ export default function DailyTargetsTable({
                 DAILY TARGETS - {currentMonth.toUpperCase()}
               </h2>
               <p className="text-2xl font-bold text-muted-foreground">
-                {remainingWorkingDays} Days Remaining / {totalWorkingDays} Total
-                Days
+                {remainingWorkingDays} Days Remaining / {totalWorkingDays} Working Days
+                {!customWorkingDays && (
+                  <span className="text-sm ml-2">
+                    ({totalDaysInMonth} total - {sundaysInMonth} Sundays)
+                  </span>
+                )}
+                {customWorkingDays && (
+                  <span className="text-sm ml-2 text-blue-600 dark:text-blue-400">
+                    (Custom: {customWorkingDays} days)
+                  </span>
+                )}
               </p>
             </div>
             <Button
@@ -106,55 +119,122 @@ export default function DailyTargetsTable({
 
           {/* Settings Panel */}
           {showSettings && (
-            <div className="mt-4 p-4 bg-background rounded-lg border grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="start-hour">Work Start Hour</Label>
-                <Input
-                  id="start-hour"
-                  type="number"
-                  min="0"
-                  max="23"
-                  value={workingHours.start}
-                  onChange={(e) =>
-                    setWorkingHours((prev) => ({
-                      ...prev,
-                      start: parseInt(e.target.value),
-                    }))
-                  }
-                  className="mt-1"
-                />
+            <div className="mt-4 p-4 bg-background rounded-lg border space-y-6">
+              {/* Working Days Section */}
+              <div className="border-b pb-4">
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <Target className="w-4 h-4" />
+                  Working Days Configuration
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Current Month Calculation</Label>
+                    <div className="p-3 bg-muted rounded-lg text-sm">
+                      <div className="flex justify-between">
+                        <span>Total days in month:</span>
+                        <span className="font-semibold">{totalDaysInMonth}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Sundays in month:</span>
+                        <span className="font-semibold">{sundaysInMonth}</span>
+                      </div>
+                      <div className="flex justify-between border-t mt-2 pt-2">
+                        <span>Calculated working days:</span>
+                        <span className="font-bold text-primary">
+                          {customWorkingDays || (totalDaysInMonth - sundaysInMonth)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="customWorkingDays">Custom Working Days (Optional)</Label>
+                    <Input
+                      id="customWorkingDays"
+                      type="number"
+                      min="1"
+                      max="31"
+                      placeholder={`Default: ${totalDaysInMonth - sundaysInMonth}`}
+                      value={customWorkingDays || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setCustomWorkingDays(value ? parseInt(value) : null);
+                      }}
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Override automatic calculation (total days - Sundays)
+                    </p>
+                    {customWorkingDays && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => setCustomWorkingDays(null)}
+                      >
+                        Reset to Auto
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
+
+              {/* Working Hours Section */}
               <div>
-                <Label htmlFor="end-hour">Work End Hour</Label>
-                <Input
-                  id="end-hour"
-                  type="number"
-                  min="0"
-                  max="23"
-                  value={workingHours.end}
-                  onChange={(e) =>
-                    setWorkingHours((prev) => ({
-                      ...prev,
-                      end: parseInt(e.target.value),
-                    }))
-                  }
-                  className="mt-1"
-                />
-              </div>
-              <div className="col-span-2">
-                <Label htmlFor="alert-time">Alert Time (Hour)</Label>
-                <Input
-                  id="alert-time"
-                  type="number"
-                  min="0"
-                  max="23"
-                  value={alertTime}
-                  onChange={(e) => setAlertTime(parseInt(e.target.value))}
-                  className="mt-1"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Alert will trigger at {alertTime}:00 if targets are not met
-                </p>
+                <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                  <Clock className="w-4 h-4" />
+                  Alert Configuration
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="start-hour">Work Start Hour</Label>
+                    <Input
+                      id="start-hour"
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={workingHours.start}
+                      onChange={(e) =>
+                        setWorkingHours((prev) => ({
+                          ...prev,
+                          start: parseInt(e.target.value),
+                        }))
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="end-hour">Work End Hour</Label>
+                    <Input
+                      id="end-hour"
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={workingHours.end}
+                      onChange={(e) =>
+                        setWorkingHours((prev) => ({
+                          ...prev,
+                          end: parseInt(e.target.value),
+                        }))
+                      }
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <Label htmlFor="alert-time">Alert Time (Hour)</Label>
+                    <Input
+                      id="alert-time"
+                      type="number"
+                      min="0"
+                      max="23"
+                      value={alertTime}
+                      onChange={(e) => setAlertTime(parseInt(e.target.value))}
+                      className="mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Alert will trigger at {alertTime}:00 if targets are not met
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
