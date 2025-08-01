@@ -27,41 +27,40 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
   }, [agents]);
 
   useEffect(() => {
-    if (visibleAgents.length <= 2) {
+    // Only start auto-scroll if we have more than 2 agents
+    if (agents.length <= 2) {
       setIsAutoScrolling(false);
       return;
     }
 
     setIsAutoScrolling(true);
-    console.log('Starting row rotation with', visibleAgents.length, 'agents');
+    console.log('Starting row rotation with', agents.length, 'agents');
     
     const rotateRows = () => {
       console.log('Rotating rows...');
       setVisibleAgents(prevAgents => {
         if (prevAgents.length <= 1) return prevAgents;
         
-        // Move first row to last position
+        // Move first row to last position - all others shift up
         const [firstAgent, ...restAgents] = prevAgents;
         const newOrder = [...restAgents, firstAgent];
-        console.log('New order:', newOrder.map(a => a.name));
+        console.log('Row rotation:', prevAgents.map(a => a.name).join(' -> '));
+        console.log('New order:', newOrder.map(a => a.name).join(' -> '));
         return newOrder;
       });
     };
 
-    // Start rotation after 3 seconds, then every 3 seconds
+    // Start rotation immediately, then every 3 seconds
     let intervalId: NodeJS.Timeout;
-    const startTimeout = setTimeout(() => {
-      console.log('Starting interval for row rotation');
-      intervalId = setInterval(rotateRows, 3000);
-    }, 3000);
+    console.log('Setting up rotation interval');
+    intervalId = setInterval(rotateRows, 3000);
 
     return () => {
-      console.log('Cleaning up row rotation');
-      clearTimeout(startTimeout);
+      console.log('Cleaning up row rotation interval');
       if (intervalId) clearInterval(intervalId);
       setIsAutoScrolling(false);
     };
-  }, [visibleAgents.length]);
+  }, [agents.length]); // Only depend on agents.length, not visibleAgents.length
 
   return (
     <div className="h-full">
@@ -73,7 +72,7 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
               Sales Leaderboard
             </h2>
             <p className="text-2xl font-bold text-gray-600 dark:text-gray-400 mt-1">
-              Real-time performance tracking
+              Real-time performance tracking • {visibleAgents.length} agents
             </p>
           </div>
           {isAutoScrolling && (
@@ -104,12 +103,12 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody className="transition-all duration-300 ease-in-out">
             {visibleAgents.map((agent: any, index: number) => {
               return (
                 <TableRow
-                  key={`${agent.id}-${index}`}
-                  className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all duration-500"
+                  key={`${agent.id}-row-${index}`}
+                  className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all duration-300 ease-in-out"
                 >
                   {/* Agent Info */}
                   <TableCell className="py-4 px-6">

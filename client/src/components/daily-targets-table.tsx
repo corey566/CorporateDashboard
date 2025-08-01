@@ -53,8 +53,8 @@ export default function DailyTargetsTable({
   } = targetManager;
 
   const currentMonth = new Date().toLocaleDateString("en-US", {
-    month: "long",
-    year: "numeric",
+    day: "numeric",
+    month: "numeric",
   });
 
   return (
