@@ -13,6 +13,7 @@ export default function DailyTargetManager({ teams, agents, onTargetAlert }: Dai
   const [alertTime, setAlertTime] = useState(16); // 4 PM alert time
   const [dailyTargets, setDailyTargets] = useState<any[]>([]);
   const [customWorkingDays, setCustomWorkingDays] = useState<number | null>(null); // Allow manual override
+  const [lastAlertTime, setLastAlertTime] = useState<{ [teamId: number]: number }>({});
 
   // Calculate working days remaining in current month (excluding only Sundays)
   const calculateRemainingWorkingDays = () => {
@@ -162,30 +163,44 @@ export default function DailyTargetManager({ teams, agents, onTargetAlert }: Dai
   const checkForAlerts = useCallback(() => {
     const now = new Date();
     const currentHour = now.getHours();
+    const currentTime = now.getTime();
     
-    // Check during working hours (remove specific alert time restriction for 15-minute checks)
-    if (currentHour >= workingHours.start && currentHour <= workingHours.end) {
+    // Check during working hours and only after the initial alert time
+    if (currentHour >= workingHours.start && currentHour <= workingHours.end && currentHour >= alertTime) {
       const targets = calculateDynamicTargets();
       
       targets.forEach((target: any) => {
         if (target.isBehindSchedule) {
-          const message = `Attention: Daily target not achieved for team ${target.name}. Volume progress is ${target.volumeProgress.toFixed(1)} percent. Units progress is ${target.unitsProgress.toFixed(1)} percent. Please take action to meet today's targets.`;
+          const teamId = target.id;
+          const lastAlert = lastAlertTime[teamId] || 0;
+          const timeSinceLastAlert = currentTime - lastAlert;
           
-          // Only use text-to-speech alert (no visual display)
-          if ('speechSynthesis' in window) {
-            const utterance = new SpeechSynthesisUtterance(message);
-            utterance.rate = 0.9;
-            utterance.pitch = 1.0;
-            utterance.volume = 1.0;
-            speechSynthesis.speak(utterance);
+          // Only alert if 15 minutes (900,000 ms) have passed since last alert for this team
+          if (timeSinceLastAlert >= 15 * 60 * 1000) {
+            const message = `Attention: Daily target not achieved for team ${target.name}. Volume progress is ${target.volumeProgress.toFixed(1)} percent. Units progress is ${target.unitsProgress.toFixed(1)} percent. Please take action to meet today's targets.`;
+            
+            // Only use text-to-speech alert (no visual display)
+            if ('speechSynthesis' in window) {
+              const utterance = new SpeechSynthesisUtterance(message);
+              utterance.rate = 0.9;
+              utterance.pitch = 1.0;
+              utterance.volume = 1.0;
+              speechSynthesis.speak(utterance);
+            }
+            
+            // Update last alert time for this team
+            setLastAlertTime(prev => ({
+              ...prev,
+              [teamId]: currentTime
+            }));
+            
+            // Log for debugging but don't show visually
+            console.log(`Voice alert (15-min interval): ${message}`);
           }
-          
-          // Log for debugging but don't show visually
-          console.log(`Voice alert: ${message}`);
         }
       });
     }
-  }, [workingHours, alertTime, calculateDynamicTargets, onTargetAlert]);
+  }, [workingHours, alertTime, calculateDynamicTargets, onTargetAlert, lastAlertTime]);
 
   // Update targets every minute
   useEffect(() => {
@@ -199,10 +214,10 @@ export default function DailyTargetManager({ teams, agents, onTargetAlert }: Dai
     return () => clearInterval(interval);
   }, [calculateDynamicTargets]);
 
-  // Check for alerts every 15 minutes for behind-schedule teams
+  // Check for alerts every 5 minutes (but only announce every 15 minutes per team)
   useEffect(() => {
     checkForAlerts();
-    const interval = setInterval(checkForAlerts, 15 * 60 * 1000); // Check every 15 minutes
+    const interval = setInterval(checkForAlerts, 5 * 60 * 1000); // Check every 5 minutes for responsiveness
     
     return () => clearInterval(interval);
   }, [checkForAlerts]);

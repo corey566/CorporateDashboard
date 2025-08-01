@@ -18,7 +18,9 @@ Preferred communication style: Simple, everyday language.
 ✓ Fixed all category CRUD operations - create, update, and delete categories working perfectly
 ✓ Enhanced voice alert system with 15-minute intervals for teams behind schedule during working hours
 ✓ Added text-to-speech voice notifications with detailed progress announcements
-✓ Implemented comprehensive error handling for sound effects with fallback audio support
+✓ Implemented comprehensive error handling for sound effects with fallback audio support  
+✓ Fixed voice alert frequency to announce only once every 15 minutes per team after initial alert time
+✓ Resolved category management UI issues by replacing problematic API wrapper with native fetch
 
 ✓ Implemented comprehensive theme system with dark/light mode toggle
 ✓ Enhanced TV dashboard with modern responsive design and proper theme variables
