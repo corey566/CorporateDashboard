@@ -19,11 +19,13 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
 
-  // Row-based auto-scroll functionality - first row moves to last
+  // Carousel-style auto-scroll functionality - infinite loop top to bottom
   const [visibleAgents, setVisibleAgents] = useState(agents);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
     setVisibleAgents(agents);
+    setCurrentIndex(0);
   }, [agents]);
 
   useEffect(() => {
@@ -34,33 +36,39 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
     }
 
     setIsAutoScrolling(true);
-    console.log('Starting row rotation with', agents.length, 'agents');
+    console.log('Starting carousel scroll with', agents.length, 'agents');
     
-    const rotateRows = () => {
-      console.log('Rotating rows...');
-      setVisibleAgents(prevAgents => {
-        if (prevAgents.length <= 1) return prevAgents;
-        
-        // Move first row to last position - all others shift up
-        const [firstAgent, ...restAgents] = prevAgents;
-        const newOrder = [...restAgents, firstAgent];
-        console.log('Row rotation:', prevAgents.map(a => a.name).join(' -> '));
-        console.log('New order:', newOrder.map(a => a.name).join(' -> '));
-        return newOrder;
+    const rotateCarousel = () => {
+      setCurrentIndex(prevIndex => {
+        const nextIndex = (prevIndex + 1) % agents.length;
+        console.log(`Carousel rotating: ${prevIndex} -> ${nextIndex} (${agents[nextIndex]?.name})`);
+        return nextIndex;
       });
     };
 
-    // Start rotation immediately, then every 3 seconds
-    let intervalId: NodeJS.Timeout;
-    console.log('Setting up rotation interval');
-    intervalId = setInterval(rotateRows, 3000);
+    // Start rotation immediately, then every 6 seconds
+    const intervalId = setInterval(rotateCarousel, 6000);
+    console.log('Carousel interval started - rotating every 6 seconds');
 
     return () => {
-      console.log('Cleaning up row rotation interval');
-      if (intervalId) clearInterval(intervalId);
+      console.log('Cleaning up carousel interval');
+      clearInterval(intervalId);
       setIsAutoScrolling(false);
     };
-  }, [agents.length]); // Only depend on agents.length, not visibleAgents.length
+  }, [agents.length]);
+
+  // Create infinite scrolling effect by reordering agents based on currentIndex
+  const getCarouselAgents = () => {
+    if (agents.length <= 2) return agents;
+    
+    // Create infinite loop by starting from currentIndex
+    const reorderedAgents = [];
+    for (let i = 0; i < agents.length; i++) {
+      const index = (currentIndex + i) % agents.length;
+      reorderedAgents.push(agents[index]);
+    }
+    return reorderedAgents;
+  };
 
   return (
     <div className="h-full">
@@ -72,13 +80,16 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
               Sales Leaderboard
             </h2>
             <p className="text-2xl font-bold text-gray-600 dark:text-gray-400 mt-1">
-              Real-time performance tracking • {visibleAgents.length} agents
+              Real-time performance tracking • Carousel Mode • {agents.length} agents
             </p>
           </div>
           {isAutoScrolling && (
             <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
-              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="text-2xl font-black">Auto-Scrolling</span>
+              <div className="w-4 h-4 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="text-2xl font-black">Carousel Mode</span>
+              <div className="text-xl font-bold ml-2">
+                {currentIndex + 1}/{agents.length}
+              </div>
             </div>
           )}
         </div>
@@ -86,7 +97,7 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
 
       <div
         ref={scrollContainerRef}
-        className="overflow-hidden custom-scrollbar"
+        className="carousel-container carousel-transition"
         style={{ height: "calc(100% - 80px)" }}
       >
         <Table>
@@ -103,12 +114,12 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody className="transition-all duration-300 ease-in-out">
-            {visibleAgents.map((agent: any, index: number) => {
+          <TableBody className="transition-all duration-1000 ease-in-out">
+            {getCarouselAgents().map((agent: any, index: number) => {
               return (
                 <TableRow
-                  key={`${agent.id}-row-${index}`}
-                  className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-all duration-300 ease-in-out"
+                  key={`carousel-${agent.id}-${currentIndex}-${index}`}
+                  className="border-b border-gray-100 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800/50 carousel-row carousel-transition"
                 >
                   {/* Agent Info */}
                   <TableCell className="py-4 px-6">

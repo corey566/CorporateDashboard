@@ -550,3 +550,44 @@
 .text-warning { color: hsl(var(--warning)); }
 .bg-warning { background-color: hsl(var(--warning)); }
 .border-warning { border-color: hsl(var(--warning)); }
+
+/* Carousel animation styles */
+@keyframes carouselSlideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0.3;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes carouselSlideOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(20px);
+    opacity: 0.3;
+  }
+}
+
+.carousel-row {
+  animation: carouselSlideIn 1s ease-out;
+}
+
+.carousel-container {
+  overflow: hidden;
+  position: relative;
+}
+
+.carousel-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Smooth transitions for all carousel elements */
+.carousel-transition {
+  transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
