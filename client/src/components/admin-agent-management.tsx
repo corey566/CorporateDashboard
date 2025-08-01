@@ -50,6 +50,10 @@ export default function AdminAgentManagement() {
     queryKey: ["/api/teams"],
   });
 
+  const { data: categories } = useQuery({
+    queryKey: ["/api/categories"],
+  });
+
   const form = useForm<AgentFormData>({
     resolver: zodResolver(agentFormSchema),
     defaultValues: {
@@ -273,9 +277,11 @@ export default function AdminAgentManagement() {
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Software">Software</SelectItem>
-                        <SelectItem value="Hardware">Hardware</SelectItem>
-                        <SelectItem value="Mixed">Mixed</SelectItem>
+                        {categories?.map((category: any) => (
+                          <SelectItem key={category.id} value={category.name}>
+                            {category.name}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                     {form.formState.errors.category && (

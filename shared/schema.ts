@@ -10,6 +10,16 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
 });
 
+// Categories table
+export const categories = pgTable("categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  color: text("color").notNull().default("#3B82F6"),
+  description: text("description"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Teams table
 export const teams = pgTable("teams", {
   id: serial("id").primaryKey(),
@@ -29,6 +39,7 @@ export const agents = pgTable("agents", {
   name: text("name").notNull(),
   photo: text("photo"),
   teamId: integer("team_id").references(() => teams.id).notNull(),
+  categoryId: integer("category_id").references(() => categories.id),
   category: text("category").notNull(),
   volumeTarget: decimal("volume_target", { precision: 10, scale: 2 }).notNull().default("0"),
   unitsTarget: integer("units_target").notNull().default(0),
@@ -177,10 +188,18 @@ export const teamsRelations = relations(teams, ({ many }) => ({
   targetHistory: many(teamTargetHistory),
 }));
 
+export const categoriesRelations = relations(categories, ({ many }) => ({
+  agents: many(agents),
+}));
+
 export const agentsRelations = relations(agents, ({ one, many }) => ({
   team: one(teams, {
     fields: [agents.teamId],
     references: [teams.id],
+  }),
+  category: one(categories, {
+    fields: [agents.categoryId],
+    references: [categories.id],
   }),
   sales: many(sales),
   targetHistory: many(agentTargetHistory),
@@ -211,6 +230,11 @@ export const teamTargetHistoryRelations = relations(teamTargetHistory, ({ one })
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+});
+
+export const insertCategorySchema = createInsertSchema(categories).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertTeamSchema = createInsertSchema(teams).omit({
@@ -287,6 +311,8 @@ export const insertSoundEffectSchema = createInsertSchema(soundEffects).omit({
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type Category = typeof categories.$inferSelect;
+export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Team = typeof teams.$inferSelect;
 export type InsertTeam = z.infer<typeof insertTeamSchema>;
 export type Agent = typeof agents.$inferSelect;

@@ -151,6 +151,9 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                         <p className="text-2xl font-bold text-gray-500 dark:text-gray-400 truncate">
                           {agent.team?.name || ""}
                         </p>
+                        <p className="text-xl font-bold text-blue-600 dark:text-blue-400 truncate">
+                          {agent.category || "No Category"}
+                        </p>
                       </div>
                     </div>
                   </TableCell>

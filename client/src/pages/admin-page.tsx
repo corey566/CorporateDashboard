@@ -24,6 +24,7 @@ import {
   Image,
   FolderOpen,
   Volume2,
+  Tag,
 } from "lucide-react";
 import AdminTeamManagement from "@/components/admin-team-management";
 import AdminAgentManagement from "@/components/admin-agent-management";
@@ -37,6 +38,7 @@ import AdminReports from "@/components/admin-reports";
 import AdminTargetCycles from "@/components/admin-target-cycles";
 import UICustomization from "@/components/ui-customization";
 import AdminDisplaySettings from "@/components/admin-display-settings";
+import AdminCategories from "@/components/admin-categories";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWebSocket } from "@/hooks/use-websocket";
 
@@ -222,6 +224,7 @@ export default function AdminPage() {
           <TabsList className="grid w-full grid-cols-12">
             <TabsTrigger value="teams">Teams</TabsTrigger>
             <TabsTrigger value="agents">Agents</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="sales">Sales Entry</TabsTrigger>
             <TabsTrigger value="offers">Cash Offers</TabsTrigger>
             <TabsTrigger value="announcements">Announcements</TabsTrigger>
@@ -230,7 +233,6 @@ export default function AdminPage() {
             <TabsTrigger value="sounds">Sounds</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="cycles">Target Cycles</TabsTrigger>
-            <TabsTrigger value="display">Display</TabsTrigger>
             <TabsTrigger value="customization">UI</TabsTrigger>
           </TabsList>
 
@@ -240,6 +242,10 @@ export default function AdminPage() {
 
           <TabsContent value="agents" className="space-y-6">
             <AdminAgentManagement />
+          </TabsContent>
+
+          <TabsContent value="categories" className="space-y-6">
+            <AdminCategories />
           </TabsContent>
 
           <TabsContent value="sales" className="space-y-6">

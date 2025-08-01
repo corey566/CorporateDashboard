@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema, agentLoginSchema, insertFileUploadSchema, insertSystemSettingSchema, insertSoundEffectSchema } from "@shared/schema";
+import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema, agentLoginSchema, insertFileUploadSchema, insertSystemSettingSchema, insertSoundEffectSchema, insertCategorySchema } from "@shared/schema";
 import { z } from "zod";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -281,6 +281,65 @@ export function registerRoutes(app: Express): Server {
       res.sendStatus(204);
     } catch (error) {
       res.status(500).json({ error: "Failed to delete team" });
+    }
+  });
+
+  // Categories endpoints
+  app.get("/api/categories", async (req, res) => {
+    try {
+      const categories = await storage.getCategories();
+      res.json(categories);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch categories" });
+    }
+  });
+
+  app.post("/api/categories", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const categoryData = insertCategorySchema.parse(req.body);
+      const category = await storage.createCategory(categoryData);
+      
+      broadcastToClients({ type: "category_created", data: category });
+      
+      res.status(201).json(category);
+    } catch (error) {
+      res.status(400).json({ 
+        error: "Invalid category data",
+        details: error instanceof z.ZodError ? error.errors : error.message 
+      });
+    }
+  });
+
+  app.put("/api/categories/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      const categoryData = insertCategorySchema.parse(req.body);
+      const category = await storage.updateCategory(id, categoryData);
+      
+      broadcastToClients({ type: "category_updated", data: category });
+      
+      res.json(category);
+    } catch (error) {
+      res.status(400).json({ error: "Invalid category data", details: error.message });
+    }
+  });
+
+  app.delete("/api/categories/:id", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteCategory(id);
+      
+      broadcastToClients({ type: "category_deleted", data: { id } });
+      
+      res.sendStatus(204);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete category" });
     }
   });
 

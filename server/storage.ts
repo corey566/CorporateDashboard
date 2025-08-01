@@ -1,12 +1,12 @@
 import { 
   users, agents, teams, sales, cashOffers, mediaSlides, announcements, newsTicker, fileUploads, systemSettings, soundEffects,
-  agentTargetHistory, teamTargetHistory,
+  agentTargetHistory, teamTargetHistory, categories,
   type User, type InsertUser, type Agent, type InsertAgent, type Team, type InsertTeam,
   type Sale, type InsertSale, type CashOffer, type InsertCashOffer, type MediaSlide,
   type InsertMediaSlide, type Announcement, type InsertAnnouncement, type NewsTicker,
   type InsertNewsTicker, type FileUpload, type InsertFileUpload, type SystemSetting, type InsertSystemSetting,
   type SoundEffect, type InsertSoundEffect, type AgentTargetHistory, type InsertAgentTargetHistory,
-  type TeamTargetHistory, type InsertTeamTargetHistory
+  type TeamTargetHistory, type InsertTeamTargetHistory, type Category, type InsertCategory
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, gte, lte, or } from "drizzle-orm";
@@ -58,6 +58,13 @@ export interface IStorage {
   createTeam(team: InsertTeam): Promise<Team>;
   updateTeam(id: number, team: Partial<InsertTeam>): Promise<Team>;
   deleteTeam(id: number): Promise<void>;
+  
+  // Category methods
+  getCategories(): Promise<Category[]>;
+  getCategory(id: number): Promise<Category | undefined>;
+  createCategory(category: InsertCategory): Promise<Category>;
+  updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category>;
+  deleteCategory(id: number): Promise<void>;
   
   // Sales methods
   getSales(): Promise<Sale[]>;
@@ -228,6 +235,30 @@ export class DatabaseStorage implements IStorage {
   
   async deleteTeam(id: number): Promise<void> {
     await db.delete(teams).where(eq(teams.id, id));
+  }
+
+  // Category methods
+  async getCategories(): Promise<Category[]> {
+    return await db.select().from(categories).where(eq(categories.isActive, true));
+  }
+
+  async getCategory(id: number): Promise<Category | undefined> {
+    const result = await db.select().from(categories).where(eq(categories.id, id));
+    return result[0];
+  }
+
+  async createCategory(category: InsertCategory): Promise<Category> {
+    const result = await db.insert(categories).values(category).returning();
+    return result[0];
+  }
+
+  async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category> {
+    const result = await db.update(categories).set(category).where(eq(categories.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    await db.update(categories).set({ isActive: false }).where(eq(categories.id, id));
   }
   
   async getSales(): Promise<Sale[]> {
