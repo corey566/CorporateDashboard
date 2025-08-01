@@ -94,7 +94,7 @@ export function registerRoutes(app: Express): Server {
       res.json(data);
     } catch (error) {
       console.error("Dashboard data error:", error);
-      res.status(500).json({ error: "Failed to fetch dashboard data", details: error.message });
+      res.status(500).json({ error: "Failed to fetch dashboard data", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -126,7 +126,11 @@ export function registerRoutes(app: Express): Server {
         agentData.password = await hashPassword(agentData.password);
       }
       
-      const agent = await storage.createAgent(agentData);
+      const agent = await storage.createAgent({
+        ...agentData,
+        volumeTarget: agentData.volumeTarget.toString(),
+        unitsTarget: agentData.unitsTarget
+      });
       
       // Broadcast update to all connected clients
       broadcastToClients({ type: "agent_created", data: agent });
@@ -136,7 +140,7 @@ export function registerRoutes(app: Express): Server {
       console.error("Agent creation error:", error);
       res.status(400).json({ 
         error: "Invalid agent data",
-        details: error instanceof z.ZodError ? error.errors : error.message 
+        details: error instanceof z.ZodError ? error.errors : (error instanceof Error ? error.message : String(error)) 
       });
     }
   });
@@ -161,7 +165,10 @@ export function registerRoutes(app: Express): Server {
         agentData.password = await hashPassword(agentData.password);
       }
       
-      const agent = await storage.updateAgent(id, agentData);
+      const agent = await storage.updateAgent(id, {
+        ...agentData,
+        volumeTarget: agentData.volumeTarget ? agentData.volumeTarget.toString() : undefined
+      });
       
       broadcastToClients({ type: "agent_updated", data: agent });
       
@@ -170,7 +177,7 @@ export function registerRoutes(app: Express): Server {
       console.error("Agent update error:", error);
       res.status(400).json({ 
         error: "Failed to update agent",
-        details: error instanceof z.ZodError ? error.errors : error.message 
+        details: error instanceof z.ZodError ? error.errors : (error instanceof Error ? error.message : String(error))
       });
     }
   });
@@ -228,7 +235,10 @@ export function registerRoutes(app: Express): Server {
       const teamData = serverTeamSchema.parse(processedData);
       console.log("Parsed team data:", teamData);
       
-      const team = await storage.createTeam(teamData);
+      const team = await storage.createTeam({
+        ...teamData,
+        volumeTarget: teamData.volumeTarget.toString()
+      });
       
       broadcastToClients({ type: "team_created", data: team });
       
@@ -237,7 +247,7 @@ export function registerRoutes(app: Express): Server {
       console.error("Team creation error:", error);
       res.status(400).json({ 
         error: "Invalid team data",
-        details: error instanceof z.ZodError ? error.errors : error.message 
+        details: error instanceof z.ZodError ? error.errors : (error instanceof Error ? error.message : String(error))
       });
     }
   });
@@ -265,7 +275,7 @@ export function registerRoutes(app: Express): Server {
       res.json(team);
     } catch (error) {
       console.error("Team update error:", error);
-      res.status(400).json({ error: "Invalid team data", details: error.message });
+      res.status(400).json({ error: "Invalid team data", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -280,7 +290,7 @@ export function registerRoutes(app: Express): Server {
       
       res.sendStatus(204);
     } catch (error) {
-      res.status(500).json({ error: "Failed to delete team" });
+      res.status(500).json({ error: "Failed to delete team", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -307,7 +317,7 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       res.status(400).json({ 
         error: "Invalid category data",
-        details: error instanceof z.ZodError ? error.errors : error.message 
+        details: error instanceof z.ZodError ? error.errors : (error instanceof Error ? error.message : String(error))
       });
     }
   });
@@ -324,7 +334,7 @@ export function registerRoutes(app: Express): Server {
       
       res.json(category);
     } catch (error) {
-      res.status(400).json({ error: "Invalid category data", details: error.message });
+      res.status(400).json({ error: "Invalid category data", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -379,7 +389,7 @@ export function registerRoutes(app: Express): Server {
       res.status(201).json(sale);
     } catch (error) {
       console.error("Sale creation error:", error);
-      res.status(400).json({ error: "Invalid sale data", details: error.message });
+      res.status(400).json({ error: "Invalid sale data", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -396,7 +406,7 @@ export function registerRoutes(app: Express): Server {
       
       res.json(sale);
     } catch (error) {
-      res.status(400).json({ error: "Invalid sale data" });
+      res.status(400).json({ error: "Invalid sale data", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -450,7 +460,7 @@ export function registerRoutes(app: Express): Server {
       console.error("Cash offer creation error:", error);
       res.status(400).json({ 
         error: "Invalid cash offer data",
-        details: error instanceof z.ZodError ? error.errors : error.message 
+        details: error instanceof z.ZodError ? error.errors : (error instanceof Error ? error.message : String(error)) 
       });
     }
   });
@@ -476,7 +486,7 @@ export function registerRoutes(app: Express): Server {
       
       res.json(offer);
     } catch (error) {
-      res.status(400).json({ error: "Invalid cash offer data" });
+      res.status(400).json({ error: "Invalid cash offer data", details: error instanceof Error ? error.message : String(error) });
     }
   });
 
@@ -690,7 +700,7 @@ export function registerRoutes(app: Express): Server {
   });
 
   app.post("/api/mobile/logout", async (req, res) => {
-    req.session.agentId = null;
+    req.session.agentId = undefined;
     res.sendStatus(200);
   });
 
