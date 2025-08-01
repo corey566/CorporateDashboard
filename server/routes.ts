@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema, agentLoginSchema, insertFileUploadSchema, insertSystemSettingSchema, insertSoundEffectSchema, insertCategorySchema } from "@shared/schema";
+import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema, agentLoginSchema, insertFileUploadSchema, insertSystemSettingSchema, insertSoundEffectSchema, insertCategorySchema, insertAgentCategoryTargetSchema, insertTeamCategoryTargetSchema } from "@shared/schema";
 import { z } from "zod";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
@@ -1111,6 +1111,88 @@ export function registerRoutes(app: Express): Server {
       res.json(currentCycle);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch current team cycle" });
+    }
+  });
+
+  // Agent category targets
+  app.get("/api/agents/:id/category-targets", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const agentId = parseInt(req.params.id);
+      const targets = await storage.getAgentCategoryTargets(agentId);
+      res.json(targets);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch agent category targets" });
+    }
+  });
+
+  app.post("/api/agents/:id/category-targets", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const agentId = parseInt(req.params.id);
+      const targetsSchema = z.array(insertAgentCategoryTargetSchema);
+      const targets = targetsSchema.parse(req.body);
+      
+      // Add agentId to each target
+      const targetsWithAgentId = targets.map(target => ({
+        ...target,
+        agentId
+      }));
+      
+      await storage.setAgentCategoryTargets(agentId, targetsWithAgentId);
+      
+      // Broadcast update
+      broadcastToClients({
+        type: 'agent_targets_updated',
+        data: { agentId, targets: targetsWithAgentId }
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update agent category targets" });
+    }
+  });
+
+  // Team category targets
+  app.get("/api/teams/:id/category-targets", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const teamId = parseInt(req.params.id);
+      const targets = await storage.getTeamCategoryTargets(teamId);
+      res.json(targets);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch team category targets" });
+    }
+  });
+
+  app.post("/api/teams/:id/category-targets", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+    
+    try {
+      const teamId = parseInt(req.params.id);
+      const targetsSchema = z.array(insertTeamCategoryTargetSchema);
+      const targets = targetsSchema.parse(req.body);
+      
+      // Add teamId to each target
+      const targetsWithTeamId = targets.map(target => ({
+        ...target,
+        teamId
+      }));
+      
+      await storage.setTeamCategoryTargets(teamId, targetsWithTeamId);
+      
+      // Broadcast update
+      broadcastToClients({
+        type: 'team_targets_updated',
+        data: { teamId, targets: targetsWithTeamId }
+      });
+      
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update team category targets" });
     }
   });
 

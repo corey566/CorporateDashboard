@@ -1,12 +1,13 @@
 import { 
   users, agents, teams, sales, cashOffers, mediaSlides, announcements, newsTicker, fileUploads, systemSettings, soundEffects,
-  agentTargetHistory, teamTargetHistory, categories,
+  agentTargetHistory, teamTargetHistory, categories, agentCategoryTargets, teamCategoryTargets,
   type User, type InsertUser, type Agent, type InsertAgent, type Team, type InsertTeam,
   type Sale, type InsertSale, type CashOffer, type InsertCashOffer, type MediaSlide,
   type InsertMediaSlide, type Announcement, type InsertAnnouncement, type NewsTicker,
   type InsertNewsTicker, type FileUpload, type InsertFileUpload, type SystemSetting, type InsertSystemSetting,
   type SoundEffect, type InsertSoundEffect, type AgentTargetHistory, type InsertAgentTargetHistory,
-  type TeamTargetHistory, type InsertTeamTargetHistory, type Category, type InsertCategory
+  type TeamTargetHistory, type InsertTeamTargetHistory, type Category, type InsertCategory,
+  type AgentCategoryTarget, type InsertAgentCategoryTarget, type TeamCategoryTarget, type InsertTeamCategoryTarget
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql, gte, lte, or } from "drizzle-orm";
@@ -141,6 +142,16 @@ export interface IStorage {
   updateAgentTargetHistory(id: number, history: Partial<InsertAgentTargetHistory>): Promise<AgentTargetHistory>;
   updateTeamTargetHistory(id: number, history: Partial<InsertTeamTargetHistory>): Promise<TeamTargetHistory>;
   calculateNextCycleDate(targetCycle: string, resetDay: number, resetMonth?: number): Date;
+
+  // Agent category targets methods
+  getAgentCategoryTargets(agentId: number): Promise<AgentCategoryTarget[]>;
+  setAgentCategoryTargets(agentId: number, targets: InsertAgentCategoryTarget[]): Promise<void>;
+  deleteAgentCategoryTargets(agentId: number): Promise<void>;
+
+  // Team category targets methods
+  getTeamCategoryTargets(teamId: number): Promise<TeamCategoryTarget[]>;
+  setTeamCategoryTargets(teamId: number, targets: InsertTeamCategoryTarget[]): Promise<void>;
+  deleteTeamCategoryTargets(teamId: number): Promise<void>;
   
   sessionStore: session.SessionStore;
 }
@@ -178,7 +189,24 @@ export class DatabaseStorage implements IStorage {
         console.log("First agent isActive type:", typeof result[0].isActive);
         console.log("First agent isActive value:", result[0].isActive);
       }
-      const activeAgents = result.filter(agent => agent.isActive);
+      
+      // Get category targets for all agents
+      const categoryTargetsData = await db
+        .select({
+          agentId: agentCategoryTargets.agentId,
+          categoryId: agentCategoryTargets.categoryId, 
+          volumeTarget: agentCategoryTargets.volumeTarget,
+          unitsTarget: agentCategoryTargets.unitsTarget,
+        })
+        .from(agentCategoryTargets);
+      
+      // Combine agents with their category targets
+      const agentsWithTargets = result.map(agent => ({
+        ...agent,
+        categoryTargets: categoryTargetsData.filter(target => target.agentId === agent.id)
+      }));
+      
+      const activeAgents = agentsWithTargets.filter(agent => agent.isActive);
       console.log("Active agents:", activeAgents);
       return activeAgents;
     } catch (error) {
@@ -985,6 +1013,44 @@ export class DatabaseStorage implements IStorage {
     // For now, return CSV as PDF requires additional dependencies
     const csv = await this.exportReportAsCSV(reportData);
     return Buffer.from(csv);
+  }
+
+  // Agent category targets methods
+  async getAgentCategoryTargets(agentId: number): Promise<AgentCategoryTarget[]> {
+    return await db.select().from(agentCategoryTargets).where(eq(agentCategoryTargets.agentId, agentId));
+  }
+
+  async setAgentCategoryTargets(agentId: number, targets: InsertAgentCategoryTarget[]): Promise<void> {
+    // Delete existing targets
+    await db.delete(agentCategoryTargets).where(eq(agentCategoryTargets.agentId, agentId));
+    
+    // Insert new targets
+    if (targets.length > 0) {
+      await db.insert(agentCategoryTargets).values(targets);
+    }
+  }
+
+  async deleteAgentCategoryTargets(agentId: number): Promise<void> {
+    await db.delete(agentCategoryTargets).where(eq(agentCategoryTargets.agentId, agentId));
+  }
+
+  // Team category targets methods  
+  async getTeamCategoryTargets(teamId: number): Promise<TeamCategoryTarget[]> {
+    return await db.select().from(teamCategoryTargets).where(eq(teamCategoryTargets.teamId, teamId));
+  }
+
+  async setTeamCategoryTargets(teamId: number, targets: InsertTeamCategoryTarget[]): Promise<void> {
+    // Delete existing targets
+    await db.delete(teamCategoryTargets).where(eq(teamCategoryTargets.teamId, teamId));
+    
+    // Insert new targets
+    if (targets.length > 0) {
+      await db.insert(teamCategoryTargets).values(targets);
+    }
+  }
+
+  async deleteTeamCategoryTargets(teamId: number): Promise<void> {
+    await db.delete(teamCategoryTargets).where(eq(teamCategoryTargets.teamId, teamId));
   }
 }
 

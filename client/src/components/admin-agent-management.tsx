@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,24 +8,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertAgentSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Users } from "lucide-react";
+import { Plus, Edit, Trash2, Users, Target } from "lucide-react";
 import { z } from "zod";
+import CategoryTargetsForm from "./category-targets-form";
 
 const agentFormSchema = insertAgentSchema.omit({
   teamId: true,
+  categoryId: true,
+  category: true,
   volumeTarget: true,
   unitsTarget: true,
   resetDay: true,
   resetMonth: true,
 }).extend({
   teamId: z.string().min(1, "Team is required").transform(val => parseInt(val)),
-  volumeTarget: z.string().min(1, "Volume target is required").transform(val => parseFloat(val)),
-  unitsTarget: z.string().min(1, "Units target is required").transform(val => parseInt(val)),
   targetCycle: z.enum(["monthly", "yearly"]).default("monthly"),
   resetDay: z.string().min(1, "Reset day is required").transform(val => parseInt(val)),
   resetMonth: z.string().optional().transform(val => val ? parseInt(val) : undefined),
@@ -36,9 +38,17 @@ const agentFormSchema = insertAgentSchema.omit({
 
 type AgentFormData = z.infer<typeof agentFormSchema>;
 
+interface CategoryTarget {
+  categoryId: number;
+  categoryName?: string;
+  volumeTarget: number;
+  unitsTarget: number;
+}
+
 export default function AdminAgentManagement() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingAgent, setEditingAgent] = useState<any>(null);
+  const [categoryTargets, setCategoryTargets] = useState<CategoryTarget[]>([]);
   const { toast } = useToast();
 
   const { data: agents, isLoading } = useQuery({
@@ -60,9 +70,6 @@ export default function AdminAgentManagement() {
       name: "",
       photo: "",
       teamId: "",
-      category: "",
-      volumeTarget: "",
-      unitsTarget: "",
       targetCycle: "monthly",
       resetDay: "1",
       resetMonth: "1",
@@ -72,15 +79,43 @@ export default function AdminAgentManagement() {
     },
   });
 
+  // Load category targets when editing an agent
+  const { data: agentCategoryTargets } = useQuery({
+    queryKey: ["/api/agents", editingAgent?.id, "category-targets"],
+    enabled: !!editingAgent?.id,
+  });
+
+  // Update category targets when agent changes or data loads
+  useEffect(() => {
+    if (editingAgent && agentCategoryTargets) {
+      const targets = agentCategoryTargets.map((target: any) => ({
+        categoryId: target.categoryId,
+        categoryName: categories?.find(cat => cat.id === target.categoryId)?.name,
+        volumeTarget: parseFloat(target.volumeTarget),
+        unitsTarget: target.unitsTarget,
+      }));
+      setCategoryTargets(targets);
+    } else if (!editingAgent) {
+      setCategoryTargets([]);
+    }
+  }, [editingAgent, agentCategoryTargets, categories]);
+
   const createMutation = useMutation({
     mutationFn: async (data: AgentFormData) => {
-      const agentData = {
-        ...data,
-        // Only include auth fields if provided
-        username: data.username || undefined,
-        password: data.password || undefined,
-      };
-      return apiRequest("POST", "/api/agents", agentData);
+      // Create agent first
+      const agent = await apiRequest("POST", "/api/agents", data);
+      
+      // Then set category targets if any
+      if (categoryTargets.length > 0) {
+        const targets = categoryTargets.map(target => ({
+          categoryId: target.categoryId,
+          volumeTarget: target.volumeTarget.toString(),
+          unitsTarget: target.unitsTarget,
+        }));
+        await apiRequest("POST", `/api/agents/${agent.id}/category-targets`, targets);
+      }
+      
+      return agent;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/agents"] });
@@ -90,12 +125,13 @@ export default function AdminAgentManagement() {
         description: "Agent created successfully",
       });
       setIsDialogOpen(false);
+      setCategoryTargets([]);
       form.reset();
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to create agent",
         variant: "destructive",
       });
     },
@@ -103,29 +139,36 @@ export default function AdminAgentManagement() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: AgentFormData }) => {
-      const agentData = {
-        ...data,
-        // Only include auth fields if provided
-        username: data.username || undefined,
-        password: data.password || undefined,
-      };
-      return apiRequest("PUT", `/api/agents/${id}`, agentData);
+      // Update agent first
+      const agent = await apiRequest("PUT", `/api/agents/${id}`, data);
+      
+      // Then update category targets
+      const targets = categoryTargets.map(target => ({
+        categoryId: target.categoryId,
+        volumeTarget: target.volumeTarget.toString(),
+        unitsTarget: target.unitsTarget,
+      }));
+      await apiRequest("POST", `/api/agents/${id}/category-targets`, targets);
+      
+      return agent;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/agents"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/agents", editingAgent?.id, "category-targets"] });
       toast({
         title: "Success",
         description: "Agent updated successfully",
       });
       setIsDialogOpen(false);
       setEditingAgent(null);
+      setCategoryTargets([]);
       form.reset();
     },
     onError: (error) => {
       toast({
         title: "Error",
-        description: error.message,
+        description: "Failed to update agent",
         variant: "destructive",
       });
     },
@@ -152,22 +195,25 @@ export default function AdminAgentManagement() {
     },
   });
 
-  const handleEdit = (agent: any) => {
-    setEditingAgent(agent);
-    form.reset({
-      name: agent.name,
-      photo: agent.photo || "",
-      teamId: agent.teamId.toString(),
-      category: agent.category,
-      volumeTarget: agent.volumeTarget.toString(),
-      unitsTarget: agent.unitsTarget.toString(),
-      targetCycle: agent.targetCycle || "monthly",
-      resetDay: agent.resetDay?.toString() || "1",
-      resetMonth: agent.resetMonth?.toString() || "1",
-      username: agent.username || "",
-      password: "",
-      canSelfReport: agent.canSelfReport || false,
-    });
+  const openDialog = (agent?: any) => {
+    if (agent) {
+      setEditingAgent(agent);
+      form.reset({
+        name: agent.name,
+        photo: agent.photo || "",
+        teamId: agent.teamId?.toString() || "",
+        targetCycle: agent.targetCycle || "monthly",
+        resetDay: agent.resetDay?.toString() || "1",
+        resetMonth: agent.resetMonth?.toString() || "1",
+        username: agent.username || "",
+        password: "",
+        canSelfReport: agent.canSelfReport || false,
+      });
+    } else {
+      setEditingAgent(null);
+      setCategoryTargets([]);
+      form.reset();
+    }
     setIsDialogOpen(true);
   };
 
@@ -201,10 +247,7 @@ export default function AdminAgentManagement() {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button
-                onClick={() => {
-                  setEditingAgent(null);
-                  form.reset();
-                }}
+                onClick={() => openDialog()}
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Agent
@@ -267,62 +310,15 @@ export default function AdminAgentManagement() {
                     )}
                   </div>
                   
-                  <div>
-                    <Label htmlFor="category">Category</Label>
-                    <Select
-                      value={form.watch("category")}
-                      onValueChange={(value) => form.setValue("category", value)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories?.map((category: any) => (
-                          <SelectItem key={category.id} value={category.name}>
-                            {category.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {form.formState.errors.category && (
-                      <p className="text-sm text-destructive">
-                        {form.formState.errors.category.message}
-                      </p>
-                    )}
-                  </div>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="volumeTarget">Volume Target ($)</Label>
-                    <Input
-                      id="volumeTarget"
-                      type="number"
-                      {...form.register("volumeTarget")}
-                      placeholder="35000"
-                    />
-                    {form.formState.errors.volumeTarget && (
-                      <p className="text-sm text-destructive">
-                        {form.formState.errors.volumeTarget.message}
-                      </p>
-                    )}
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="unitsTarget">Units Target</Label>
-                    <Input
-                      id="unitsTarget"
-                      type="number"
-                      {...form.register("unitsTarget")}
-                      placeholder="20"
-                    />
-                    {form.formState.errors.unitsTarget && (
-                      <p className="text-sm text-destructive">
-                        {form.formState.errors.unitsTarget.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
+                {/* Category Targets */}
+                <CategoryTargetsForm
+                  entityType="agent"
+                  entityId={editingAgent?.id || null}
+                  initialTargets={categoryTargets}
+                  onTargetsChange={setCategoryTargets}
+                />
                 
                 {/* Target Cycle Configuration */}
                 <div className="border-t pt-4">
@@ -503,9 +499,9 @@ export default function AdminAgentManagement() {
               <TableRow>
                 <TableHead>Agent</TableHead>
                 <TableHead>Team</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Volume Target</TableHead>
-                <TableHead>Units Target</TableHead>
+                <TableHead>Categories</TableHead>
+                <TableHead>Total Volume Target</TableHead>
+                <TableHead>Total Units Target</TableHead>
                 <TableHead>Target Cycle</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -513,6 +509,22 @@ export default function AdminAgentManagement() {
             <TableBody>
               {agents?.map((agent: any) => {
                 const team = teams?.find((t: any) => t.id === agent.teamId);
+                
+                // Calculate totals from category targets (fallback to legacy single values)
+                const totalVolume = agent.categoryTargets?.length > 0 
+                  ? agent.categoryTargets.reduce((sum: number, target: any) => sum + parseFloat(target.volumeTarget || 0), 0)
+                  : parseFloat(agent.volumeTarget || 0);
+                
+                const totalUnits = agent.categoryTargets?.length > 0
+                  ? agent.categoryTargets.reduce((sum: number, target: any) => sum + (target.unitsTarget || 0), 0)
+                  : (agent.unitsTarget || 0);
+                
+                const categoryNames = agent.categoryTargets?.length > 0
+                  ? agent.categoryTargets.map((target: any) => 
+                      categories?.find((cat: any) => cat.id === target.categoryId)?.name || 'Unknown'
+                    )
+                  : [agent.category || 'Unknown'];
+
                 return (
                   <TableRow key={agent.id}>
                     <TableCell>
@@ -524,22 +536,42 @@ export default function AdminAgentManagement() {
                         />
                         <div>
                           <p className="font-semibold text-corporate-800">{agent.name}</p>
-                          <p className="text-xs text-corporate-500">{agent.category}</p>
+                          {agent.canSelfReport && (
+                            <Badge variant="outline" className="text-xs mt-1">
+                              Self-Report
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="bg-primary text-white">
-                        {team?.name || "Unknown"}
+                        {team?.name || "No Team"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{agent.category}</TableCell>
-                    <TableCell>${parseFloat(agent.volumeTarget).toLocaleString()}</TableCell>
-                    <TableCell>{agent.unitsTarget}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {categoryNames.map((name: string, index: number) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {name}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">
+                        ${totalVolume.toLocaleString()}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="font-medium">
+                        {totalUnits}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="text-sm">
                         <div className="font-medium capitalize">{agent.targetCycle || "Monthly"}</div>
-                        <div className="text-gray-500">
+                        <div className="text-gray-500 text-xs">
                           {agent.targetCycle === "yearly" 
                             ? `Reset: Day ${agent.resetDay || 1} of ${
                                 ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
@@ -557,7 +589,7 @@ export default function AdminAgentManagement() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleEdit(agent)}
+                          onClick={() => openDialog(agent)}
                         >
                           <Edit className="w-4 h-4 text-primary" />
                         </Button>

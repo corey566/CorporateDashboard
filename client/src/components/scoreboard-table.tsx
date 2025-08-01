@@ -116,6 +116,22 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
           </TableHeader>
           <TableBody className="transition-all duration-1000 ease-in-out">
             {getTableOrder().map((agent: any, index: number) => {
+              // Calculate totals from category targets (fallback to legacy single values)
+              const totalVolumeTarget = agent.categoryTargets?.length > 0 
+                ? agent.categoryTargets.reduce((sum: number, target: any) => sum + parseFloat(target.volumeTarget || 0), 0)
+                : parseFloat(agent.volumeTarget || 0);
+              
+              const totalUnitsTarget = agent.categoryTargets?.length > 0
+                ? agent.categoryTargets.reduce((sum: number, target: any) => sum + (target.unitsTarget || 0), 0)
+                : (agent.unitsTarget || 0);
+
+              // Calculate current sales progress
+              const volumeSales = parseFloat(agent.volumeSales || 0);
+              const unitsSales = parseInt(agent.unitsSales || 0);
+              
+              const volumeProgress = totalVolumeTarget > 0 ? Math.round((volumeSales / totalVolumeTarget) * 100) : 0;
+              const unitsProgress = totalUnitsTarget > 0 ? Math.round((unitsSales / totalUnitsTarget) * 100) : 0;
+              
               return (
                 <TableRow
                   key={`table-${agent.id}-${carouselOffset}-${index}`}
@@ -151,9 +167,19 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                         <p className="text-2xl font-bold text-gray-500 dark:text-gray-400 truncate">
                           {agent.team?.name || ""}
                         </p>
-                        <p className="text-xl font-bold text-blue-600 dark:text-blue-400 truncate">
-                          {agent.category || "No Category"}
-                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {agent.categoryTargets?.length > 0 ? (
+                            agent.categoryTargets.map((target: any, i: number) => (
+                              <span key={i} className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-100 dark:bg-blue-900 px-2 py-1 rounded">
+                                Cat {target.categoryId}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                              {agent.category || "No Category"}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </TableCell>
@@ -168,51 +194,22 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                             Volume
                           </span>
                           <span className="text-2xl font-black text-gray-900 dark:text-white">
-                            {Math.round(
-                              (parseFloat(agent.currentVolume || "0") /
-                                parseFloat(agent.volumeTarget || "1")) *
-                                100,
-                            )}
-                            %
+                            {volumeProgress}%
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full transition-all duration-300 ${
-                              Math.min(
-                                (parseFloat(agent.currentVolume || "0") /
-                                  parseFloat(agent.volumeTarget || "1")) *
-                                  100,
-                                100,
-                              ) >= 100
+                              volumeProgress >= 100
                                 ? "bg-emerald-500"
-                                : Math.min(
-                                      (parseFloat(agent.currentVolume || "0") /
-                                        parseFloat(agent.volumeTarget || "1")) *
-                                        100,
-                                      100,
-                                    ) >= 75
+                                : volumeProgress >= 75
                                   ? "bg-blue-500"
-                                  : Math.min(
-                                        (parseFloat(
-                                          agent.currentVolume || "0",
-                                        ) /
-                                          parseFloat(
-                                            agent.volumeTarget || "1",
-                                          )) *
-                                          100,
-                                        100,
-                                      ) >= 50
+                                  : volumeProgress >= 50
                                     ? "bg-yellow-500"
                                     : "bg-red-500"
                             }`}
                             style={{
-                              width: `${Math.min(
-                                (parseFloat(agent.currentVolume || "0") /
-                                  parseFloat(agent.volumeTarget || "1")) *
-                                  100,
-                                100,
-                              )}%`,
+                              width: `${Math.min(volumeProgress, 100)}%`,
                             }}
                           ></div>
                         </div>
@@ -224,47 +221,22 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                             Units
                           </span>
                           <span className="text-2xl font-black text-gray-900 dark:text-white">
-                            {Math.round(
-                              ((agent.currentUnits || 0) /
-                                (agent.unitsTarget || 1)) *
-                                100,
-                            )}
-                            %
+                            {unitsProgress}%
                           </span>
                         </div>
                         <div className="w-full bg-gray-200 dark:bg-slate-700 rounded-full h-2">
                           <div
                             className={`h-2 rounded-full transition-all duration-300 ${
-                              Math.min(
-                                ((agent.currentUnits || 0) /
-                                  (agent.unitsTarget || 1)) *
-                                  100,
-                                100,
-                              ) >= 100
+                              unitsProgress >= 100
                                 ? "bg-emerald-500"
-                                : Math.min(
-                                      ((agent.currentUnits || 0) /
-                                        (agent.unitsTarget || 1)) *
-                                        100,
-                                      100,
-                                    ) >= 75
+                                : unitsProgress >= 75
                                   ? "bg-blue-500"
-                                  : Math.min(
-                                        ((agent.currentUnits || 0) /
-                                          (agent.unitsTarget || 1)) *
-                                          100,
-                                        100,
-                                      ) >= 50
+                                  : unitsProgress >= 50
                                     ? "bg-yellow-500"
                                     : "bg-red-500"
                             }`}
                             style={{
-                              width: `${Math.min(
-                                ((agent.currentUnits || 0) /
-                                  (agent.unitsTarget || 1)) *
-                                  100,
-                                100,
-                              )}%`,
+                              width: `${Math.min(unitsProgress, 100)}%`,
                             }}
                           ></div>
                         </div>
@@ -276,12 +248,10 @@ export default function ScoreboardTable({ agents }: ScoreboardTableProps) {
                   <TableCell className="py-4 px-6 text-center">
                     <div className="space-y-2">
                       <div className="text-4xl font-black text-gray-900 dark:text-white">
-                        {formatCurrency(agent.currentVolume || "0")} /{" "}
-                        {agent.currentUnits || 0}
+                        {formatCurrency(volumeSales)} / {unitsSales}
                       </div>
                       <div className="text-2xl font-bold text-gray-500 dark:text-gray-400">
-                        Target: {formatCurrency(agent.volumeTarget || "0")} /{" "}
-                        {agent.unitsTarget || 0}
+                        Target: {formatCurrency(totalVolumeTarget)} / {totalUnitsTarget}
                       </div>
                     </div>
                   </TableCell>

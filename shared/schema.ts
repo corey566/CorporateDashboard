@@ -16,8 +16,6 @@ export const categories = pgTable("categories", {
   name: text("name").notNull().unique(),
   color: text("color").notNull().default("#3B82F6"),
   description: text("description"),
-  volumeTarget: decimal("volume_target", { precision: 10, scale: 2 }).notNull().default("0"),
-  unitsTarget: integer("units_target").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -184,14 +182,37 @@ export const soundEffects = pgTable("sound_effects", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// Agent category targets junction table
+export const agentCategoryTargets = pgTable("agent_category_targets", {
+  id: serial("id").primaryKey(),
+  agentId: integer("agent_id").notNull().references(() => agents.id, { onDelete: "cascade" }),
+  categoryId: integer("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  volumeTarget: decimal("volume_target", { precision: 10, scale: 2 }).notNull().default("0"),
+  unitsTarget: integer("units_target").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Team category targets junction table
+export const teamCategoryTargets = pgTable("team_category_targets", {
+  id: serial("id").primaryKey(),
+  teamId: integer("team_id").notNull().references(() => teams.id, { onDelete: "cascade" }),
+  categoryId: integer("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+  volumeTarget: decimal("volume_target", { precision: 10, scale: 2 }).notNull().default("0"),
+  unitsTarget: integer("units_target").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const teamsRelations = relations(teams, ({ many }) => ({
   agents: many(agents),
   targetHistory: many(teamTargetHistory),
+  categoryTargets: many(teamCategoryTargets),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
   agents: many(agents),
+  agentTargets: many(agentCategoryTargets),
+  teamTargets: many(teamCategoryTargets),
 }));
 
 export const agentsRelations = relations(agents, ({ one, many }) => ({
@@ -205,6 +226,7 @@ export const agentsRelations = relations(agents, ({ one, many }) => ({
   }),
   sales: many(sales),
   targetHistory: many(agentTargetHistory),
+  categoryTargets: many(agentCategoryTargets),
 }));
 
 export const salesRelations = relations(sales, ({ one }) => ({
@@ -225,6 +247,28 @@ export const teamTargetHistoryRelations = relations(teamTargetHistory, ({ one })
   team: one(teams, {
     fields: [teamTargetHistory.teamId],
     references: [teams.id],
+  }),
+}));
+
+export const agentCategoryTargetsRelations = relations(agentCategoryTargets, ({ one }) => ({
+  agent: one(agents, {
+    fields: [agentCategoryTargets.agentId],
+    references: [agents.id],
+  }),
+  category: one(categories, {
+    fields: [agentCategoryTargets.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+export const teamCategoryTargetsRelations = relations(teamCategoryTargets, ({ one }) => ({
+  team: one(teams, {
+    fields: [teamCategoryTargets.teamId],
+    references: [teams.id],
+  }),
+  category: one(categories, {
+    fields: [teamCategoryTargets.categoryId],
+    references: [categories.id],
   }),
 }));
 
@@ -310,6 +354,16 @@ export const insertSoundEffectSchema = createInsertSchema(soundEffects).omit({
   createdAt: true,
 });
 
+export const insertAgentCategoryTargetSchema = createInsertSchema(agentCategoryTargets).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTeamCategoryTargetSchema = createInsertSchema(teamCategoryTargets).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -339,3 +393,7 @@ export type AgentTargetHistory = typeof agentTargetHistory.$inferSelect;
 export type InsertAgentTargetHistory = z.infer<typeof insertAgentTargetHistorySchema>;
 export type TeamTargetHistory = typeof teamTargetHistory.$inferSelect;
 export type InsertTeamTargetHistory = z.infer<typeof insertTeamTargetHistorySchema>;
+export type AgentCategoryTarget = typeof agentCategoryTargets.$inferSelect;
+export type InsertAgentCategoryTarget = z.infer<typeof insertAgentCategoryTargetSchema>;
+export type TeamCategoryTarget = typeof teamCategoryTargets.$inferSelect;
+export type InsertTeamCategoryTarget = z.infer<typeof insertTeamCategoryTargetSchema>;
