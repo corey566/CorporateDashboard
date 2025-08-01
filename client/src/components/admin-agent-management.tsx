@@ -33,6 +33,15 @@ const agentFormSchema = insertAgentSchema.omit({
   resetMonth: z.string().optional().transform(val => val ? parseInt(val) : undefined),
   username: z.string().optional(),
   password: z.string().optional(),
+  photo: z.string().optional().refine((val) => {
+    if (!val || val.trim() === "") return true; // Allow empty values
+    try {
+      new URL(val);
+      return true;
+    } catch {
+      return val.startsWith("http://") || val.startsWith("https://") || val.startsWith("/");
+    }
+  }, "Please enter a valid URL or leave empty"),
   canSelfReport: z.boolean().default(false),
 });
 
@@ -56,21 +65,21 @@ export default function AdminAgentManagement() {
     refetchInterval: 5000,
   });
 
-  const { data: teams } = useQuery({
+  const { data: teams = [] } = useQuery({
     queryKey: ["/api/teams"],
   });
 
-  const { data: categories } = useQuery({
+  const { data: categories = [] } = useQuery({
     queryKey: ["/api/categories"],
   });
 
-  const form = useForm<AgentFormData>({
+  const form = useForm({
     resolver: zodResolver(agentFormSchema),
     defaultValues: {
       name: "",
       photo: "",
       teamId: "",
-      targetCycle: "monthly",
+      targetCycle: "monthly" as "monthly" | "yearly",
       resetDay: "1",
       resetMonth: "1",
       username: "",
@@ -87,10 +96,10 @@ export default function AdminAgentManagement() {
 
   // Update category targets when agent changes or data loads
   useEffect(() => {
-    if (editingAgent && agentCategoryTargets) {
+    if (editingAgent && agentCategoryTargets && Array.isArray(agentCategoryTargets)) {
       const targets = agentCategoryTargets.map((target: any) => ({
         categoryId: target.categoryId,
-        categoryName: categories?.find(cat => cat.id === target.categoryId)?.name,
+        categoryName: categories.find((cat: any) => cat.id === target.categoryId)?.name,
         volumeTarget: parseFloat(target.volumeTarget),
         unitsTarget: target.unitsTarget,
       }));
@@ -101,21 +110,60 @@ export default function AdminAgentManagement() {
   }, [editingAgent, agentCategoryTargets, categories]);
 
   const createMutation = useMutation({
-    mutationFn: async (data: AgentFormData) => {
-      // Create agent first
-      const agent = await apiRequest("POST", "/api/agents", data);
-      
-      // Then set category targets if any
-      if (categoryTargets.length > 0) {
-        const targets = categoryTargets.map(target => ({
-          categoryId: target.categoryId,
-          volumeTarget: target.volumeTarget.toString(),
-          unitsTarget: target.unitsTarget,
-        }));
-        await apiRequest("POST", `/api/agents/${agent.id}/category-targets`, targets);
+    mutationFn: async (data: any) => {
+      console.log("Creating agent with data:", data);
+      try {
+        // Create agent first
+        const response = await fetch("/api/agents", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            ...data,
+            category: "General", // Default category
+            volumeTarget: "0", // Default volume target
+            unitsTarget: 0, // Default units target
+            isActive: true,
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: "Failed to create agent" }));
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+        
+        const agent = await response.json();
+        console.log("Agent created:", agent);
+        
+        // If category targets are set, save them
+        if (categoryTargets.length > 0 && agent.id) {
+          const targets = categoryTargets.map(target => ({
+            categoryId: target.categoryId,
+            volumeTarget: target.volumeTarget.toString(),
+            unitsTarget: target.unitsTarget,
+          }));
+          
+          const targetResponse = await fetch(`/api/agents/${agent.id}/category-targets`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify(targets),
+          });
+          
+          if (!targetResponse.ok) {
+            console.error("Failed to save category targets");
+          }
+        }
+        
+        return agent;
+      } catch (error) {
+        console.error("Agent creation error:", error);
+        throw error;
       }
-      
-      return agent;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/agents"] });
@@ -138,19 +186,59 @@ export default function AdminAgentManagement() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: AgentFormData }) => {
-      // Update agent first
-      const agent = await apiRequest("PUT", `/api/agents/${id}`, data);
-      
-      // Then update category targets
-      const targets = categoryTargets.map(target => ({
-        categoryId: target.categoryId,
-        volumeTarget: target.volumeTarget.toString(),
-        unitsTarget: target.unitsTarget,
-      }));
-      await apiRequest("POST", `/api/agents/${id}/category-targets`, targets);
-      
-      return agent;
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      try {
+        console.log("Updating agent with data:", data);
+        // Update agent first
+        const response = await fetch(`/api/agents/${id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            ...data,
+            category: "General", // Default category
+            volumeTarget: "0", // Default volume target
+            unitsTarget: 0, // Default units target
+            isActive: true,
+          }),
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: "Failed to update agent" }));
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+        
+        const agent = await response.json();
+        
+        // Then update category targets
+        if (categoryTargets.length > 0) {
+          const targets = categoryTargets.map(target => ({
+            categoryId: target.categoryId,
+            volumeTarget: target.volumeTarget.toString(),
+            unitsTarget: target.unitsTarget,
+          }));
+          
+          const targetResponse = await fetch(`/api/agents/${id}/category-targets`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify(targets),
+          });
+          
+          if (!targetResponse.ok) {
+            console.error("Failed to save category targets");
+          }
+        }
+        
+        return agent;
+      } catch (error) {
+        console.error("Agent update error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/agents"] });
@@ -176,7 +264,22 @@ export default function AdminAgentManagement() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest("DELETE", `/api/agents/${id}`);
+      try {
+        const response = await fetch(`/api/agents/${id}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: "Failed to delete agent" }));
+          throw new Error(errorData.error || `HTTP ${response.status}`);
+        }
+        
+        return { success: true };
+      } catch (error) {
+        console.error("Agent delete error:", error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/agents"] });
@@ -217,7 +320,9 @@ export default function AdminAgentManagement() {
     setIsDialogOpen(true);
   };
 
-  const handleSubmit = (data: AgentFormData) => {
+  const handleSubmit = (data: any) => {
+    console.log("Form submitted with data:", data);
+    console.log("Form errors:", form.formState.errors);
     if (editingAgent) {
       updateMutation.mutate({ id: editingAgent.id, data });
     } else {
@@ -296,7 +401,7 @@ export default function AdminAgentManagement() {
                         <SelectValue placeholder="Select team" />
                       </SelectTrigger>
                       <SelectContent>
-                        {teams?.map((team: any) => (
+                        {teams.map((team: any) => (
                           <SelectItem key={team.id} value={team.id.toString()}>
                             {team.name}
                           </SelectItem>
@@ -332,7 +437,7 @@ export default function AdminAgentManagement() {
                       <Label htmlFor="targetCycle">Target Cycle</Label>
                       <Select
                         value={form.watch("targetCycle")}
-                        onValueChange={(value) => form.setValue("targetCycle", value)}
+                        onValueChange={(value) => form.setValue("targetCycle", value as "monthly" | "yearly")}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select cycle" />
