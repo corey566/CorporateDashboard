@@ -52,26 +52,35 @@ export default function TeamLeaderboard({
     }
 
     setIsAutoScrolling(true);
-    console.log('Starting team carousel with', teamPerformance.length, 'teams');
-    
+    console.log("Starting team carousel with", teamPerformance.length, "teams");
+
     const cycleTeams = () => {
-      setCarouselOffset(prevOffset => {
+      setCarouselOffset((prevOffset) => {
         const nextOffset = (prevOffset + 1) % teamPerformance.length;
-        console.log(`Team carousel cycling: offset ${prevOffset} -> ${nextOffset}`);
-        console.log('Team order:', teamPerformance.map((team, i) => {
-          const position = (i - nextOffset + teamPerformance.length) % teamPerformance.length;
-          return `${team.name} (pos: ${position})`;
-        }).join(', '));
+        console.log(
+          `Team carousel cycling: offset ${prevOffset} -> ${nextOffset}`,
+        );
+        console.log(
+          "Team order:",
+          teamPerformance
+            .map((team, i) => {
+              const position =
+                (i - nextOffset + teamPerformance.length) %
+                teamPerformance.length;
+              return `${team.name} (pos: ${position})`;
+            })
+            .join(", "),
+        );
         return nextOffset;
       });
     };
 
     // Start cycling immediately, then every 6 seconds
     const intervalId = setInterval(cycleTeams, 6000);
-    console.log('Team carousel started - cycling every 6 seconds');
+    console.log("Team carousel started - cycling every 6 seconds");
 
     return () => {
-      console.log('Cleaning up team carousel');
+      console.log("Cleaning up team carousel");
       clearInterval(intervalId);
       setIsAutoScrolling(false);
     };
@@ -80,15 +89,18 @@ export default function TeamLeaderboard({
   // Reorder the entire team list based on carousel offset
   const getTeamOrder = () => {
     if (teamPerformance.length <= 2) return teamPerformance;
-    
+
     // Rotate the entire team list by the offset
     const rotatedTeams = [];
     for (let i = 0; i < teamPerformance.length; i++) {
       const sourceIndex = (i + carouselOffset) % teamPerformance.length;
       rotatedTeams.push(teamPerformance[sourceIndex]);
     }
-    
-    console.log('Current team order:', rotatedTeams.map(t => t.name).join(' -> '));
+
+    console.log(
+      "Current team order:",
+      rotatedTeams.map((t) => t.name).join(" -> "),
+    );
     return rotatedTeams;
   };
 
@@ -137,17 +149,17 @@ export default function TeamLeaderboard({
             <h2 className="text-2xl font-black text-foreground mb-2">
               TEAM SCOREBOARD
             </h2>
-            <div className="text-sm font-bold text-muted-foreground">
+            {/* <div className="text-sm font-bold text-muted-foreground">
               Live Team Rankings • Team Carousel • {teamPerformance.length} teams
-            </div>
+            </div> */}
           </div>
           {isAutoScrolling && (
             <div className="flex items-center gap-2 text-sm text-blue-600 dark:text-blue-400">
               <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
-              <span className="text-lg font-black">Team Carousel</span>
+              {/* <span className="text-lg font-black">Team Carousel</span>
               <div className="text-md font-bold ml-2">
                 Offset: {carouselOffset}/{teamPerformance.length}
-              </div>
+              </div> */}
             </div>
           )}
         </div>

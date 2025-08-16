@@ -29,30 +29,31 @@ export default function DailyTargetsTable({
   const [isScrolling, setIsScrolling] = useState(true);
   const tableRef = useRef<HTMLDivElement>(null);
 
-
   // Enhanced target alerts with 15-minute intervals and voice announcements
-  const [lastAlertTime, setLastAlertTime] = useState<{ [teamId: number]: number }>({});
-  
+  const [lastAlertTime, setLastAlertTime] = useState<{
+    [teamId: number]: number;
+  }>({});
+
   const handleTargetAlert = useCallback((message: string, teamName: string) => {
     console.log(`Voice alert triggered for ${teamName}: ${message}`);
-    
+
     // Use text-to-speech for voice alerts
-    if ('speechSynthesis' in window) {
+    if ("speechSynthesis" in window) {
       const utterance = new SpeechSynthesisUtterance(message);
       utterance.rate = 0.8;
       utterance.pitch = 1.0;
       utterance.volume = 0.8;
-      utterance.lang = 'en-US';
-      
+      utterance.lang = "en-US";
+
       // Clear any existing speech
       window.speechSynthesis.cancel();
-      
+
       // Speak the alert
       window.speechSynthesis.speak(utterance);
-      
+
       console.log(`Voice alert spoken: "${message}" for team ${teamName}`);
     } else {
-      console.warn('Text-to-speech not supported in this browser');
+      console.warn("Text-to-speech not supported in this browser");
     }
   }, []);
 
@@ -86,15 +87,15 @@ export default function DailyTargetsTable({
   const totalPages = Math.ceil(dailyTargets.length / teamsPerPage);
   const displayedTargets = dailyTargets.slice(
     currentIndex * teamsPerPage,
-    (currentIndex + 1) * teamsPerPage
+    (currentIndex + 1) * teamsPerPage,
   );
 
   // Auto-scroll carousel every 6 seconds
   useEffect(() => {
     if (dailyTargets.length > teamsPerPage && isScrolling) {
       const interval = setInterval(() => {
-        setCurrentIndex((prevIndex) => 
-          prevIndex >= totalPages - 1 ? 0 : prevIndex + 1
+        setCurrentIndex((prevIndex) =>
+          prevIndex >= totalPages - 1 ? 0 : prevIndex + 1,
         );
       }, 6000);
 
@@ -104,38 +105,40 @@ export default function DailyTargetsTable({
 
   // Pagination handlers
   const nextPage = () => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex >= totalPages - 1 ? 0 : prevIndex + 1
+    setCurrentIndex((prevIndex) =>
+      prevIndex >= totalPages - 1 ? 0 : prevIndex + 1,
     );
   };
 
   const prevPage = () => {
-    setCurrentIndex((prevIndex) => 
-      prevIndex <= 0 ? totalPages - 1 : prevIndex - 1
+    setCurrentIndex((prevIndex) =>
+      prevIndex <= 0 ? totalPages - 1 : prevIndex - 1,
     );
   };
 
   return (
-    <div className="w-full space-y-4"
-         onMouseEnter={() => setIsScrolling(false)}
-         onMouseLeave={() => setIsScrolling(true)}>
-
-
+    <div
+      className="w-full space-y-4"
+      onMouseEnter={() => setIsScrolling(false)}
+      onMouseLeave={() => setIsScrolling(true)}
+    >
       <div className="bg-card rounded-2xl border-2 border-border shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="bg-primary/10 p-4 border-b-2 border-border">
           <div className="flex justify-between items-center">
             <div className="text-center flex-1">
               <h2 className="text-4xl font-black text-foreground">
-                DAILY TARGETS - {currentMonth.toUpperCase()}
+                DAILY TARGETS
+                {/* - {currentMonth.toUpperCase()} */}
               </h2>
-              <p className="text-2xl font-bold text-muted-foreground">
-                {remainingWorkingDays} Days Remaining / {totalWorkingDays} Working Days
-                {!customWorkingDays && (
+              <p className="text-4xl font-bold text-muted-foreground">
+                {remainingWorkingDays} Days Remaining / {totalWorkingDays}{" "}
+                Working Days
+                {/* {!customWorkingDays && (
                   <span className="text-sm ml-2">
                     ({totalDaysInMonth} total - {sundaysInMonth} Sundays)
                   </span>
-                )}
+                )} */}
                 {customWorkingDays && (
                   <span className="text-sm ml-2 text-blue-600 dark:text-blue-400">
                     (Custom: {customWorkingDays} days)
@@ -145,7 +148,7 @@ export default function DailyTargetsTable({
             </div>
             <div className="flex items-center gap-2 ml-4">
               {/* Carousel controls - only show if more than 2 teams */}
-              {dailyTargets.length > teamsPerPage && (
+              {/* {dailyTargets.length > teamsPerPage && (
                 <div className="flex items-center gap-1 mr-2">
                   <Button
                     variant="outline"
@@ -170,7 +173,7 @@ export default function DailyTargetsTable({
                     {isScrolling ? "Auto-scrolling" : "Paused"}
                   </div>
                 </div>
-              )}
+              )} */}
               <Button
                 variant="outline"
                 size="sm"
@@ -196,7 +199,9 @@ export default function DailyTargetsTable({
                     <div className="p-3 bg-muted rounded-lg text-sm">
                       <div className="flex justify-between">
                         <span>Total days in month:</span>
-                        <span className="font-semibold">{totalDaysInMonth}</span>
+                        <span className="font-semibold">
+                          {totalDaysInMonth}
+                        </span>
                       </div>
                       <div className="flex justify-between">
                         <span>Sundays in month:</span>
@@ -205,13 +210,16 @@ export default function DailyTargetsTable({
                       <div className="flex justify-between border-t mt-2 pt-2">
                         <span>Calculated working days:</span>
                         <span className="font-bold text-primary">
-                          {customWorkingDays || (totalDaysInMonth - sundaysInMonth)}
+                          {customWorkingDays ||
+                            totalDaysInMonth - sundaysInMonth}
                         </span>
                       </div>
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="customWorkingDays">Custom Working Days (Optional)</Label>
+                    <Label htmlFor="customWorkingDays">
+                      Custom Working Days (Optional)
+                    </Label>
                     <Input
                       id="customWorkingDays"
                       type="number"
@@ -295,7 +303,8 @@ export default function DailyTargetsTable({
                       className="mt-1"
                     />
                     <p className="text-xs text-muted-foreground mt-1">
-                      Alert will trigger at {alertTime}:00 if targets are not met
+                      Alert will trigger at {alertTime}:00 if targets are not
+                      met
                     </p>
                   </div>
                 </div>
@@ -336,10 +345,10 @@ export default function DailyTargetsTable({
                         style={{ backgroundColor: target.color }}
                       ></div>
                       <div>
-                        <div className="text-xl font-black text-foreground">
+                        <div className="text-2xl font-black text-foreground">
                           {target.name}
                         </div>
-                        <div className="text-xl font-bold text-foreground">
+                        <div className="text-2xl font-bold text-foreground">
                           {remainingWorkingDays} days left
                         </div>
                       </div>
@@ -351,12 +360,12 @@ export default function DailyTargetsTable({
                     <div className="space-y-2">
                       {/* Targets on one line */}
                       <div className="flex justify-center items-center gap-4">
-                        <div className="text-lg font-black text-foreground">
+                        <div className="text-2xl font-black text-foreground">
                           {formatCurrency(
                             target.adjustedDailyVolumeTarget.toFixed(2),
                           )}
                         </div>
-                        <div className="text-lg font-black text-foreground">
+                        <div className="text-2xl font-black text-foreground">
                           {Math.round(target.adjustedDailyUnitsTarget)} units
                         </div>
                       </div>
@@ -386,7 +395,7 @@ export default function DailyTargetsTable({
 
                         {/* Units Progress */}
                         <div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                          <div className="w-full h-2 bg-gray-200 dark:bg-black-700 rounded-full ">
                             <div
                               className={`h-2 rounded-full transition-all duration-300 ${
                                 target.unitsProgress >= 90
