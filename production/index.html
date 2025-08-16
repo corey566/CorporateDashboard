@@ -8,69 +8,160 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
-        * {
-            font-family: 'Manrope', 'Inter', sans-serif;
+        :root {
+            --primary: 219 75% 55%;
+            --secondary: 210 40% 98%;
+            --accent: 210 40% 15%;
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --border: 214.3 31.8% 91.4%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --ring: 222.2 84% 4.9%;
+            --radius: 0.5rem;
+        }
+
+        .dark {
+            --background: 222.2 84% 4.9%;
+            --foreground: 210 40% 98%;
+            --card: 222.2 84% 4.9%;
+            --card-foreground: 210 40% 98%;
+            --border: 217.2 32.6% 17.5%;
+            --muted: 217.2 32.6% 17.5%;
+            --muted-foreground: 215 20.2% 65.1%;
+            --popover: 222.2 84% 4.9%;
+            --popover-foreground: 210 40% 98%;
+            --ring: 212.7 26.8% 83.9%;
         }
         
-        /* TV Optimized Styles - 50m viewing distance */
-        .main-title {
-            font-size: 8rem;
+        * {
+            font-family: 'Manrope', 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            color: white;
+            overflow: hidden;
+        }
+        
+        /* TV Optimized Styles - Exact replica of original */
+        .corporate-title {
+            font-size: 6rem;
             font-weight: 900;
+            background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            letter-spacing: -0.02em;
             line-height: 1.1;
+            margin-bottom: 2rem;
         }
         
         .date-time {
-            font-size: 4rem;
-            font-weight: 700;
+            font-size: 3rem;
+            font-weight: 600;
+            color: #94a3b8;
         }
         
-        .scoreboard-table {
-            font-size: 3.5rem;
-            line-height: 1.2;
+        .scoreboard-container {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 2rem;
+            padding: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .agent-row {
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .agent-row:hover {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        
+        .agent-photo {
+            width: 4.5rem;
+            height: 4.5rem;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(148, 163, 184, 0.2);
         }
         
         .agent-name {
-            font-size: 4rem;
+            font-size: 2.5rem;
             font-weight: 800;
+            color: #ffffff;
         }
         
         .team-name {
-            font-size: 2.5rem;
-            font-weight: 700;
+            font-size: 1.5rem;
+            font-weight: 600;
         }
         
         .progress-text {
-            font-size: 2.8rem;
+            font-size: 1.75rem;
             font-weight: 700;
+            color: #ffffff;
         }
         
         .target-text {
-            font-size: 2.2rem;
+            font-size: 1.25rem;
             font-weight: 600;
+            color: #94a3b8;
         }
         
         .status-badge {
-            font-size: 1.8rem;
+            font-size: 1rem;
             font-weight: 800;
-            padding: 0.8rem 1.6rem;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+        }
+        
+        .progress-bar {
+            height: 0.75rem;
+            border-radius: 9999px;
+            background: rgba(148, 163, 184, 0.2);
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.8s ease-in-out;
         }
         
         .news-ticker {
-            font-size: 2.5rem;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+            color: white;
+            padding: 1rem;
+            font-size: 1.5rem;
             font-weight: 600;
+            overflow: hidden;
+            z-index: 50;
         }
         
-        .daily-targets-header {
-            font-size: 3rem;
-            font-weight: 800;
-        }
-        
-        .daily-targets-table {
-            font-size: 2.2rem;
-            font-weight: 600;
+        .ticker-content {
+            animation: scroll-left 30s linear infinite;
+            white-space: nowrap;
         }
         
         @keyframes scroll-left {
@@ -78,152 +169,278 @@
             100% { transform: translateX(-100%); }
         }
         
-        .ticker-scroll {
-            animation: scroll-left 30s linear infinite;
+        .daily-targets-header {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #ffffff;
         }
         
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .daily-targets-table {
+            font-size: 1.5rem;
+            font-weight: 600;
         }
         
-        .fade-in {
-            animation: fade-in 0.5s ease-out;
+        .carousel-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 1rem;
         }
         
-        .progress-bar {
-            transition: width 0.8s ease-in-out;
-        }
-        
-        .agent-photo {
-            width: 6rem;
-            height: 6rem;
+        .carousel-dot {
+            width: 0.75rem;
+            height: 0.75rem;
             border-radius: 50%;
-            object-fit: cover;
+            background: rgba(148, 163, 184, 0.4);
+            transition: all 0.3s ease;
+        }
+        
+        .carousel-dot.active {
+            background: #3b82f6;
+            transform: scale(1.2);
+        }
+        
+        .sale-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            font-size: 2rem;
+            font-weight: 700;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            z-index: 1000;
+            animation: popup 3s ease-in-out;
+        }
+        
+        @keyframes popup {
+            0%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+            20%, 80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+        
+        .cash-offer-banner {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+        
+        .websocket-status {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            z-index: 100;
+        }
+        
+        .websocket-connected {
+            background: rgba(16, 185, 129, 0.9);
+        }
+        
+        .websocket-disconnected {
+            background: rgba(239, 68, 68, 0.9);
+        }
+        
+        /* Admin Panel Styles */
+        .admin-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            z-index: 1001;
         }
         
         .admin-panel {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 20px;
+            top: 0;
+            right: 0;
+            width: 400px;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(148, 163, 184, 0.1);
+            padding: 2rem;
             color: white;
-            font-size: 16px;
-            max-width: 400px;
-            max-height: 80vh;
             overflow-y: auto;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
         }
         
-        .admin-hidden {
-            display: none;
+        .admin-panel.open {
+            transform: translateX(0);
         }
         
-        .admin-form input, .admin-form select, .admin-form textarea {
+        .admin-form {
+            margin-bottom: 2rem;
+        }
+        
+        .admin-form input,
+        .admin-form select,
+        .admin-form textarea {
             width: 100%;
-            padding: 8px;
-            margin: 8px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background: rgba(255, 255, 255, 0.9);
-            color: black;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 0.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.875rem;
+        }
+        
+        .admin-form input::placeholder,
+        .admin-form textarea::placeholder {
+            color: rgba(148, 163, 184, 0.7);
         }
         
         .admin-form button {
-            background: #3B82F6;
+            background: #3b82f6;
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
             cursor: pointer;
-            margin: 5px;
+            margin: 0.25rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: background 0.2s ease;
         }
         
         .admin-form button:hover {
-            background: #2563EB;
+            background: #2563eb;
         }
         
-        .admin-form button.delete {
-            background: #EF4444;
+        .admin-form button.success {
+            background: #10b981;
         }
         
-        .admin-form button.delete:hover {
-            background: #DC2626;
+        .admin-form button.success:hover {
+            background: #059669;
+        }
+        
+        .admin-form button.danger {
+            background: #ef4444;
+        }
+        
+        .admin-form button.danger:hover {
+            background: #dc2626;
+        }
+        
+        .admin-section {
+            margin-bottom: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+        
+        .admin-section h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: #ffffff;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .admin-panel {
+                width: 100%;
+            }
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
-    <!-- Admin Panel Toggle -->
-    <div style="position: fixed; top: 10px; left: 10px; z-index: 1001;">
-        <button onclick="toggleAdmin()" style="background: rgba(0,0,0,0.7); color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer;">
-            ⚙️ Admin
-        </button>
+<body>
+    <!-- WebSocket Status Indicator -->
+    <div id="websocketStatus" class="websocket-status websocket-connected">
+        🟢 Connected
     </div>
 
+    <!-- Admin Toggle -->
+    <button id="adminToggle" class="admin-toggle" onclick="toggleAdminPanel()">
+        ⚙️ Admin Portal
+    </button>
+
     <!-- Admin Panel -->
-    <div id="adminPanel" class="admin-panel admin-hidden">
-        <h2>Dashboard Admin</h2>
-        
-        <!-- Data Management -->
-        <div style="margin-bottom: 20px;">
-            <h3>Data Management</h3>
-            <button onclick="exportData()">📥 Export Data</button>
-            <button onclick="document.getElementById('importFile').click()">📤 Import Data</button>
-            <input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display: none;">
-        </div>
-        
-        <!-- Quick Add Agent -->
-        <div style="margin-bottom: 20px;">
-            <h3>Quick Add Agent</h3>
+    <div id="adminPanel" class="admin-panel">
+        <div class="admin-section">
+            <h3>Quick Admin Access</h3>
             <div class="admin-form">
-                <input type="text" id="agentName" placeholder="Agent Name">
-                <select id="agentTeam">
-                    <option value="">Select Team</option>
-                </select>
-                <input type="text" id="agentCategory" placeholder="Category">
-                <input type="number" id="agentVolumeTarget" placeholder="Volume Target">
-                <input type="number" id="agentUnitsTarget" placeholder="Units Target">
-                <button onclick="addAgent()">Add Agent</button>
+                <button onclick="window.open('admin.html', '_blank')" class="success">
+                    🏢 Open Full Admin Panel
+                </button>
+                <button onclick="exportData()">📥 Export Data</button>
+                <button onclick="document.getElementById('importFile').click()">📤 Import Data</button>
+                <input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display: none;">
             </div>
         </div>
         
-        <!-- Quick Sale Entry -->
-        <div style="margin-bottom: 20px;">
+        <div class="admin-section">
             <h3>Quick Sale Entry</h3>
             <div class="admin-form">
                 <select id="saleAgent">
                     <option value="">Select Agent</option>
                 </select>
-                <input type="number" id="saleAmount" placeholder="Sale Amount">
+                <input type="number" id="saleAmount" placeholder="Sale Amount" step="0.01">
                 <input type="number" id="saleUnits" placeholder="Units" value="1">
                 <input type="text" id="clientName" placeholder="Client Name">
-                <button onclick="addSale()">Record Sale</button>
+                <button onclick="addSale()" class="success">💰 Record Sale</button>
             </div>
         </div>
         
-        <!-- Settings -->
-        <div>
-            <h3>Settings</h3>
+        <div class="admin-section">
+            <h3>Quick Settings</h3>
             <div class="admin-form">
                 <input type="text" id="companyName" placeholder="Company Name">
                 <input type="text" id="currencySymbol" placeholder="Currency Symbol">
-                <button onclick="updateSettings()">Update Settings</button>
+                <button onclick="updateSettings()">💾 Save Settings</button>
+            </div>
+        </div>
+        
+        <div class="admin-section">
+            <h3>Display Control</h3>
+            <div class="admin-form">
+                <button onclick="toggleFullscreen()">🖥️ Toggle Fullscreen</button>
+                <button onclick="refreshDashboard()">🔄 Refresh Data</button>
+                <button onclick="resetCarousel()">⏹️ Reset Carousel</button>
             </div>
         </div>
     </div>
+    
+    <!-- Sale Popup -->
+    <div id="salePopup" class="sale-popup hidden"></div>
+    
+    <!-- Cash Offers Banner -->
+    <div id="cashOfferBanner" class="cash-offer-banner hidden"></div>
 
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect } = React;
 
-        // Local Storage Management
+        // Local Storage Management with Enhanced Features
         class LocalStorageDB {
             constructor() {
                 this.initializeData();
+                this.setupEventListeners();
             }
 
             initializeData() {
@@ -234,59 +451,97 @@
                             currency: { symbol: "LKR", code: "LKR", name: "Sri Lankan Rupee" }
                         },
                         teams: [
-                            { id: 1, name: "Team RegiPros", color: "#3B82F6", volumeTarget: "700000.00", unitsTarget: 15 },
-                            { id: 2, name: "Team Titans", color: "#10B981", volumeTarget: "800000.00", unitsTarget: 15 },
-                            { id: 3, name: "Team Phoenix", color: "#F59E0B", volumeTarget: "200000.00", unitsTarget: 5 },
-                            { id: 4, name: "AL-FATIHA", color: "#EF4444", volumeTarget: "100000.00", unitsTarget: 4 },
-                            { id: 5, name: "ClickMasters", color: "#8B5CF6", volumeTarget: "300000.00", unitsTarget: 8 }
+                            { id: 1, name: "Team RegiPros", color: "#3B82F6", volumeTarget: "700000.00", unitsTarget: 15, isActive: true },
+                            { id: 2, name: "Team Titans", color: "#10B981", volumeTarget: "800000.00", unitsTarget: 15, isActive: true },
+                            { id: 3, name: "Team Phoenix", color: "#F59E0B", volumeTarget: "200000.00", unitsTarget: 5, isActive: true },
+                            { id: 4, name: "AL-FATIHA", color: "#EF4444", volumeTarget: "100000.00", unitsTarget: 4, isActive: true },
+                            { id: 5, name: "ClickMasters", color: "#8B5CF6", volumeTarget: "300000.00", unitsTarget: 8, isActive: true }
                         ],
                         agents: [
                             {
                                 id: 1, name: "Bilal", photo: "https://via.placeholder.com/96x96/3B82F6/FFFFFF?text=B",
                                 teamId: 1, category: "Software", volumeTarget: "500000.00", unitsTarget: 10,
-                                isActive: true, volumeAchieved: "320000.00", unitsAchieved: 6, totalSales: 15
+                                isActive: true, volumeAchieved: "320000.00", unitsAchieved: 6, totalSales: 15,
+                                canSelfReport: false, username: null, password: null
                             },
                             {
                                 id: 2, name: "Rizna", photo: "https://via.placeholder.com/96x96/10B981/FFFFFF?text=R",
                                 teamId: 1, category: "Software", volumeTarget: "200000.00", unitsTarget: 5,
-                                isActive: true, volumeAchieved: "180000.00", unitsAchieved: 4, totalSales: 12
+                                isActive: true, volumeAchieved: "180000.00", unitsAchieved: 4, totalSales: 12,
+                                canSelfReport: false, username: null, password: null
                             },
                             {
                                 id: 3, name: "Yazeed", photo: "https://via.placeholder.com/96x96/F59E0B/FFFFFF?text=Y",
                                 teamId: 2, category: "Software", volumeTarget: "300000.00", unitsTarget: 5,
-                                isActive: true, volumeAchieved: "250000.00", unitsAchieved: 4, totalSales: 10
+                                isActive: true, volumeAchieved: "250000.00", unitsAchieved: 4, totalSales: 10,
+                                canSelfReport: false, username: null, password: null
                             },
                             {
                                 id: 4, name: "Anuk", photo: "https://via.placeholder.com/96x96/8B5CF6/FFFFFF?text=A",
                                 teamId: 2, category: "Hardware", volumeTarget: "500000.00", unitsTarget: 10,
-                                isActive: true, volumeAchieved: "450000.00", unitsAchieved: 8, totalSales: 18
+                                isActive: true, volumeAchieved: "450000.00", unitsAchieved: 8, totalSales: 18,
+                                canSelfReport: false, username: null, password: null
                             },
                             {
                                 id: 5, name: "Niflan", photo: "https://via.placeholder.com/96x96/EF4444/FFFFFF?text=N",
                                 teamId: 3, category: "Mixed", volumeTarget: "200000.00", unitsTarget: 5,
-                                isActive: true, volumeAchieved: "150000.00", unitsAchieved: 3, totalSales: 8
+                                isActive: true, volumeAchieved: "150000.00", unitsAchieved: 3, totalSales: 8,
+                                canSelfReport: false, username: null, password: null
                             },
                             {
                                 id: 6, name: "Thanish", photo: "https://via.placeholder.com/96x96/06B6D4/FFFFFF?text=T",
                                 teamId: 4, category: "Mixed", volumeTarget: "100000.00", unitsTarget: 4,
-                                isActive: true, volumeAchieved: "95000.00", unitsAchieved: 3, totalSales: 7
+                                isActive: true, volumeAchieved: "95000.00", unitsAchieved: 3, totalSales: 7,
+                                canSelfReport: false, username: null, password: null
                             }
                         ],
+                        categories: [
+                            { id: 1, name: "Software", color: "#3B82F6", isActive: true },
+                            { id: 2, name: "Hardware", color: "#10B981", isActive: true },
+                            { id: 3, name: "Mixed", color: "#F59E0B", isActive: true }
+                        ],
                         sales: [],
+                        cashOffers: [],
+                        announcements: [],
+                        mediaSlides: [],
                         settings: {
                             autoScrollInterval: 6000,
                             agentsPerPage: 2,
-                            workingDaysPerMonth: 22
+                            workingDaysPerMonth: 22,
+                            showTeamRankings: true,
+                            enableTeams: true,
+                            companyName: "SALES LEADERBOARD",
+                            primaryColor: "#3B82F6",
+                            secondaryColor: "#64748B",
+                            backgroundColor: "#0F172A",
+                            accentColor: "#10B981",
+                            fontFamily: "Manrope, Inter, sans-serif",
+                            fontSize: "large",
+                            enableHighContrast: false,
+                            enableReducedMotion: false,
+                            dashboardDuration: 30
                         },
                         newsTicker: [
                             "🎉 Welcome to Sales Dashboard - Optimized for 50m TV Viewing Distance",
                             "🔥 Great performance by all teams this month!",
                             "📈 Keep pushing towards your targets - You've got this!",
-                            "⭐ Excellence is not a destination, it's a continuous journey"
-                        ]
+                            "⭐ Excellence is not a destination, it's a continuous journey",
+                            "💪 Every sale counts towards your success story!",
+                            "🚀 Push beyond limits and achieve greatness!"
+                        ],
+                        systemSettings: []
                     };
                     this.saveData(defaultData);
                 }
+            }
+
+            setupEventListeners() {
+                // Listen for storage changes from other tabs/windows
+                window.addEventListener('storage', (e) => {
+                    if (e.key === 'salesDashboard') {
+                        window.dispatchEvent(new CustomEvent('dataUpdate'));
+                    }
+                });
             }
 
             getData() {
@@ -343,6 +598,124 @@
                 const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmAaAjaD0fPQfS4FKWrB7+OOVQEG');
                 audio.volume = 0.3;
                 audio.play().catch(e => console.log('Audio play failed:', e));
+            }
+
+            // Enhanced database methods
+            updateCompany(updates) {
+                const data = this.getData();
+                data.company = { ...data.company, ...updates };
+                this.saveData(data);
+            }
+
+            addTeam(team) {
+                const data = this.getData();
+                team.id = Date.now();
+                team.isVisible = true;
+                data.teams.push(team);
+                this.saveData(data);
+            }
+
+            updateTeam(teamId, updates) {
+                const data = this.getData();
+                const teamIndex = data.teams.findIndex(t => t.id === teamId);
+                if (teamIndex !== -1) {
+                    data.teams[teamIndex] = { ...data.teams[teamIndex], ...updates };
+                    this.saveData(data);
+                }
+            }
+
+            deleteTeam(teamId) {
+                const data = this.getData();
+                data.teams = data.teams.filter(t => t.id !== teamId);
+                // Also remove agents from this team
+                data.agents = data.agents.filter(a => a.teamId !== teamId);
+                this.saveData(data);
+            }
+
+            deleteAgent(agentId) {
+                const data = this.getData();
+                data.agents = data.agents.filter(a => a.id !== agentId);
+                this.saveData(data);
+            }
+
+            addCashOffer(offer) {
+                const data = this.getData();
+                offer.id = Date.now();
+                offer.isActive = true;
+                data.cashOffers.push(offer);
+                this.saveData(data);
+            }
+
+            deleteCashOffer(offerId) {
+                const data = this.getData();
+                data.cashOffers = data.cashOffers.filter(o => o.id !== offerId);
+                this.saveData(data);
+            }
+
+            updateNewsTicker(messages) {
+                const data = this.getData();
+                data.newsTicker = messages;
+                this.saveData(data);
+            }
+
+            updateSettings(settings) {
+                const data = this.getData();
+                data.settings = { ...data.settings, ...settings };
+                this.saveData(data);
+            }
+
+            // Dashboard data processor with calculations
+            getDashboardData() {
+                const data = this.getData();
+                
+                // Calculate team stats
+                const teamsWithStats = data.teams.map(team => {
+                    const teamAgents = data.agents.filter(a => a.teamId === team.id && a.isActive);
+                    const totalVolumeAchieved = teamAgents.reduce((sum, agent) => sum + parseFloat(agent.volumeAchieved || 0), 0);
+                    const totalUnitsAchieved = teamAgents.reduce((sum, agent) => sum + (agent.unitsAchieved || 0), 0);
+                    const totalVolumeTarget = parseFloat(team.volumeTarget || 0);
+                    const totalUnitsTarget = team.unitsTarget || 0;
+                    
+                    const volumeProgress = totalVolumeTarget > 0 ? (totalVolumeAchieved / totalVolumeTarget) * 100 : 0;
+                    const unitsProgress = totalUnitsTarget > 0 ? (totalUnitsAchieved / totalUnitsTarget) * 100 : 0;
+                    
+                    // Calculate daily targets
+                    const workingDaysPerMonth = data.settings.workingDaysPerMonth || 22;
+                    const dailyVolumeTarget = totalVolumeTarget / workingDaysPerMonth;
+                    const dailyUnitsTarget = Math.ceil(totalUnitsTarget / workingDaysPerMonth);
+                    
+                    return {
+                        ...team,
+                        volumeAchieved: totalVolumeAchieved.toString(),
+                        unitsAchieved: totalUnitsAchieved,
+                        volumeProgress,
+                        unitsProgress,
+                        agentCount: teamAgents.length,
+                        dailyVolumeTarget,
+                        dailyUnitsTarget
+                    };
+                }).sort((a, b) => b.volumeProgress - a.volumeProgress);
+
+                // Calculate agent stats with team information
+                const agentsWithStats = data.agents.map(agent => {
+                    const team = data.teams.find(t => t.id === agent.teamId);
+                    const volumeProgress = calculateProgress(agent.volumeAchieved, agent.volumeTarget);
+                    const unitsProgress = calculateProgress(agent.unitsAchieved, agent.unitsTarget);
+                    
+                    return {
+                        ...agent,
+                        teamName: team?.name || 'No Team',
+                        teamColor: team?.color || '#64748B',
+                        volumeProgress,
+                        unitsProgress
+                    };
+                });
+
+                return {
+                    ...data,
+                    teams: teamsWithStats,
+                    agents: agentsWithStats
+                };
             }
         }
 
@@ -658,115 +1031,662 @@
         }
 
         function Dashboard() {
-            const [data, setData] = useState(db.getData());
-            const [currentTime, setCurrentTime] = useState(new Date());
-            const [scrollOffset, setScrollOffset] = useState(0);
+            const [dashboardData, setDashboardData] = useState(null);
+            const [lastUpdated, setLastUpdated] = useState(new Date());
+            const [carouselIndex, setCarouselIndex] = useState(0);
+            const [salePopup, setSalePopup] = useState(null);
+            const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+            const [websocketConnected, setWebsocketConnected] = useState(true);
 
             useEffect(() => {
-                const timeInterval = setInterval(() => {
-                    setCurrentTime(new Date());
-                }, 1000);
-
-                // Auto-scroll agents
-                const scrollInterval = setInterval(() => {
-                    if (data.agents.filter(a => a.isActive).length > data.settings.agentsPerPage) {
-                        setScrollOffset(prev => (prev + 1) % data.agents.filter(a => a.isActive).length);
-                    }
-                }, data.settings.autoScrollInterval);
-
+                updateDashboard();
+                
                 // Listen for data updates
                 const handleDataUpdate = (event) => {
-                    setData(event.detail);
+                    updateDashboard();
+                    setLastUpdated(new Date());
+                    
+                    // Check for new sales and show popup
+                    if (event.detail?.type === 'sale_added') {
+                        showSalePopup(event.detail.sale);
+                    }
                 };
+                
                 window.addEventListener('dataUpdate', handleDataUpdate);
-
+                
+                // Auto refresh every 10 seconds (matching original)
+                const interval = setInterval(updateDashboard, 10000);
+                
+                // Simulate WebSocket heartbeat
+                const wsInterval = setInterval(() => {
+                    setWebsocketConnected(true);
+                }, 5000);
+                
                 return () => {
-                    clearInterval(timeInterval);
-                    clearInterval(scrollInterval);
                     window.removeEventListener('dataUpdate', handleDataUpdate);
+                    clearInterval(interval);
+                    clearInterval(wsInterval);
                 };
-            }, [data.settings.autoScrollInterval, data.agents.length, data.settings.agentsPerPage]);
+            }, []);
 
-            const activeAgents = data.agents.filter(a => a.isActive);
-            const agentsPerPage = data.settings.agentsPerPage;
-            const displayedAgents = activeAgents.slice(scrollOffset, scrollOffset + agentsPerPage);
-            if (displayedAgents.length < agentsPerPage && activeAgents.length > 1) {
-                displayedAgents.push(...activeAgents.slice(0, agentsPerPage - displayedAgents.length));
+            // Auto-carousel for agents (exact replica of original)
+            useEffect(() => {
+                if (!dashboardData?.agents || dashboardData.agents.length <= 2) {
+                    setIsAutoScrolling(false);
+                    return;
+                }
+                
+                setIsAutoScrolling(true);
+                const interval = setInterval(() => {
+                    setCarouselIndex(prev => (prev + 1) % dashboardData.agents.length);
+                }, dashboardData.settings?.autoScrollInterval || 6000);
+                
+                return () => {
+                    clearInterval(interval);
+                    setIsAutoScrolling(false);
+                };
+            }, [dashboardData?.agents, dashboardData?.settings]);
+
+            function updateDashboard() {
+                const data = db.getDashboardData();
+                setDashboardData(data);
+                
+                // Update settings from localStorage
+                const settings = data.settings || {};
+                updateCompanyTitle(settings.companyName || data.company.name);
             }
 
-            return (
-                <div className="min-h-screen p-8 pb-24">
-                    {/* Header */}
-                    <div className="text-center mb-12">
-                        <h1 className="main-title text-white mb-4">{data.company.name.toUpperCase()}</h1>
-                        <div className="date-time text-slate-300">
-                            {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}
-                        </div>
-                    </div>
+            function updateCompanyTitle(name) {
+                document.title = `${name} - TV Display`;
+            }
 
-                    <div className="grid grid-cols-12 gap-8 h-[calc(100vh-300px)]">
-                        {/* Main Scoreboard */}
-                        <div className="col-span-8">
-                            <div className="bg-slate-800/50 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-8 h-full">
-                                <div className="overflow-hidden h-full">
-                                    <table className="w-full scoreboard-table">
-                                        <thead>
-                                            <tr className="border-b-2 border-slate-600">
-                                                <th className="text-slate-300 p-6 text-center">Agent</th>
-                                                <th className="text-slate-300 p-6 text-center">Volume Progress</th>
-                                                <th className="text-slate-300 p-6 text-center">Units Progress</th>
-                                                <th className="text-slate-300 p-6 text-center">Sales</th>
-                                                <th className="text-slate-300 p-6 text-center">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {displayedAgents.map((agent, index) => {
-                                                const team = data.teams.find(t => t.id === agent.teamId);
-                                                return (
-                                                    <AgentRow 
-                                                        key={`${agent.id}-${index}`} 
-                                                        agent={agent} 
-                                                        team={team} 
-                                                        index={index}
-                                                    />
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                
-                                {/* Auto-scroll indicator */}
-                                {activeAgents.length > agentsPerPage && (
-                                    <div className="flex justify-center mt-6">
-                                        <div className="flex space-x-2">
-                                            {Array.from({ length: activeAgents.length }).map((_, index) => (
-                                                <div
-                                                    key={index}
-                                                    className={`w-4 h-4 rounded-full transition-all duration-300 ${
-                                                        index === scrollOffset ? 'bg-blue-500' : 'bg-slate-600'
-                                                    }`}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
+            function showSalePopup(sale) {
+                const agent = dashboardData?.agents.find(a => a.id === sale.agentId);
+                if (agent) {
+                    setSalePopup({
+                        agentName: agent.name,
+                        amount: sale.amount,
+                        client: sale.clientName
+                    });
+                    
+                    // Auto-hide after 5 seconds
+                    setTimeout(() => setSalePopup(null), 5000);
+                }
+            }
 
-                        {/* Right Panel */}
-                        <div className="col-span-4 space-y-8">
-                            <DailyTargets teams={data.teams} settings={data.settings} />
-                            <TeamRanking teams={data.teams} agents={activeAgents} />
-                        </div>
-                    </div>
+            if (!dashboardData) {
+                return React.createElement('div', { 
+                    className: 'flex items-center justify-center h-screen'
+                }, [
+                    React.createElement('div', {
+                        key: 'loading',
+                        className: 'text-center'
+                    }, [
+                        React.createElement('div', {
+                            key: 'spinner',
+                            className: 'text-6xl text-white mb-4'
+                        }, '⏳'),
+                        React.createElement('div', {
+                            key: 'text',
+                            className: 'text-2xl text-slate-400'
+                        }, 'Loading Dashboard...')
+                    ])
+                ]);
+            }
 
-                    {/* News Ticker */}
-                    <NewsTicker messages={data.newsTicker} />
-                </div>
-            );
+            const { agents, teams, company, newsTicker, cashOffers } = dashboardData;
+            const activeAgents = agents.filter(agent => agent.isActive);
+            const activeCashOffers = cashOffers?.filter(offer => offer.isActive) || [];
+            
+            // Get current visible agents (carousel logic matching original)
+            const agentsToShow = activeAgents.length <= 2 ? activeAgents : 
+                [activeAgents[carouselIndex], activeAgents[(carouselIndex + 1) % activeAgents.length]];
+
+            return React.createElement('div', {
+                className: 'min-h-screen relative'
+            }, [
+                // WebSocket Status Indicator
+                React.createElement('div', {
+                    key: 'websocket-status',
+                    className: `websocket-status ${websocketConnected ? 'websocket-connected' : 'websocket-disconnected'}`
+                }, websocketConnected ? '🟢 Connected' : '🔴 Disconnected'),
+
+                // Sale Popup
+                salePopup && React.createElement('div', {
+                    key: 'sale-popup',
+                    className: 'sale-popup'
+                }, [
+                    React.createElement('div', {
+                        key: 'icon',
+                        className: 'text-4xl mb-2'
+                    }, '🎉'),
+                    React.createElement('div', {
+                        key: 'title',
+                        className: 'text-2xl font-bold mb-2'
+                    }, 'SALE RECORDED!'),
+                    React.createElement('div', {
+                        key: 'agent',
+                        className: 'text-xl mb-1'
+                    }, salePopup.agentName),
+                    React.createElement('div', {
+                        key: 'amount',
+                        className: 'text-3xl font-bold mb-1'
+                    }, formatCurrency(salePopup.amount)),
+                    React.createElement('div', {
+                        key: 'client',
+                        className: 'text-lg'
+                    }, `Client: ${salePopup.client}`)
+                ]),
+
+                // Active Cash Offers Banner
+                activeCashOffers.length > 0 && React.createElement('div', {
+                    key: 'cash-offers',
+                    className: 'cash-offer-banner'
+                }, [
+                    React.createElement('div', {
+                        key: 'header',
+                        className: 'text-2xl font-bold mb-2'
+                    }, '🎁 ACTIVE CASH OFFERS'),
+                    React.createElement('div', {
+                        key: 'offers',
+                        className: 'grid grid-cols-1 md:grid-cols-2 gap-4'
+                    }, activeCashOffers.slice(0, 2).map(offer => 
+                        React.createElement('div', {
+                            key: offer.id,
+                            className: 'bg-white/20 rounded-lg p-4'
+                        }, [
+                            React.createElement('div', {
+                                key: 'title',
+                                className: 'font-bold text-lg'
+                            }, offer.title),
+                            React.createElement('div', {
+                                key: 'reward',
+                                className: 'text-2xl font-bold'
+                            }, `Reward: ${formatCurrency(offer.reward)}`),
+                            React.createElement('div', {
+                                key: 'target',
+                                className: 'text-sm'
+                            }, `Target: ${offer.target} ${offer.type}`)
+                        ])
+                    ))
+                ]),
+
+                // Main Dashboard Container
+                React.createElement('div', {
+                    key: 'dashboard',
+                    className: 'p-8 pb-20'
+                }, [
+                    // Header with Company Name and DateTime
+                    React.createElement('div', {
+                        key: 'header',
+                        className: 'text-center mb-8'
+                    }, [
+                        React.createElement('h1', {
+                            key: 'title',
+                            className: 'corporate-title'
+                        }, company.name),
+                        React.createElement('div', {
+                            key: 'datetime',
+                            className: 'date-time'
+                        }, lastUpdated.toLocaleString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                        }))
+                    ]),
+                    
+                    // Main Content Grid
+                    React.createElement('div', {
+                        key: 'main-grid',
+                        className: 'grid grid-cols-12 gap-8 h-[calc(100vh-300px)]'
+                    }, [
+                        // Left Panel - Football-style Scoreboard Table (8 columns)
+                        React.createElement('div', {
+                            key: 'scoreboard-panel',
+                            className: 'col-span-8 h-full'
+                        }, [
+                            React.createElement('div', {
+                                key: 'scoreboard-container',
+                                className: 'scoreboard-container h-full'
+                            }, [
+                                React.createElement('table', {
+                                    key: 'scoreboard-table',
+                                    className: 'w-full h-full'
+                                }, [
+                                    React.createElement('thead', { key: 'thead' }, [
+                                        React.createElement('tr', {
+                                            key: 'header-row',
+                                            className: 'border-b-2 border-slate-600'
+                                        }, [
+                                            React.createElement('th', { 
+                                                key: 'photo-header', 
+                                                className: 'text-left p-4 text-2xl font-bold text-slate-300',
+                                                style: { width: '80px' }
+                                            }, ''),
+                                            React.createElement('th', { 
+                                                key: 'agent-header', 
+                                                className: 'text-left p-4 text-2xl font-bold text-slate-300' 
+                                            }, 'AGENT'),
+                                            React.createElement('th', { 
+                                                key: 'volume-header', 
+                                                className: 'text-left p-4 text-2xl font-bold text-slate-300' 
+                                            }, 'VOLUME / UNITS'),
+                                            React.createElement('th', { 
+                                                key: 'status-header', 
+                                                className: 'text-center p-4 text-2xl font-bold text-slate-300' 
+                                            }, 'STATUS')
+                                        ])
+                                    ]),
+                                    React.createElement('tbody', { key: 'tbody' }, 
+                                        agentsToShow.map((agent, index) => 
+                                            React.createElement('tr', {
+                                                key: agent.id,
+                                                className: 'agent-row'
+                                            }, [
+                                                React.createElement('td', {
+                                                    key: 'photo-cell',
+                                                    className: 'p-4'
+                                                }, React.createElement('img', {
+                                                    src: agent.photo,
+                                                    className: 'agent-photo',
+                                                    alt: agent.name,
+                                                    onError: (e) => {
+                                                        e.target.src = `https://via.placeholder.com/72x72/${agent.teamColor.slice(1)}/FFFFFF?text=${agent.name.charAt(0)}`;
+                                                    }
+                                                })),
+                                                React.createElement('td', {
+                                                    key: 'agent-info',
+                                                    className: 'p-4'
+                                                }, [
+                                                    React.createElement('div', {
+                                                        key: 'agent-name',
+                                                        className: 'agent-name'
+                                                    }, agent.name),
+                                                    React.createElement('div', {
+                                                        key: 'team-name',
+                                                        className: 'team-name mt-1',
+                                                        style: { color: agent.teamColor }
+                                                    }, agent.teamName)
+                                                ]),
+                                                React.createElement('td', {
+                                                    key: 'performance',
+                                                    className: 'p-4'
+                                                }, [
+                                                    // Volume Progress
+                                                    React.createElement('div', {
+                                                        key: 'volume-section',
+                                                        className: 'mb-4'
+                                                    }, [
+                                                        React.createElement('div', {
+                                                            key: 'volume-text',
+                                                            className: 'progress-text mb-1'
+                                                        }, `${formatCurrency(agent.volumeAchieved)} / ${formatCurrency(agent.volumeTarget)}`),
+                                                        React.createElement('div', {
+                                                            key: 'volume-progress',
+                                                            className: 'progress-bar'
+                                                        }, React.createElement('div', {
+                                                            className: `progress-fill ${getProgressColor(agent.volumeProgress)}`,
+                                                            style: { width: `${Math.min(agent.volumeProgress, 100)}%` }
+                                                        })),
+                                                        React.createElement('div', {
+                                                            key: 'volume-percentage',
+                                                            className: 'target-text mt-1'
+                                                        }, `${Math.round(agent.volumeProgress)}% Volume`)
+                                                    ]),
+                                                    // Units Progress
+                                                    React.createElement('div', {
+                                                        key: 'units-section'
+                                                    }, [
+                                                        React.createElement('div', {
+                                                            key: 'units-text',
+                                                            className: 'progress-text mb-1'
+                                                        }, `${agent.unitsAchieved} / ${agent.unitsTarget} Units`),
+                                                        React.createElement('div', {
+                                                            key: 'units-progress',
+                                                            className: 'progress-bar'
+                                                        }, React.createElement('div', {
+                                                            className: `progress-fill ${getProgressColor(agent.unitsProgress)}`,
+                                                            style: { width: `${Math.min(agent.unitsProgress, 100)}%` }
+                                                        })),
+                                                        React.createElement('div', {
+                                                            key: 'units-percentage',
+                                                            className: 'target-text mt-1'
+                                                        }, `${Math.round(agent.unitsProgress)}% Units`)
+                                                    ])
+                                                ]),
+                                                React.createElement('td', {
+                                                    key: 'status-cell',
+                                                    className: 'p-4 text-center'
+                                                }, getStatusBadge(Math.max(agent.volumeProgress, agent.unitsProgress)))
+                                            ])
+                                        )
+                                    )
+                                ])
+                            ]),
+                            
+                            // Auto-scroll Indicators (matching original)
+                            isAutoScrolling && activeAgents.length > 2 && React.createElement('div', {
+                                key: 'carousel-indicators',
+                                className: 'carousel-indicators'
+                            }, [
+                                React.createElement('div', {
+                                    key: 'scroll-indicator',
+                                    className: 'text-center text-slate-400 text-sm mt-4'
+                                }, `Auto-scrolling agents (${carouselIndex + 1}-${(carouselIndex + 1) % activeAgents.length + 1} of ${activeAgents.length})`),
+                                React.createElement('div', {
+                                    key: 'dots',
+                                    className: 'flex justify-center space-x-2 mt-2'
+                                }, activeAgents.map((_, index) => 
+                                    React.createElement('div', {
+                                        key: index,
+                                        className: `carousel-dot ${
+                                            index === carouselIndex || index === (carouselIndex + 1) % activeAgents.length ? 'active' : ''
+                                        }`
+                                    })
+                                ))
+                            ])
+                        ]),
+                        
+                        // Right Panel - Daily Targets and Team Rankings (4 columns)
+                        React.createElement('div', {
+                            key: 'right-panel',
+                            className: 'col-span-4 space-y-6 h-full overflow-y-auto'
+                        }, [
+                            // Daily Targets Table
+                            React.createElement('div', {
+                                key: 'daily-targets',
+                                className: 'scoreboard-container'
+                            }, [
+                                React.createElement('h3', {
+                                    key: 'targets-header',
+                                    className: 'daily-targets-header text-center mb-6'
+                                }, 'DAILY TARGETS'),
+                                React.createElement('div', {
+                                    key: 'targets-content',
+                                    className: 'space-y-3'
+                                }, teams.slice(0, 6).map(team => 
+                                    React.createElement('div', {
+                                        key: team.id,
+                                        className: 'p-4 bg-slate-700/30 rounded-xl border border-slate-600/30'
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'team-header',
+                                            className: 'flex justify-between items-center mb-2'
+                                        }, [
+                                            React.createElement('span', {
+                                                key: 'team-name',
+                                                className: 'daily-targets-table font-bold',
+                                                style: { color: team.color }
+                                            }, team.name),
+                                            React.createElement('span', {
+                                                key: 'progress',
+                                                className: 'text-sm font-bold text-white'
+                                            }, `${Math.round(team.volumeProgress)}%`)
+                                        ]),
+                                        React.createElement('div', {
+                                            key: 'targets-info',
+                                            className: 'grid grid-cols-2 gap-2 text-sm'
+                                        }, [
+                                            React.createElement('div', {
+                                                key: 'volume-target',
+                                                className: 'text-slate-300'
+                                            }, `Volume: ${formatCurrency(team.dailyVolumeTarget || 0)}`),
+                                            React.createElement('div', {
+                                                key: 'units-target',
+                                                className: 'text-slate-300'
+                                            }, `Units: ${team.dailyUnitsTarget || 0}`)
+                                        ]),
+                                        React.createElement('div', {
+                                            key: 'members',
+                                            className: 'text-xs text-slate-400 mt-1'
+                                        }, `${team.agentCount} team members`)
+                                    ])
+                                ))
+                            ]),
+                            
+                            // Team Rankings
+                            React.createElement('div', {
+                                key: 'team-rankings',
+                                className: 'scoreboard-container'
+                            }, [
+                                React.createElement('h3', {
+                                    key: 'rankings-header',
+                                    className: 'daily-targets-header text-center mb-6'
+                                }, 'TEAM RANKINGS'),
+                                React.createElement('div', {
+                                    key: 'rankings-content',
+                                    className: 'space-y-3'
+                                }, teams.slice(0, 6).map((team, index) => 
+                                    React.createElement('div', {
+                                        key: team.id,
+                                        className: `p-4 rounded-xl border ${
+                                            index === 0 ? 'bg-yellow-500/20 border-yellow-500/50' :
+                                            index === 1 ? 'bg-gray-400/20 border-gray-400/50' :
+                                            index === 2 ? 'bg-orange-600/20 border-orange-600/50' :
+                                            'bg-slate-700/30 border-slate-600/30'
+                                        }`
+                                    }, [
+                                        React.createElement('div', {
+                                            key: 'ranking-row',
+                                            className: 'flex items-center justify-between'
+                                        }, [
+                                            React.createElement('div', {
+                                                key: 'position-info',
+                                                className: 'flex items-center space-x-3'
+                                            }, [
+                                                React.createElement('span', {
+                                                    key: 'rank',
+                                                    className: 'text-3xl font-bold text-white'
+                                                }, `#${index + 1}`),
+                                                React.createElement('div', {
+                                                    key: 'team-info'
+                                                }, [
+                                                    React.createElement('div', {
+                                                        key: 'name',
+                                                        className: 'daily-targets-table font-bold',
+                                                        style: { color: team.color }
+                                                    }, team.name),
+                                                    React.createElement('div', {
+                                                        key: 'achieved',
+                                                        className: 'text-sm text-slate-400'
+                                                    }, `${formatCurrency(team.volumeAchieved)} achieved`)
+                                                ])
+                                            ]),
+                                            React.createElement('div', {
+                                                key: 'performance',
+                                                className: 'text-right'
+                                            }, [
+                                                React.createElement('div', {
+                                                    key: 'percentage',
+                                                    className: 'text-2xl font-bold text-white'
+                                                }, `${Math.round(team.volumeProgress)}%`),
+                                                React.createElement('div', {
+                                                    key: 'units-achieved',
+                                                    className: 'text-sm text-slate-400'
+                                                }, `${team.unitsAchieved} units`)
+                                            ])
+                                        ])
+                                    ])
+                                ))
+                            ])
+                        ])
+                    ])
+                ]),
+                
+                // News Ticker (matching original)
+                React.createElement('div', {
+                    key: 'news-ticker',
+                    className: 'news-ticker'
+                }, React.createElement('div', {
+                    className: 'ticker-content'
+                }, newsTicker.join(' • ')))
+            ]);
         }
 
-        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+        // Additional Admin Functions
+        function toggleAdminPanel() {
+            const panel = document.getElementById('adminPanel');
+            panel.classList.toggle('open');
+            updateAdminSelects();
+        }
+
+        function updateAdminSelects() {
+            const data = db.getDashboardData();
+            
+            // Update agent select for sale entry
+            const agentSelect = document.getElementById('saleAgent');
+            if (agentSelect) {
+                agentSelect.innerHTML = '<option value="">Select Agent</option>';
+                data.agents.forEach(agent => {
+                    agentSelect.innerHTML += `<option value="${agent.id}">${agent.name} (${agent.teamName})</option>`;
+                });
+            }
+            
+            // Update settings
+            const companyNameInput = document.getElementById('companyName');
+            const currencySymbolInput = document.getElementById('currencySymbol');
+            if (companyNameInput) companyNameInput.value = data.company.name;
+            if (currencySymbolInput) currencySymbolInput.value = data.company.currency.symbol;
+        }
+
+        function addSale() {
+            const agentId = parseInt(document.getElementById('saleAgent').value);
+            const amount = parseFloat(document.getElementById('saleAmount').value);
+            const units = parseInt(document.getElementById('saleUnits').value) || 1;
+            const clientName = document.getElementById('clientName').value;
+            
+            if (agentId && amount && clientName) {
+                const sale = db.addSale({
+                    agentId, 
+                    amount, 
+                    units, 
+                    clientName,
+                    category: 'General'
+                });
+                
+                // Trigger sale popup
+                window.dispatchEvent(new CustomEvent('dataUpdate', { 
+                    detail: { type: 'sale_added', sale: { ...sale, agentId } }
+                }));
+                
+                // Clear form
+                document.getElementById('saleAgent').value = '';
+                document.getElementById('saleAmount').value = '';
+                document.getElementById('saleUnits').value = '1';
+                document.getElementById('clientName').value = '';
+                
+                // Play sound effect
+                db.playSaleSound();
+                
+                alert('Sale recorded successfully! 🎉');
+            } else {
+                alert('Please fill all required fields');
+            }
+        }
+
+        function updateSettings() {
+            const companyName = document.getElementById('companyName').value;
+            const currencySymbol = document.getElementById('currencySymbol').value;
+            
+            if (companyName || currencySymbol) {
+                const updates = {};
+                if (companyName) {
+                    updates.name = companyName;
+                }
+                if (currencySymbol) {
+                    updates.currency = { symbol: currencySymbol, code: currencySymbol, name: currencySymbol };
+                }
+                
+                db.updateCompany(updates);
+                alert('Settings updated successfully!');
+            }
+        }
+
+        function exportData() {
+            const data = db.getData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dashboard-data-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        db.saveData(data);
+                        alert('Data imported successfully!');
+                        updateAdminSelects();
+                    } catch (error) {
+                        alert('Invalid JSON file');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        function refreshDashboard() {
+            window.location.reload();
+        }
+
+        function resetCarousel() {
+            window.dispatchEvent(new CustomEvent('resetCarousel'));
+        }
+
+        // Initialize the application
+        function initializeApp() {
+            // Render the dashboard
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(React.createElement(Dashboard));
+
+            // Initialize admin panel
+            updateAdminSelects();
+
+            // Set up periodic data refresh
+            setInterval(() => {
+                window.dispatchEvent(new CustomEvent('dataUpdate'));
+            }, 30000); // Refresh every 30 seconds
+
+            console.log('Sales Dashboard initialized successfully');
+        }
+
+        // Auto-start the application when page loads
+        document.addEventListener('DOMContentLoaded', initializeApp);
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                window.dispatchEvent(new CustomEvent('dataUpdate'));
+            }
+        });
+
+        // Global error handler
+        window.addEventListener('error', (event) => {
+            console.error('Dashboard Error:', event.error);
+        });
+
+        // Performance monitoring
+        window.addEventListener('load', () => {
+            console.log('Dashboard loaded in', performance.now(), 'ms');
+        });
     </script>
 </body>
 </html>
