@@ -1,11 +1,17 @@
 # Sales Dashboard - Apache Configuration
 # Optimized for XAMPP production deployment
+# Supports both localStorage and MySQL versions
 
 # Security Headers
 Header always set X-Content-Type-Options nosniff
 Header always set X-Frame-Options DENY
 Header always set X-XSS-Protection "1; mode=block"
 Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# CORS Headers for MySQL API
+Header always set Access-Control-Allow-Origin "*"
+Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+Header always set Access-Control-Allow-Headers "Content-Type"
 
 # Performance Optimization
 # Enable Gzip Compression
@@ -19,6 +25,8 @@ Header always set Referrer-Policy "strict-origin-when-cross-origin"
     AddOutputFilterByType DEFLATE application/rss+xml
     AddOutputFilterByType DEFLATE application/javascript
     AddOutputFilterByType DEFLATE application/x-javascript
+    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE application/php
 </IfModule>
 
 # Browser Caching
@@ -44,20 +52,25 @@ RewriteEngine On
 # RewriteCond %{HTTPS} off
 # RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# Handle admin route
+# Handle API requests for MySQL
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^admin$ admin.html [L]
-RewriteRule ^admin/$ admin.html [L]
+RewriteRule ^api/(.*)$ api.php [QSA,L]
 
-# Handle dashboard route (default)
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^dashboard$ index.html [L]
-RewriteRule ^dashboard/$ index.html [L]
+# Handle setup route
+RewriteRule ^setup/?$ setup-mysql.php [L]
 
-# Default route to dashboard
-DirectoryIndex index.html
+# Route handling for different versions
+# MySQL versions (default)
+RewriteRule ^admin/?$ admin-mysql.html [L]
+RewriteRule ^dashboard/?$ dashboard-mysql.html [L]
+
+# localStorage versions (backup)
+RewriteRule ^admin-storage/?$ admin.html [L]
+RewriteRule ^dashboard-storage/?$ index.html [L]
+
+# Default route to MySQL dashboard
+DirectoryIndex dashboard-mysql.html
 
 # MIME Types for modern web
 AddType application/javascript .js

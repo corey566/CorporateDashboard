@@ -15,7 +15,11 @@ The application provides a Real-Time Sales Leaderboard optimized for large scree
 The TV dashboard is designed with an elegant, professional aesthetic, utilizing Manrope and Inter fonts for readability. It features a clean, minimal card-based layout with subtle shadows, rounded corners, and consistent color-coded progress bars. All font sizes are doubled for optimal TV viewing. The admin panel provides a responsive and professional interface for management. A comprehensive theme system with dark/light mode toggle is implemented across both dashboard and admin panel. Currency customization is available, allowing users to set preferred currency symbols and formatting.
 
 ### Technical Implementation
-The frontend is built with React 18 and TypeScript, styled using Tailwind CSS with shadcn/ui components. TanStack Query manages server state, and Wouter handles client-side routing. Real-time updates are powered by a WebSocket connection. The backend uses Node.js with Express.js and TypeScript, with PostgreSQL as the database managed by Drizzle ORM. Authentication is handled by Passport.js with session management. The system supports full offline functionality via a localStorage database system, requiring zero external dependencies or internet connection for certain deployments (e.g., XAMPP).
+The frontend is built with React 18 and TypeScript, styled using Tailwind CSS with shadcn/ui components. TanStack Query manages server state, and Wouter handles client-side routing. Real-time updates are powered by a WebSocket connection. The backend uses Node.js with Express.js and TypeScript, with PostgreSQL as the database managed by Drizzle ORM. Authentication is handled by Passport.js with session management. 
+
+For production deployment, the system offers dual database options:
+1. **MySQL Version (Recommended)**: Full production deployment with MySQL database, PHP API layer, persistent data storage, and multi-user support optimized for XAMPP
+2. **localStorage Version**: Standalone browser-based storage requiring zero external dependencies for offline deployments
 
 ### Key Features
 - **Real-time Performance Display:** Live updates of agent and team performance, sales pop-ups, and daily targets.

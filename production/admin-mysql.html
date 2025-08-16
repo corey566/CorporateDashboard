@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Dashboard - Admin Panel (MySQL)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Admin Panel Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+        }
+
+        .admin-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .admin-header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .admin-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-subtitle {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .connection-status {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-top: 1rem;
+        }
+
+        .status-connected {
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid #10B981;
+            color: #34D399;
+        }
+
+        .status-disconnected {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid #EF4444;
+            color: #F87171;
+        }
+
+        .tabs-container {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .tabs-header {
+            display: flex;
+            background: rgba(51, 65, 85, 0.5);
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab-button:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: #e2e8f0;
+        }
+
+        .tab-button.active {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border-bottom-color: #60a5fa;
+        }
+
+        .tab-content {
+            padding: 2rem;
+            min-height: 500px;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #e2e8f0;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 0.5rem;
+            color: #e2e8f0;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: rgba(51, 65, 85, 0.5);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 0.5rem;
+            color: #e2e8f0;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #2563eb, #1e40af);
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(148, 163, 184, 0.2);
+            color: #e2e8f0;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(148, 163, 184, 0.3);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .data-table th {
+            background: rgba(51, 65, 85, 0.5);
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .data-table tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stats-card {
+            background: rgba(51, 65, 85, 0.3);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #60a5fa;
+            margin-bottom: 0.25rem;
+        }
+
+        .stats-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .alert-success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        .color-picker {
+            width: 60px;
+            height: 40px;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+
+        .agent-photo {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .dashboard-link {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .dashboard-link:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            transform: translateY(-1px);
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .tabs-header {
+                flex-direction: column;
+            }
+            
+            .admin-container {
+                padding: 1rem;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .team-color-preview {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+            border: 2px solid rgba(148, 163, 184, 0.3);
+        }
+
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <a href="dashboard-mysql.html" class="dashboard-link">📺 View Dashboard</a>
+    
+    <div class="admin-container">
+        <!-- Header -->
+        <div class="admin-header">
+            <h1 class="admin-title">Sales Dashboard Admin</h1>
+            <p class="admin-subtitle">MySQL Database Management Panel</p>
+            <div id="connectionStatus" class="connection-status status-disconnected">
+                🔴 Connecting to Database...
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div class="stats-grid" id="statsGrid">
+            <!-- Stats will be populated by JavaScript -->
+        </div>
+
+        <!-- Main Admin Interface -->
+        <div class="tabs-container">
+            <div class="tabs-header">
+                <button class="tab-button active" onclick="switchTab('teams')">Teams</button>
+                <button class="tab-button" onclick="switchTab('agents')">Agents</button>
+                <button class="tab-button" onclick="switchTab('sales')">Quick Sale</button>
+                <button class="tab-button" onclick="switchTab('data')">Data Management</button>
+                <button class="tab-button" onclick="switchTab('settings')">Settings</button>
+            </div>
+
+            <!-- Teams Tab -->
+            <div id="teams-tab" class="tab-content">
+                <h2>Team Management</h2>
+                <p style="color: #94a3b8; margin-bottom: 2rem;">Create and manage sales teams with targets and colors.</p>
+                
+                <div class="grid-2">
+                    <div>
+                        <h3 style="margin-bottom: 1rem;">Add New Team</h3>
+                        <form id="addTeamForm">
+                            <div class="form-group">
+                                <label class="form-label">Team Name</label>
+                                <input type="text" id="teamName" class="form-input" placeholder="Enter team name" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Team Color</label>
+                                <input type="color" id="teamColor" class="color-picker" value="#3b82f6">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Volume Target</label>
+                                <input type="number" id="teamVolumeTarget" class="form-input" placeholder="Monthly volume target" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Units Target</label>
+                                <input type="number" id="teamUnitsTarget" class="form-input" placeholder="Monthly units target" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Team</button>
+                        </form>
+                    </div>
+                    
+                    <div>
+                        <h3 style="margin-bottom: 1rem;">Existing Teams</h3>
+                        <div id="teamsList">
+                            <!-- Teams will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agents Tab -->
+            <div id="agents-tab" class="tab-content hidden">
+                <h2>Agent Management</h2>
+                <p style="color: #94a3b8; margin-bottom: 2rem;">Add and manage sales agents with individual targets.</p>
+                
+                <div class="grid-2">
+                    <div>
+                        <h3 style="margin-bottom: 1rem;">Add New Agent</h3>
+                        <form id="addAgentForm">
+                            <div class="form-group">
+                                <label class="form-label">Agent Name</label>
+                                <input type="text" id="agentName" class="form-input" placeholder="Enter agent name" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Team</label>
+                                <select id="agentTeam" class="form-select" required>
+                                    <option value="">Select Team</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Category</label>
+                                <input type="text" id="agentCategory" class="form-input" placeholder="e.g., Sales, Hardware, Software" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Volume Target</label>
+                                <input type="number" id="agentVolumeTarget" class="form-input" placeholder="Monthly volume target" step="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Units Target</label>
+                                <input type="number" id="agentUnitsTarget" class="form-input" placeholder="Monthly units target" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Photo URL (Optional)</label>
+                                <input type="url" id="agentPhoto" class="form-input" placeholder="https://example.com/photo.jpg">
+                            </div>
+                            <button type="submit" class="btn btn-primary">Add Agent</button>
+                        </form>
+                    </div>
+                    
+                    <div>
+                        <h3 style="margin-bottom: 1rem;">Existing Agents</h3>
+                        <div id="agentsList">
+                            <!-- Agents will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sales Tab -->
+            <div id="sales-tab" class="tab-content hidden">
+                <h2>Quick Sale Entry</h2>
+                <p style="color: #94a3b8; margin-bottom: 2rem;">Record sales for agents with automatic database updates.</p>
+                
+                <div style="max-width: 500px;">
+                    <form id="addSaleForm">
+                        <div class="form-group">
+                            <label class="form-label">Agent</label>
+                            <select id="saleAgent" class="form-select" required>
+                                <option value="">Select Agent</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Sale Amount</label>
+                            <input type="number" id="saleAmount" class="form-input" placeholder="Enter sale amount" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Units Sold</label>
+                            <input type="number" id="saleUnits" class="form-input" placeholder="Number of units" value="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Client Name</label>
+                            <input type="text" id="clientName" class="form-input" placeholder="Enter client name" required>
+                        </div>
+                        <button type="submit" class="btn btn-success">🎉 Record Sale</button>
+                    </form>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <h3>Recent Sales</h3>
+                    <div id="recentSales">
+                        <!-- Recent sales will be displayed here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Management Tab -->
+            <div id="data-tab" class="tab-content hidden">
+                <h2>Data Management</h2>
+                <p style="color: #94a3b8; margin-bottom: 2rem;">Manage news ticker and database operations.</p>
+                
+                <div style="margin-bottom: 2rem;">
+                    <h3>News Ticker Management</h3>
+                    <div class="form-group">
+                        <label class="form-label">News Messages (one per line)</label>
+                        <textarea id="newsMessages" class="form-input" rows="4" placeholder="Enter news messages, one per line"></textarea>
+                    </div>
+                    <button onclick="updateNewsTicker()" class="btn btn-primary">Update News Ticker</button>
+                </div>
+
+                <div>
+                    <h3>Database Operations</h3>
+                    <p style="color: #94a3b8; margin-bottom: 1rem;">Manage database setup and operations.</p>
+                    <button onclick="window.open('setup-mysql.php', '_blank')" class="btn btn-secondary">🔧 Database Setup</button>
+                    <button onclick="refreshData()" class="btn btn-primary">🔄 Refresh Data</button>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div id="settings-tab" class="tab-content hidden">
+                <h2>System Settings</h2>
+                <p style="color: #94a3b8; margin-bottom: 2rem;">Configure company information and dashboard behavior.</p>
+                
+                <div class="grid-2">
+                    <div>
+                        <h3 style="margin-bottom: 1rem;">Company Settings</h3>
+                        <div class="form-group">
+                            <label class="form-label">Company Name</label>
+                            <input type="text" id="companyName" class="form-input" placeholder="Your Company Name">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Currency Symbol</label>
+                            <input type="text" id="currencySymbol" class="form-input" placeholder="LKR" maxlength="5">
+                        </div>
+                        <button onclick="updateCompanySettings()" class="btn btn-primary">Update Company</button>
+                    </div>
+                    
+                    <div>
+                        <h3 style="margin-bottom: 1rem;">Dashboard Settings</h3>
+                        <div class="form-group">
+                            <label class="form-label">Auto-scroll Interval (seconds)</label>
+                            <input type="number" id="autoScrollInterval" class="form-input" value="6" min="3" max="30">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Working Days per Month</label>
+                            <input type="number" id="workingDays" class="form-input" value="22" min="15" max="31">
+                        </div>
+                        <button onclick="updateDashboardSettings()" class="btn btn-primary">Update Dashboard</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // MySQL Database API Client
+        class MySQLAPI {
+            constructor() {
+                this.apiBase = './api.php';
+                this.isConnected = false;
+                this.checkConnection();
+            }
+
+            async checkConnection() {
+                try {
+                    await this.apiCall('dashboard-data');
+                    this.setConnectionStatus(true);
+                } catch (error) {
+                    console.error('Database connection failed:', error);
+                    this.setConnectionStatus(false);
+                }
+            }
+
+            setConnectionStatus(connected) {
+                this.isConnected = connected;
+                const statusEl = document.getElementById('connectionStatus');
+                if (connected) {
+                    statusEl.className = 'connection-status status-connected';
+                    statusEl.innerHTML = '🟢 MySQL Database Connected';
+                } else {
+                    statusEl.className = 'connection-status status-disconnected';
+                    statusEl.innerHTML = '🔴 Database Connection Failed - Please run setup-mysql.php';
+                }
+            }
+
+            async apiCall(endpoint, method = 'GET', data = null) {
+                const url = `${this.apiBase}?endpoint=${endpoint}`;
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                };
+
+                if (data) {
+                    options.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error(`API call failed: ${response.status}`);
+                }
+
+                return await response.json();
+            }
+        }
+
+        // Initialize API
+        const api = new MySQLAPI();
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.remove('hidden');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+            
+            // Refresh data for the selected tab
+            switch(tabName) {
+                case 'teams':
+                    loadTeams();
+                    break;
+                case 'agents':
+                    loadAgents();
+                    loadTeamOptions();
+                    break;
+                case 'sales':
+                    loadAgentOptions();
+                    loadRecentSales();
+                    break;
+                case 'data':
+                    loadNewsTicker();
+                    break;
+                case 'settings':
+                    loadSettings();
+                    break;
+            }
+        }
+
+        // Statistics update
+        async function updateStats() {
+            try {
+                const data = await api.apiCall('dashboard-data');
+                const totalTeams = data.teams.length;
+                const totalAgents = data.agents.filter(a => a.isActive).length;
+                const totalSales = data.sales.length;
+                const totalVolume = data.agents.reduce((sum, agent) => sum + parseFloat(agent.volumeAchieved || 0), 0);
+                
+                const statsGrid = document.getElementById('statsGrid');
+                statsGrid.innerHTML = `
+                    <div class="stats-card">
+                        <div class="stats-number">${totalTeams}</div>
+                        <div class="stats-label">Active Teams</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number">${totalAgents}</div>
+                        <div class="stats-label">Active Agents</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number">${totalSales}</div>
+                        <div class="stats-label">Total Sales</div>
+                    </div>
+                    <div class="stats-card">
+                        <div class="stats-number">${data.company.currency.symbol} ${totalVolume.toLocaleString()}</div>
+                        <div class="stats-label">Total Volume</div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Failed to update stats:', error);
+            }
+        }
+
+        // Teams management
+        async function loadTeams() {
+            try {
+                const teams = await api.apiCall('teams');
+                const teamsList = document.getElementById('teamsList');
+                
+                if (teams.length === 0) {
+                    teamsList.innerHTML = '<p style="color: #94a3b8;">No teams created yet. Add your first team!</p>';
+                    return;
+                }
+                
+                teamsList.innerHTML = teams.map(team => `
+                    <div style="background: rgba(51, 65, 85, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center;">
+                                <span class="team-color-preview" style="background-color: ${team.color}"></span>
+                                <div>
+                                    <div style="font-weight: 600; color: ${team.color};">${team.name}</div>
+                                    <div style="font-size: 0.8rem; color: #94a3b8;">
+                                        Target: ${team.volumeTarget} / ${team.unitsTarget} units
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="deleteTeam(${team.id})" class="btn btn-danger" style="padding: 0.5rem;">🗑️</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load teams:', error);
+            }
+        }
+
+        async function deleteTeam(teamId) {
+            if (confirm('Are you sure you want to delete this team? All agents in this team will be unassigned.')) {
+                try {
+                    await api.apiCall('teams', 'DELETE', { id: teamId });
+                    showAlert('Team deleted successfully!', 'success');
+                    loadTeams();
+                    updateStats();
+                } catch (error) {
+                    showAlert('Failed to delete team.', 'error');
+                }
+            }
+        }
+
+        // Agents management
+        async function loadAgents() {
+            try {
+                const agents = await api.apiCall('agents');
+                const agentsList = document.getElementById('agentsList');
+                
+                if (agents.length === 0) {
+                    agentsList.innerHTML = '<p style="color: #94a3b8;">No agents added yet. Add your first agent!</p>';
+                    return;
+                }
+                
+                agentsList.innerHTML = agents.map(agent => {
+                    const volumeProgress = ((parseFloat(agent.volumeAchieved) / parseFloat(agent.volumeTarget)) * 100).toFixed(1);
+                    const unitsProgress = ((agent.unitsAchieved / agent.unitsTarget) * 100).toFixed(1);
+                    
+                    return `
+                        <div style="background: rgba(51, 65, 85, 0.3); border-radius: 0.5rem; padding: 1rem; margin-bottom: 1rem;">
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center;">
+                                    <img src="${agent.photo}" alt="${agent.name}" class="agent-photo" style="margin-right: 1rem;"
+                                         onerror="this.src='https://via.placeholder.com/48x48/${agent.teamColor?.replace('#', '') || '3B82F6'}/FFFFFF?text=${agent.name.charAt(0)}'">
+                                    <div>
+                                        <div style="font-weight: 600; color: #e2e8f0;">${agent.name}</div>
+                                        <div style="font-size: 0.8rem; color: ${agent.teamColor || '#94a3b8'};">${agent.teamName || 'No Team'}</div>
+                                        <div style="font-size: 0.8rem; color: #94a3b8;">
+                                            Volume: ${volumeProgress}% • Units: ${unitsProgress}% • Sales: ${agent.totalSales || 0}
+                                        </div>
+                                    </div>
+                                </div>
+                                <button onclick="deleteAgent(${agent.id})" class="btn btn-danger" style="padding: 0.5rem;">🗑️</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load agents:', error);
+            }
+        }
+
+        async function deleteAgent(agentId) {
+            if (confirm('Are you sure you want to delete this agent?')) {
+                try {
+                    await api.apiCall('agents', 'DELETE', { id: agentId });
+                    showAlert('Agent deleted successfully!', 'success');
+                    loadAgents();
+                    updateStats();
+                } catch (error) {
+                    showAlert('Failed to delete agent.', 'error');
+                }
+            }
+        }
+
+        // Load team options for agent form
+        async function loadTeamOptions() {
+            try {
+                const teams = await api.apiCall('teams');
+                const agentTeamSelect = document.getElementById('agentTeam');
+                agentTeamSelect.innerHTML = '<option value="">Select Team</option>' + 
+                    teams.map(team => `<option value="${team.id}">${team.name}</option>`).join('');
+            } catch (error) {
+                console.error('Failed to load team options:', error);
+            }
+        }
+
+        // Load agent options for sales form
+        async function loadAgentOptions() {
+            try {
+                const agents = await api.apiCall('agents');
+                const saleAgentSelect = document.getElementById('saleAgent');
+                saleAgentSelect.innerHTML = '<option value="">Select Agent</option>' + 
+                    agents.filter(a => a.isActive).map(agent => {
+                        return `<option value="${agent.id}">${agent.name} (${agent.teamName || 'No Team'})</option>`;
+                    }).join('');
+            } catch (error) {
+                console.error('Failed to load agent options:', error);
+            }
+        }
+
+        // Recent sales
+        async function loadRecentSales() {
+            try {
+                const sales = await api.apiCall('sales');
+                const recentSales = document.getElementById('recentSales');
+                
+                if (sales.length === 0) {
+                    recentSales.innerHTML = '<p style="color: #94a3b8;">No sales recorded yet.</p>';
+                    return;
+                }
+                
+                const recent = sales.slice(0, 10);
+                recentSales.innerHTML = `
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Agent</th>
+                                <th>Amount</th>
+                                <th>Units</th>
+                                <th>Client</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${recent.map(sale => `
+                                <tr>
+                                    <td>${new Date(sale.createdAt).toLocaleDateString()}</td>
+                                    <td>${sale.agentName || 'Unknown'}</td>
+                                    <td>${sale.amount.toLocaleString()}</td>
+                                    <td>${sale.units}</td>
+                                    <td>${sale.clientName}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (error) {
+                console.error('Failed to load recent sales:', error);
+            }
+        }
+
+        // Settings management
+        async function loadSettings() {
+            try {
+                const company = await api.apiCall('company');
+                const settings = await api.apiCall('settings');
+                
+                document.getElementById('companyName').value = company.name;
+                document.getElementById('currencySymbol').value = company.currency.symbol;
+                document.getElementById('autoScrollInterval').value = settings.autoScrollInterval / 1000;
+                document.getElementById('workingDays').value = settings.workingDaysPerMonth;
+            } catch (error) {
+                console.error('Failed to load settings:', error);
+            }
+        }
+
+        async function loadNewsTicker() {
+            try {
+                const newsTicker = await api.apiCall('news-ticker');
+                document.getElementById('newsMessages').value = newsTicker.join('\n');
+            } catch (error) {
+                console.error('Failed to load news ticker:', error);
+            }
+        }
+
+        // Form submissions
+        document.getElementById('addTeamForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const teamData = {
+                name: document.getElementById('teamName').value,
+                color: document.getElementById('teamColor').value,
+                volumeTarget: parseFloat(document.getElementById('teamVolumeTarget').value),
+                unitsTarget: parseInt(document.getElementById('teamUnitsTarget').value)
+            };
+            
+            try {
+                await api.apiCall('teams', 'POST', teamData);
+                this.reset();
+                document.getElementById('teamColor').value = '#3b82f6';
+                showAlert('Team added successfully!', 'success');
+                loadTeams();
+                updateStats();
+            } catch (error) {
+                showAlert('Failed to add team.', 'error');
+            }
+        });
+
+        document.getElementById('addAgentForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const agentData = {
+                name: document.getElementById('agentName').value,
+                teamId: parseInt(document.getElementById('agentTeam').value) || null,
+                category: document.getElementById('agentCategory').value,
+                volumeTarget: parseFloat(document.getElementById('agentVolumeTarget').value),
+                unitsTarget: parseInt(document.getElementById('agentUnitsTarget').value),
+                photo: document.getElementById('agentPhoto').value
+            };
+            
+            try {
+                await api.apiCall('agents', 'POST', agentData);
+                this.reset();
+                showAlert('Agent added successfully!', 'success');
+                loadAgents();
+                updateStats();
+            } catch (error) {
+                showAlert('Failed to add agent.', 'error');
+            }
+        });
+
+        document.getElementById('addSaleForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const saleData = {
+                agentId: parseInt(document.getElementById('saleAgent').value),
+                amount: parseFloat(document.getElementById('saleAmount').value),
+                units: parseInt(document.getElementById('saleUnits').value),
+                clientName: document.getElementById('clientName').value,
+                category: 'General'
+            };
+            
+            try {
+                await api.apiCall('sales', 'POST', saleData);
+                this.reset();
+                document.getElementById('saleUnits').value = '1';
+                showAlert('Sale recorded successfully! 🎉', 'success');
+                loadRecentSales();
+                updateStats();
+                
+                // Trigger dashboard update
+                window.dispatchEvent(new CustomEvent('saleUpdate', { 
+                    detail: { type: 'sale_added', sale: saleData }
+                }));
+            } catch (error) {
+                showAlert('Failed to record sale.', 'error');
+            }
+        });
+
+        // Utility functions
+        async function updateCompanySettings() {
+            const companyName = document.getElementById('companyName').value;
+            const currencySymbol = document.getElementById('currencySymbol').value;
+            
+            if (companyName || currencySymbol) {
+                const updates = {
+                    name: companyName,
+                    currency: { 
+                        symbol: currencySymbol, 
+                        code: currencySymbol, 
+                        name: currencySymbol 
+                    }
+                };
+                
+                try {
+                    await api.apiCall('company', 'PUT', updates);
+                    showAlert('Company settings updated successfully!', 'success');
+                } catch (error) {
+                    showAlert('Failed to update company settings.', 'error');
+                }
+            }
+        }
+
+        async function updateDashboardSettings() {
+            const autoScrollInterval = parseInt(document.getElementById('autoScrollInterval').value) * 1000;
+            const workingDaysPerMonth = parseInt(document.getElementById('workingDays').value);
+            
+            try {
+                await api.apiCall('settings', 'PUT', {
+                    autoScrollInterval,
+                    workingDaysPerMonth
+                });
+                showAlert('Dashboard settings updated!', 'success');
+            } catch (error) {
+                showAlert('Failed to update dashboard settings.', 'error');
+            }
+        }
+
+        async function updateNewsTicker() {
+            const messages = document.getElementById('newsMessages').value
+                .split('\n')
+                .filter(msg => msg.trim())
+                .map(msg => msg.trim());
+            
+            if (messages.length > 0) {
+                try {
+                    await api.apiCall('news-ticker', 'PUT', { messages });
+                    showAlert('News ticker updated!', 'success');
+                } catch (error) {
+                    showAlert('Failed to update news ticker.', 'error');
+                }
+            } else {
+                showAlert('Please enter at least one message.', 'error');
+            }
+        }
+
+        async function refreshData() {
+            try {
+                await api.checkConnection();
+                await updateStats();
+                showAlert('Data refreshed successfully!', 'success');
+            } catch (error) {
+                showAlert('Failed to refresh data.', 'error');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            // Find the active tab content and prepend the alert
+            const activeTab = document.querySelector('.tab-content:not(.hidden)');
+            if (activeTab) {
+                activeTab.insertBefore(alertDiv, activeTab.firstChild);
+                
+                // Remove alert after 5 seconds
+                setTimeout(() => {
+                    if (alertDiv.parentNode) {
+                        alertDiv.parentNode.removeChild(alertDiv);
+                    }
+                }, 5000);
+            }
+        }
+
+        // Initialize the interface
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStats();
+            loadTeams();
+            loadAgents();
+            loadTeamOptions();
+            loadAgentOptions();
+            loadSettings();
+            loadNewsTicker();
+            
+            console.log('MySQL Admin panel initialized successfully');
+        });
+    </script>
+</body>
+</html>
