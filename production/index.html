@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Dashboard - TV Display</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            font-family: 'Manrope', 'Inter', sans-serif;
+        }
+        
+        /* TV Optimized Styles - 50m viewing distance */
+        .main-title {
+            font-size: 8rem;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+        
+        .date-time {
+            font-size: 4rem;
+            font-weight: 700;
+        }
+        
+        .scoreboard-table {
+            font-size: 3.5rem;
+            line-height: 1.2;
+        }
+        
+        .agent-name {
+            font-size: 4rem;
+            font-weight: 800;
+        }
+        
+        .team-name {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        
+        .progress-text {
+            font-size: 2.8rem;
+            font-weight: 700;
+        }
+        
+        .target-text {
+            font-size: 2.2rem;
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            font-size: 1.8rem;
+            font-weight: 800;
+            padding: 0.8rem 1.6rem;
+        }
+        
+        .news-ticker {
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+        
+        .daily-targets-header {
+            font-size: 3rem;
+            font-weight: 800;
+        }
+        
+        .daily-targets-table {
+            font-size: 2.2rem;
+            font-weight: 600;
+        }
+        
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        
+        .ticker-scroll {
+            animation: scroll-left 30s linear infinite;
+        }
+        
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fade-in 0.5s ease-out;
+        }
+        
+        .progress-bar {
+            transition: width 0.8s ease-in-out;
+        }
+        
+        .agent-photo {
+            width: 6rem;
+            height: 6rem;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .admin-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 20px;
+            color: white;
+            font-size: 16px;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .admin-hidden {
+            display: none;
+        }
+        
+        .admin-form input, .admin-form select, .admin-form textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.9);
+            color: black;
+        }
+        
+        .admin-form button {
+            background: #3B82F6;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .admin-form button:hover {
+            background: #2563EB;
+        }
+        
+        .admin-form button.delete {
+            background: #EF4444;
+        }
+        
+        .admin-form button.delete:hover {
+            background: #DC2626;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-hidden">
+    <!-- Admin Panel Toggle -->
+    <div style="position: fixed; top: 10px; left: 10px; z-index: 1001;">
+        <button onclick="toggleAdmin()" style="background: rgba(0,0,0,0.7); color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer;">
+            ⚙️ Admin
+        </button>
+    </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="admin-panel admin-hidden">
+        <h2>Dashboard Admin</h2>
+        
+        <!-- Data Management -->
+        <div style="margin-bottom: 20px;">
+            <h3>Data Management</h3>
+            <button onclick="exportData()">📥 Export Data</button>
+            <button onclick="document.getElementById('importFile').click()">📤 Import Data</button>
+            <input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display: none;">
+        </div>
+        
+        <!-- Quick Add Agent -->
+        <div style="margin-bottom: 20px;">
+            <h3>Quick Add Agent</h3>
+            <div class="admin-form">
+                <input type="text" id="agentName" placeholder="Agent Name">
+                <select id="agentTeam">
+                    <option value="">Select Team</option>
+                </select>
+                <input type="text" id="agentCategory" placeholder="Category">
+                <input type="number" id="agentVolumeTarget" placeholder="Volume Target">
+                <input type="number" id="agentUnitsTarget" placeholder="Units Target">
+                <button onclick="addAgent()">Add Agent</button>
+            </div>
+        </div>
+        
+        <!-- Quick Sale Entry -->
+        <div style="margin-bottom: 20px;">
+            <h3>Quick Sale Entry</h3>
+            <div class="admin-form">
+                <select id="saleAgent">
+                    <option value="">Select Agent</option>
+                </select>
+                <input type="number" id="saleAmount" placeholder="Sale Amount">
+                <input type="number" id="saleUnits" placeholder="Units" value="1">
+                <input type="text" id="clientName" placeholder="Client Name">
+                <button onclick="addSale()">Record Sale</button>
+            </div>
+        </div>
+        
+        <!-- Settings -->
+        <div>
+            <h3>Settings</h3>
+            <div class="admin-form">
+                <input type="text" id="companyName" placeholder="Company Name">
+                <input type="text" id="currencySymbol" placeholder="Currency Symbol">
+                <button onclick="updateSettings()">Update Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Local Storage Management
+        class LocalStorageDB {
+            constructor() {
+                this.initializeData();
+            }
+
+            initializeData() {
+                if (!localStorage.getItem('salesDashboard')) {
+                    const defaultData = {
+                        company: {
+                            name: "SALES LEADERBOARD",
+                            currency: { symbol: "LKR", code: "LKR", name: "Sri Lankan Rupee" }
+                        },
+                        teams: [
+                            { id: 1, name: "Team RegiPros", color: "#3B82F6", volumeTarget: "700000.00", unitsTarget: 15 },
+                            { id: 2, name: "Team Titans", color: "#10B981", volumeTarget: "800000.00", unitsTarget: 15 },
+                            { id: 3, name: "Team Phoenix", color: "#F59E0B", volumeTarget: "200000.00", unitsTarget: 5 },
+                            { id: 4, name: "AL-FATIHA", color: "#EF4444", volumeTarget: "100000.00", unitsTarget: 4 },
+                            { id: 5, name: "ClickMasters", color: "#8B5CF6", volumeTarget: "300000.00", unitsTarget: 8 }
+                        ],
+                        agents: [
+                            {
+                                id: 1, name: "Bilal", photo: "https://via.placeholder.com/96x96/3B82F6/FFFFFF?text=B",
+                                teamId: 1, category: "Software", volumeTarget: "500000.00", unitsTarget: 10,
+                                isActive: true, volumeAchieved: "320000.00", unitsAchieved: 6, totalSales: 15
+                            },
+                            {
+                                id: 2, name: "Rizna", photo: "https://via.placeholder.com/96x96/10B981/FFFFFF?text=R",
+                                teamId: 1, category: "Software", volumeTarget: "200000.00", unitsTarget: 5,
+                                isActive: true, volumeAchieved: "180000.00", unitsAchieved: 4, totalSales: 12
+                            },
+                            {
+                                id: 3, name: "Yazeed", photo: "https://via.placeholder.com/96x96/F59E0B/FFFFFF?text=Y",
+                                teamId: 2, category: "Software", volumeTarget: "300000.00", unitsTarget: 5,
+                                isActive: true, volumeAchieved: "250000.00", unitsAchieved: 4, totalSales: 10
+                            },
+                            {
+                                id: 4, name: "Anuk", photo: "https://via.placeholder.com/96x96/8B5CF6/FFFFFF?text=A",
+                                teamId: 2, category: "Hardware", volumeTarget: "500000.00", unitsTarget: 10,
+                                isActive: true, volumeAchieved: "450000.00", unitsAchieved: 8, totalSales: 18
+                            },
+                            {
+                                id: 5, name: "Niflan", photo: "https://via.placeholder.com/96x96/EF4444/FFFFFF?text=N",
+                                teamId: 3, category: "Mixed", volumeTarget: "200000.00", unitsTarget: 5,
+                                isActive: true, volumeAchieved: "150000.00", unitsAchieved: 3, totalSales: 8
+                            },
+                            {
+                                id: 6, name: "Thanish", photo: "https://via.placeholder.com/96x96/06B6D4/FFFFFF?text=T",
+                                teamId: 4, category: "Mixed", volumeTarget: "100000.00", unitsTarget: 4,
+                                isActive: true, volumeAchieved: "95000.00", unitsAchieved: 3, totalSales: 7
+                            }
+                        ],
+                        sales: [],
+                        settings: {
+                            autoScrollInterval: 6000,
+                            agentsPerPage: 2,
+                            workingDaysPerMonth: 22
+                        },
+                        newsTicker: [
+                            "🎉 Welcome to Sales Dashboard - Optimized for 50m TV Viewing Distance",
+                            "🔥 Great performance by all teams this month!",
+                            "📈 Keep pushing towards your targets - You've got this!",
+                            "⭐ Excellence is not a destination, it's a continuous journey"
+                        ]
+                    };
+                    this.saveData(defaultData);
+                }
+            }
+
+            getData() {
+                return JSON.parse(localStorage.getItem('salesDashboard'));
+            }
+
+            saveData(data) {
+                localStorage.setItem('salesDashboard', JSON.stringify(data));
+                // Broadcast update event
+                window.dispatchEvent(new CustomEvent('dataUpdate', { detail: data }));
+            }
+
+            updateAgent(agentId, updates) {
+                const data = this.getData();
+                const agentIndex = data.agents.findIndex(a => a.id === agentId);
+                if (agentIndex !== -1) {
+                    data.agents[agentIndex] = { ...data.agents[agentIndex], ...updates };
+                    this.saveData(data);
+                }
+            }
+
+            addSale(sale) {
+                const data = this.getData();
+                sale.id = Date.now();
+                sale.createdAt = new Date().toISOString();
+                data.sales.push(sale);
+                
+                // Update agent stats
+                const agent = data.agents.find(a => a.id === sale.agentId);
+                if (agent) {
+                    agent.volumeAchieved = (parseFloat(agent.volumeAchieved) + parseFloat(sale.amount)).toString();
+                    agent.unitsAchieved += sale.units;
+                    agent.totalSales = (agent.totalSales || 0) + 1;
+                }
+                
+                this.saveData(data);
+                this.playSaleSound();
+            }
+
+            addAgent(agent) {
+                const data = this.getData();
+                agent.id = Date.now();
+                agent.isActive = true;
+                agent.volumeAchieved = "0.00";
+                agent.unitsAchieved = 0;
+                agent.totalSales = 0;
+                agent.photo = agent.photo || `https://via.placeholder.com/96x96/3B82F6/FFFFFF?text=${agent.name.charAt(0)}`;
+                data.agents.push(agent);
+                this.saveData(data);
+            }
+
+            playSaleSound() {
+                // Play sale notification sound
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmAaAjaD0fPQfS4FKWrB7+OOVQEG');
+                audio.volume = 0.3;
+                audio.play().catch(e => console.log('Audio play failed:', e));
+            }
+        }
+
+        // Initialize database
+        const db = new LocalStorageDB();
+
+        // Utility functions
+        function formatCurrency(amount) {
+            const data = db.getData();
+            const symbol = data.company.currency.symbol || "LKR";
+            return `${symbol} ${parseFloat(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        }
+
+        function calculateProgress(achieved, target) {
+            return Math.min((parseFloat(achieved) / parseFloat(target)) * 100, 100);
+        }
+
+        function getProgressColor(percentage) {
+            if (percentage >= 90) return 'bg-green-500';
+            if (percentage >= 70) return 'bg-blue-500';
+            if (percentage >= 50) return 'bg-yellow-500';
+            return 'bg-red-500';
+        }
+
+        function getStatusBadge(percentage) {
+            if (percentage >= 75) {
+                return <span className="status-badge bg-green-500 text-white px-4 py-2 rounded-full">ON TRACK</span>;
+            }
+            return <span className="status-badge bg-red-500 text-white px-4 py-2 rounded-full">BEHIND</span>;
+        }
+
+        // Admin functions
+        function toggleAdmin() {
+            const panel = document.getElementById('adminPanel');
+            panel.classList.toggle('admin-hidden');
+            updateAdminSelects();
+        }
+
+        function updateAdminSelects() {
+            const data = db.getData();
+            
+            // Update team select
+            const teamSelect = document.getElementById('agentTeam');
+            teamSelect.innerHTML = '<option value="">Select Team</option>';
+            data.teams.forEach(team => {
+                teamSelect.innerHTML += `<option value="${team.id}">${team.name}</option>`;
+            });
+            
+            // Update agent select
+            const agentSelect = document.getElementById('saleAgent');
+            agentSelect.innerHTML = '<option value="">Select Agent</option>';
+            data.agents.filter(a => a.isActive).forEach(agent => {
+                agentSelect.innerHTML += `<option value="${agent.id}">${agent.name}</option>`;
+            });
+            
+            // Update settings
+            document.getElementById('companyName').value = data.company.name;
+            document.getElementById('currencySymbol').value = data.company.currency.symbol;
+        }
+
+        function addAgent() {
+            const name = document.getElementById('agentName').value;
+            const teamId = parseInt(document.getElementById('agentTeam').value);
+            const category = document.getElementById('agentCategory').value;
+            const volumeTarget = document.getElementById('agentVolumeTarget').value;
+            const unitsTarget = parseInt(document.getElementById('agentUnitsTarget').value);
+            
+            if (name && teamId && category && volumeTarget && unitsTarget) {
+                db.addAgent({
+                    name, teamId, category,
+                    volumeTarget: volumeTarget.toString(),
+                    unitsTarget
+                });
+                
+                // Clear form
+                document.getElementById('agentName').value = '';
+                document.getElementById('agentTeam').value = '';
+                document.getElementById('agentCategory').value = '';
+                document.getElementById('agentVolumeTarget').value = '';
+                document.getElementById('agentUnitsTarget').value = '';
+                
+                alert('Agent added successfully!');
+                updateAdminSelects();
+            } else {
+                alert('Please fill all fields');
+            }
+        }
+
+        function addSale() {
+            const agentId = parseInt(document.getElementById('saleAgent').value);
+            const amount = parseFloat(document.getElementById('saleAmount').value);
+            const units = parseInt(document.getElementById('saleUnits').value) || 1;
+            const clientName = document.getElementById('clientName').value;
+            
+            if (agentId && amount && clientName) {
+                db.addSale({
+                    agentId, amount, units, clientName,
+                    category: 'General'
+                });
+                
+                // Clear form
+                document.getElementById('saleAgent').value = '';
+                document.getElementById('saleAmount').value = '';
+                document.getElementById('saleUnits').value = '1';
+                document.getElementById('clientName').value = '';
+                
+                alert('Sale recorded successfully!');
+            } else {
+                alert('Please fill all required fields');
+            }
+        }
+
+        function updateSettings() {
+            const data = db.getData();
+            const companyName = document.getElementById('companyName').value;
+            const currencySymbol = document.getElementById('currencySymbol').value;
+            
+            if (companyName) data.company.name = companyName;
+            if (currencySymbol) data.company.currency.symbol = currencySymbol;
+            
+            db.saveData(data);
+            alert('Settings updated successfully!');
+        }
+
+        function exportData() {
+            const data = db.getData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'dashboard-data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        db.saveData(data);
+                        alert('Data imported successfully!');
+                        updateAdminSelects();
+                    } catch (error) {
+                        alert('Invalid JSON file');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // React Components
+        function AgentRow({ agent, team, index }) {
+            const volumeProgress = calculateProgress(agent.volumeAchieved, agent.volumeTarget);
+            const unitsProgress = calculateProgress(agent.unitsAchieved, agent.unitsTarget);
+
+            return (
+                <tr className="border-b border-slate-700/50 hover:bg-slate-800/30 transition-colors">
+                    <td className="p-6 text-center">
+                        <div className="flex items-center justify-center gap-6">
+                            <img 
+                                src={agent.photo} 
+                                alt={agent.name}
+                                className="agent-photo"
+                                onError={(e) => {
+                                    e.target.src = `https://via.placeholder.com/96x96/${team.color.replace('#', '')}/FFFFFF?text=${agent.name.charAt(0)}`;
+                                }}
+                            />
+                            <div className="text-left">
+                                <div className="agent-name text-white">{agent.name}</div>
+                                <div className="team-name" style={{color: team.color}}>{team.name}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td className="p-6 text-center">
+                        <div className="progress-text text-white">
+                            {formatCurrency(agent.volumeAchieved)} / {formatCurrency(agent.volumeTarget)}
+                        </div>
+                        <div className="w-full bg-slate-700 rounded-full h-4 mt-3">
+                            <div 
+                                className={`progress-bar h-4 rounded-full ${getProgressColor(volumeProgress)}`}
+                                style={{width: `${volumeProgress}%`}}
+                            ></div>
+                        </div>
+                        <div className="target-text text-slate-300 mt-2">{volumeProgress.toFixed(1)}%</div>
+                    </td>
+                    <td className="p-6 text-center">
+                        <div className="progress-text text-white">
+                            {agent.unitsAchieved} / {agent.unitsTarget}
+                        </div>
+                        <div className="w-full bg-slate-700 rounded-full h-4 mt-3">
+                            <div 
+                                className={`progress-bar h-4 rounded-full ${getProgressColor(unitsProgress)}`}
+                                style={{width: `${unitsProgress}%`}}
+                            ></div>
+                        </div>
+                        <div className="target-text text-slate-300 mt-2">{unitsProgress.toFixed(1)}%</div>
+                    </td>
+                    <td className="p-6 text-center">
+                        <div className="progress-text text-white">{agent.totalSales}</div>
+                    </td>
+                    <td className="p-6 text-center">
+                        {getStatusBadge(Math.min(volumeProgress, unitsProgress))}
+                    </td>
+                </tr>
+            );
+        }
+
+        function TeamRanking({ teams, agents }) {
+            const teamStats = teams.map(team => {
+                const teamAgents = agents.filter(agent => agent.teamId === team.id);
+                const totalVolumeAchieved = teamAgents.reduce((sum, agent) => sum + parseFloat(agent.volumeAchieved), 0);
+                const totalUnitsAchieved = teamAgents.reduce((sum, agent) => sum + agent.unitsAchieved, 0);
+                const totalVolumeTarget = parseFloat(team.volumeTarget);
+                const totalUnitsTarget = team.unitsTarget;
+                
+                const volumeProgress = (totalVolumeAchieved / totalVolumeTarget) * 100;
+                const unitsProgress = (totalUnitsAchieved / totalUnitsTarget) * 100;
+                const avgProgress = (volumeProgress + unitsProgress) / 2;
+                
+                return {
+                    ...team,
+                    volumeAchieved: totalVolumeAchieved,
+                    unitsAchieved: totalUnitsAchieved,
+                    progress: avgProgress
+                };
+            }).sort((a, b) => b.progress - a.progress);
+
+            return (
+                <div className="bg-slate-800/50 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-8">
+                    <h3 className="daily-targets-header text-white mb-8 text-center">Team Rankings</h3>
+                    <div className="space-y-6">
+                        {teamStats.map((team, index) => (
+                            <div key={team.id} className="flex items-center justify-between p-6 bg-slate-700/30 rounded-2xl">
+                                <div className="flex items-center gap-6">
+                                    <div className="daily-targets-table text-slate-300">#{index + 1}</div>
+                                    <div>
+                                        <div className="team-name" style={{color: team.color}}>{team.name}</div>
+                                        <div className="target-text text-slate-400">{team.progress.toFixed(1)}% Complete</div>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <div className="progress-text text-white">{formatCurrency(team.volumeAchieved.toString())}</div>
+                                    <div className="target-text text-slate-400">{team.unitsAchieved} units</div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        function DailyTargets({ teams, settings }) {
+            const workingDaysInMonth = settings.workingDaysPerMonth || 22;
+
+            return (
+                <div className="bg-slate-800/50 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-8 mb-8">
+                    <h3 className="daily-targets-header text-white mb-8 text-center">Daily Targets</h3>
+                    <div className="overflow-hidden">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-slate-600">
+                                    <th className="daily-targets-table text-slate-300 p-4 text-left">Team</th>
+                                    <th className="daily-targets-table text-slate-300 p-4 text-center">Daily Volume</th>
+                                    <th className="daily-targets-table text-slate-300 p-4 text-center">Daily Units</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {teams.map(team => {
+                                    const dailyVolume = parseFloat(team.volumeTarget) / workingDaysInMonth;
+                                    const dailyUnits = Math.ceil(team.unitsTarget / workingDaysInMonth);
+                                    
+                                    return (
+                                        <tr key={team.id} className="border-b border-slate-700/50">
+                                            <td className="p-4">
+                                                <div className="team-name" style={{color: team.color}}>{team.name}</div>
+                                            </td>
+                                            <td className="daily-targets-table text-white p-4 text-center">
+                                                {formatCurrency(dailyVolume.toString())}
+                                            </td>
+                                            <td className="daily-targets-table text-white p-4 text-center">
+                                                {dailyUnits}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
+
+        function NewsTicker({ messages }) {
+            const [currentMessage, setCurrentMessage] = useState(0);
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    setCurrentMessage(prev => (prev + 1) % messages.length);
+                }, 5000);
+                return () => clearInterval(interval);
+            }, [messages.length]);
+
+            return (
+                <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 overflow-hidden z-50">
+                    <div className="news-ticker ticker-scroll whitespace-nowrap">
+                        {messages[currentMessage]}
+                    </div>
+                </div>
+            );
+        }
+
+        function Dashboard() {
+            const [data, setData] = useState(db.getData());
+            const [currentTime, setCurrentTime] = useState(new Date());
+            const [scrollOffset, setScrollOffset] = useState(0);
+
+            useEffect(() => {
+                const timeInterval = setInterval(() => {
+                    setCurrentTime(new Date());
+                }, 1000);
+
+                // Auto-scroll agents
+                const scrollInterval = setInterval(() => {
+                    if (data.agents.filter(a => a.isActive).length > data.settings.agentsPerPage) {
+                        setScrollOffset(prev => (prev + 1) % data.agents.filter(a => a.isActive).length);
+                    }
+                }, data.settings.autoScrollInterval);
+
+                // Listen for data updates
+                const handleDataUpdate = (event) => {
+                    setData(event.detail);
+                };
+                window.addEventListener('dataUpdate', handleDataUpdate);
+
+                return () => {
+                    clearInterval(timeInterval);
+                    clearInterval(scrollInterval);
+                    window.removeEventListener('dataUpdate', handleDataUpdate);
+                };
+            }, [data.settings.autoScrollInterval, data.agents.length, data.settings.agentsPerPage]);
+
+            const activeAgents = data.agents.filter(a => a.isActive);
+            const agentsPerPage = data.settings.agentsPerPage;
+            const displayedAgents = activeAgents.slice(scrollOffset, scrollOffset + agentsPerPage);
+            if (displayedAgents.length < agentsPerPage && activeAgents.length > 1) {
+                displayedAgents.push(...activeAgents.slice(0, agentsPerPage - displayedAgents.length));
+            }
+
+            return (
+                <div className="min-h-screen p-8 pb-24">
+                    {/* Header */}
+                    <div className="text-center mb-12">
+                        <h1 className="main-title text-white mb-4">{data.company.name.toUpperCase()}</h1>
+                        <div className="date-time text-slate-300">
+                            {currentTime.toLocaleDateString()} • {currentTime.toLocaleTimeString()}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-12 gap-8 h-[calc(100vh-300px)]">
+                        {/* Main Scoreboard */}
+                        <div className="col-span-8">
+                            <div className="bg-slate-800/50 backdrop-blur-sm rounded-3xl border border-slate-700/50 p-8 h-full">
+                                <div className="overflow-hidden h-full">
+                                    <table className="w-full scoreboard-table">
+                                        <thead>
+                                            <tr className="border-b-2 border-slate-600">
+                                                <th className="text-slate-300 p-6 text-center">Agent</th>
+                                                <th className="text-slate-300 p-6 text-center">Volume Progress</th>
+                                                <th className="text-slate-300 p-6 text-center">Units Progress</th>
+                                                <th className="text-slate-300 p-6 text-center">Sales</th>
+                                                <th className="text-slate-300 p-6 text-center">Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {displayedAgents.map((agent, index) => {
+                                                const team = data.teams.find(t => t.id === agent.teamId);
+                                                return (
+                                                    <AgentRow 
+                                                        key={`${agent.id}-${index}`} 
+                                                        agent={agent} 
+                                                        team={team} 
+                                                        index={index}
+                                                    />
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                {/* Auto-scroll indicator */}
+                                {activeAgents.length > agentsPerPage && (
+                                    <div className="flex justify-center mt-6">
+                                        <div className="flex space-x-2">
+                                            {Array.from({ length: activeAgents.length }).map((_, index) => (
+                                                <div
+                                                    key={index}
+                                                    className={`w-4 h-4 rounded-full transition-all duration-300 ${
+                                                        index === scrollOffset ? 'bg-blue-500' : 'bg-slate-600'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Right Panel */}
+                        <div className="col-span-4 space-y-8">
+                            <DailyTargets teams={data.teams} settings={data.settings} />
+                            <TeamRanking teams={data.teams} agents={activeAgents} />
+                        </div>
+                    </div>
+
+                    {/* News Ticker */}
+                    <NewsTicker messages={data.newsTicker} />
+                </div>
+            );
+        }
+
+        ReactDOM.render(<Dashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>
