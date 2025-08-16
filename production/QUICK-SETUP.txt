@@ -1,0 +1,71 @@
+========================================
+SALES DASHBOARD - QUICK SETUP CHECKLIST
+========================================
+
+🎯 GOAL: Deploy real-time sales dashboard on your PHP hosting server
+
+📋 PREPARATION CHECKLIST:
+□ PHP hosting server with cPanel access
+□ MySQL database creation permissions
+□ FTP/File Manager access
+□ Domain/subdomain ready for deployment
+
+⚡ RAPID DEPLOYMENT (5 STEPS):
+
+1. UPLOAD FILES
+   □ Download entire 'production' folder
+   □ Upload ALL files to your domain's public_html directory
+   □ Keep folder structure intact
+
+2. CREATE DATABASE
+   □ cPanel → MySQL Databases
+   □ Create new database (name: yourusername_sales)
+   □ Create user with ALL PRIVILEGES
+   □ Note: database name, username, password
+
+3. CONFIGURE DATABASE
+   □ Edit api.php file (lines 8-12)
+   □ Replace: $dbname, $username, $password with your actual credentials
+   □ Re-upload api.php
+
+4. INITIALIZE DATABASE
+   □ Visit: https://yourdomain.com/setup-mysql.php
+   □ Should show: "Database setup completed successfully!"
+
+5. TEST & GO LIVE
+   □ Dashboard: https://yourdomain.com/dashboard-mysql.html
+   □ Admin: https://yourdomain.com/admin-mysql.html
+   □ Add your real teams and agents
+   □ Delete sample data
+   □ Connect to TV display
+
+🚨 TROUBLESHOOTING:
+- Database error → Check credentials in api.php
+- 500 error → Check file permissions (644/755)
+- No data → Run setup-mysql.php again
+
+📱 ADMIN ACCESS:
+- Go to /admin-mysql.html
+- Add teams, agents, set targets
+- Record sales in real-time
+- Configure currency and settings
+
+🖥️ TV DISPLAY:
+- Open /dashboard-mysql.html in fullscreen (F11)
+- Connect to TV/large monitor
+- Ensure stable internet connection
+
+✅ SUCCESS INDICATORS:
+□ Dashboard shows your teams and agents
+□ Real-time sales updates appear immediately
+□ Admin panel allows data entry
+□ TV display readable from 50 meters
+
+📞 SUPPORT:
+- Check DEPLOYMENT-GUIDE.md for detailed instructions
+- Test individual URLs if issues occur
+- Contact hosting provider for server problems
+
+========================================
+READY? Start with step 1: Upload files!
+========================================
