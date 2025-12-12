@@ -39,6 +39,7 @@ import AdminTargetCycles from "@/components/admin-target-cycles";
 import UICustomization from "@/components/ui-customization";
 import AdminDisplaySettings from "@/components/admin-display-settings";
 import AdminCategories from "@/components/admin-categories";
+import AdminDomainConfig from "@/components/admin-domain-config"; // Assuming this component will be created
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWebSocket } from "@/hooks/use-websocket";
 
@@ -231,9 +232,7 @@ export default function AdminPage() {
             <TabsTrigger value="media">Media</TabsTrigger>
             <TabsTrigger value="files">Files</TabsTrigger>
             <TabsTrigger value="sounds">Sounds</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="cycles">Target Cycles</TabsTrigger>
-            <TabsTrigger value="customization">UI</TabsTrigger>
+            <TabsTrigger value="domain">Domain & SSL</TabsTrigger>
           </TabsList>
 
           <TabsContent value="teams" className="space-y-6">
@@ -272,8 +271,8 @@ export default function AdminPage() {
             <AdminSoundEffects />
           </TabsContent>
 
-          <TabsContent value="reports" className="space-y-6">
-            <AdminReports />
+          <TabsContent value="domain">
+            <AdminDomainConfig />
           </TabsContent>
 
           <TabsContent value="cycles" className="space-y-6">

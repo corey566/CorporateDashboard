@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +12,7 @@ export default function SetupPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-  
+
   const [formData, setFormData] = useState({
     dbHost: 'localhost',
     dbPort: '5432',
@@ -82,7 +81,7 @@ export default function SetupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateStep2()) {
       return;
     }
@@ -103,7 +102,7 @@ export default function SetupPage() {
           title: 'Success',
           description: 'Setup completed successfully. Redirecting...',
         });
-        
+
         setTimeout(() => {
           window.location.href = '/auth';
         }, 2000);
@@ -253,9 +252,12 @@ export default function SetupPage() {
                     name="appPort"
                     value={formData.appPort}
                     onChange={handleChange}
-                    placeholder="5000"
-                    required
+                    placeholder="Auto-detect free port"
+                    disabled
                   />
+                  <p className="text-sm text-muted-foreground">
+                    Port will be automatically detected from available ports
+                  </p>
                 </div>
 
                 <div className="space-y-2">
@@ -268,7 +270,7 @@ export default function SetupPage() {
                     placeholder="yourdomain.com"
                   />
                   <p className="text-sm text-muted-foreground">
-                    Leave empty to use IP address
+                    Leave empty to use IP address or auto-detected port
                   </p>
                 </div>
 

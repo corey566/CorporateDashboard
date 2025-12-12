@@ -1,8 +1,11 @@
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { storage } from "./storage";
 import dotenv from 'dotenv';
+import net from 'net';
+
 dotenv.config();
 
 const app = express();
@@ -39,6 +42,49 @@ app.use((req, res, next) => {
   next();
 });
 
+// Function to check if a port is available
+function isPortAvailable(port: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    
+    server.once('error', (err: any) => {
+      if (err.code === 'EADDRINUSE') {
+        resolve(false);
+      } else {
+        resolve(false);
+      }
+    });
+
+    server.once('listening', () => {
+      server.close();
+      resolve(true);
+    });
+
+    server.listen(port, '0.0.0.0');
+  });
+}
+
+// Function to find an available port
+async function findAvailablePort(preferredPort: number = 5000): Promise<number> {
+  const portsToTry = [preferredPort, 3000, 8080, 8000, 4000, 3001, 5001, 5173, 8081];
+  
+  for (const port of portsToTry) {
+    if (await isPortAvailable(port)) {
+      return port;
+    }
+  }
+
+  // If all predefined ports are taken, try random ports
+  for (let i = 0; i < 10; i++) {
+    const randomPort = Math.floor(Math.random() * (9000 - 6000 + 1)) + 6000;
+    if (await isPortAvailable(randomPort)) {
+      return randomPort;
+    }
+  }
+
+  throw new Error('No available ports found');
+}
+
 (async () => {
   // Initialize target cycles on server startup
   await storage.initializeTargetCycles();
@@ -67,15 +113,23 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
+  // Find an available port dynamically
+  const preferredPort = parseInt(process.env.PORT || '5000');
+  const port = await findAvailablePort(preferredPort);
+  
+  // Save the actual port to environment for domain configuration
+  process.env.ACTUAL_PORT = port.toString();
+
   server.listen({
     port,
-    host: "127.0.0.1",
-    // reusePort: true,
+    host: "0.0.0.0",
   }, () => {
-    log(`serving on port ${port}`);
+    log(`Server running on port ${port}`);
+    log(`Local: http://localhost:${port}`);
+    log(`Network: http://0.0.0.0:${port}`);
+    
+    if (process.env.APP_DOMAIN) {
+      log(`Domain: https://${process.env.APP_DOMAIN}`);
+    }
   });
 })();

@@ -12,6 +12,7 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import { isSetupComplete, runSetup } from "./setup";
+import { domainConfigService } from "./domain-config";
 
 const scryptAsync = promisify(scrypt);
 
@@ -141,6 +142,53 @@ export function registerRoutes(app: Express): Server {
       }
     } catch (error: any) {
       res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Domain configuration endpoints
+  app.post('/api/domain/configure', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const { domain, enableSSL = true } = req.body;
+      
+      if (!domain) {
+        return res.status(400).json({ error: 'Domain is required' });
+      }
+
+      const port = parseInt(process.env.ACTUAL_PORT || process.env.PORT || '5000');
+      
+      const result = await domainConfigService.configureDomain({
+        domain,
+        port,
+        enableSSL
+      });
+
+      res.json(result);
+    } catch (error: any) {
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  app.get('/api/domain/status', async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
+
+    try {
+      const domain = process.env.APP_DOMAIN;
+      
+      if (!domain) {
+        return res.json({ configured: false, domain: null });
+      }
+
+      const status = await domainConfigService.checkDomainStatus(domain);
+      
+      res.json({
+        ...status,
+        domain,
+        port: process.env.ACTUAL_PORT || process.env.PORT
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 
