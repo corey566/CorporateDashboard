@@ -1,8 +1,9 @@
-
 import { db, pool } from './db';
 import { users } from '@shared/schema';
 import bcrypt from 'bcryptjs';
 import { sql } from 'drizzle-orm';
+import crypto from 'crypto';
+import fs from 'fs';
 
 interface SetupConfig {
   adminUsername: string;
@@ -187,7 +188,6 @@ PORT=${config.appPort}
 ${config.appDomain ? `APP_DOMAIN=${config.appDomain}` : ''}
 `.trim();
 
-    const fs = await import('fs');
     fs.writeFileSync('.env', envContent);
     
     return { success: true };
@@ -198,7 +198,7 @@ ${config.appDomain ? `APP_DOMAIN=${config.appDomain}` : ''}
 }
 
 function generateRandomSecret(): string {
-  return require('crypto').randomBytes(32).toString('hex');
+  return crypto.randomBytes(32).toString('hex');
 }
 
 export async function runSetup(config: SetupConfig) {
