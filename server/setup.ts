@@ -18,23 +18,136 @@ interface SetupConfig {
 
 export async function isSetupComplete(): Promise<boolean> {
   try {
-    // Check if setup flag exists in system_settings or if admin user exists
-    const result = await db.select().from(users).limit(1);
-    return result.length > 0;
-  } catch (error) {
-    // If tables don't exist, setup is not complete
+    // Check if users table exists and has admin user
+    const result = await pool.query('SELECT COUNT(*) FROM users');
+    const count = parseInt(result.rows[0].count, 10);
+    return count > 0;
+  } catch (error: any) {
+    // If tables don't exist or connection error, setup is not complete
+    console.log('Setup status check:', error?.message || 'Tables not found');
     return false;
   }
 }
 
 export async function initializeDatabase() {
   try {
-    // Run migrations to create all tables
     console.log('Initializing database schema...');
     
-    // The schema is already defined, we just need to ensure tables exist
-    // This will be handled by drizzle push
+    // Create all required tables
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL
+      );
+      
+      CREATE TABLE IF NOT EXISTS teams (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        color TEXT DEFAULT '#3B82F6',
+        volume_target NUMERIC(12,2) DEFAULT 0,
+        units_target INTEGER DEFAULT 0,
+        target_cycle TEXT DEFAULT 'monthly',
+        reset_day INTEGER DEFAULT 1,
+        reset_month INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS categories (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        color TEXT DEFAULT '#3B82F6',
+        description TEXT,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS agents (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        photo TEXT,
+        team_id INTEGER REFERENCES teams(id),
+        category_id INTEGER REFERENCES categories(id),
+        category TEXT,
+        volume_target NUMERIC(12,2) DEFAULT 0,
+        units_target INTEGER DEFAULT 0,
+        target_cycle TEXT DEFAULT 'monthly',
+        reset_day INTEGER DEFAULT 1,
+        reset_month INTEGER DEFAULT 1,
+        is_active BOOLEAN DEFAULT true,
+        username TEXT,
+        password TEXT,
+        can_self_report BOOLEAN DEFAULT false,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS sales (
+        id SERIAL PRIMARY KEY,
+        agent_id INTEGER NOT NULL REFERENCES agents(id),
+        volume NUMERIC(12,2) NOT NULL,
+        units INTEGER DEFAULT 1,
+        description TEXT,
+        category TEXT,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS cash_offers (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        description TEXT,
+        amount NUMERIC(12,2),
+        expiry_date TIMESTAMP,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS announcements (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        type TEXT DEFAULT 'info',
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS media_slides (
+        id SERIAL PRIMARY KEY,
+        title TEXT,
+        type TEXT DEFAULT 'image',
+        url TEXT,
+        content TEXT,
+        duration INTEGER DEFAULT 10,
+        is_active BOOLEAN DEFAULT true,
+        display_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS news_ticker (
+        id SERIAL PRIMARY KEY,
+        message TEXT NOT NULL,
+        is_active BOOLEAN DEFAULT true,
+        display_order INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS system_settings (
+        id SERIAL PRIMARY KEY,
+        key TEXT NOT NULL UNIQUE,
+        value TEXT,
+        updated_at TIMESTAMP DEFAULT NOW()
+      );
+      
+      CREATE TABLE IF NOT EXISTS sound_effects (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        url TEXT NOT NULL,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+    `);
     
+    console.log('Database schema initialized successfully');
     return { success: true };
   } catch (error: any) {
     console.error('Database initialization error:', error);

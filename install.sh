@@ -1,4 +1,3 @@
-
 #!/bin/bash
 
 # Sales Dashboard Installation Script
@@ -17,9 +16,44 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
+# Function to check if a port is available
+check_port() {
+    local port=$1
+    if command -v netstat &> /dev/null; then
+        netstat -tuln | grep -q ":$port " && return 1 || return 0
+    elif command -v ss &> /dev/null; then
+        ss -tuln | grep -q ":$port " && return 1 || return 0
+    else
+        (echo >/dev/tcp/localhost/$port) 2>/dev/null && return 1 || return 0
+    fi
+}
+
+# Function to find an available port
+find_available_port() {
+    local ports=(5000 3000 8080 8000 4000 5001 5173 8081 9000)
+    for port in "${ports[@]}"; do
+        if check_port $port; then
+            echo $port
+            return 0
+        fi
+    done
+    # Try random port in range 10000-20000
+    for i in {1..20}; do
+        local random_port=$((10000 + RANDOM % 10000))
+        if check_port $random_port; then
+            echo $random_port
+            return 0
+        fi
+    done
+    echo "5000"  # Fallback
+}
+
 # Update system
 echo "Updating system packages..."
 apt-get update -qq
+
+# Install net-tools for port checking
+apt-get install -y net-tools curl > /dev/null 2>&1 || true
 
 # Install Node.js if not installed
 if ! command -v node &> /dev/null; then
@@ -36,44 +70,60 @@ if ! command -v psql &> /dev/null; then
     systemctl enable postgresql
 fi
 
+# Generate secure password
+DB_PASSWORD=$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9' | head -c 16)
+
 # Create database and user
 echo "Setting up PostgreSQL database..."
-sudo -u postgres psql -c "CREATE DATABASE sales_dashboard;" 2>/dev/null || echo "Database already exists"
-sudo -u postgres psql -c "CREATE USER dashboard_user WITH PASSWORD 'changeme123';" 2>/dev/null || echo "User already exists"
+sudo -u postgres psql -c "DROP DATABASE IF EXISTS sales_dashboard;" 2>/dev/null || true
+sudo -u postgres psql -c "DROP USER IF EXISTS dashboard_user;" 2>/dev/null || true
+sudo -u postgres psql -c "CREATE DATABASE sales_dashboard;"
+sudo -u postgres psql -c "CREATE USER dashboard_user WITH PASSWORD '$DB_PASSWORD';"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE sales_dashboard TO dashboard_user;"
 sudo -u postgres psql -c "ALTER USER dashboard_user CREATEDB;"
+sudo -u postgres psql -d sales_dashboard -c "GRANT ALL ON SCHEMA public TO dashboard_user;"
 
 # Configure PostgreSQL to allow local connections
 echo "Configuring PostgreSQL access..."
 PG_HBA=$(sudo -u postgres psql -t -P format=unaligned -c 'SHOW hba_file')
-if ! grep -q "sales_dashboard.*dashboard_user.*md5" "$PG_HBA"; then
-    echo "local   sales_dashboard   dashboard_user                    md5" | sudo tee -a "$PG_HBA"
-    systemctl restart postgresql
-fi
+# Remove old entries and add new one
+sudo sed -i '/dashboard_user/d' "$PG_HBA"
+echo "local   sales_dashboard   dashboard_user                    md5" | sudo tee -a "$PG_HBA" > /dev/null
+echo "host    sales_dashboard   dashboard_user    127.0.0.1/32    md5" | sudo tee -a "$PG_HBA" > /dev/null
+systemctl restart postgresql
 
-# Get current directory (should be /opt/sales-dashboard)
+# Get current directory
 APP_DIR=$(pwd)
 echo "Application directory: $APP_DIR"
+
+# Find available port
+echo "Checking port availability..."
+APP_PORT=$(find_available_port)
+echo "Using port: $APP_PORT"
 
 # Install dependencies
 echo "Installing Node.js dependencies..."
 npm install
 
-# Create .env file if it doesn't exist
-if [ ! -f .env ]; then
-    echo "Creating .env file..."
-    cat > .env << EOF
-NODE_ENV=production
-DATABASE_URL=postgresql://dashboard_user:changeme123@localhost:5432/sales_dashboard
+# Create .env file with fresh configuration
+echo "Creating configuration..."
 SESSION_SECRET=$(openssl rand -base64 32)
+cat > .env << EOF
+NODE_ENV=production
+PORT=$APP_PORT
+DATABASE_URL=postgresql://dashboard_user:$DB_PASSWORD@localhost:5432/sales_dashboard
+SESSION_SECRET=$SESSION_SECRET
 PGHOST=localhost
 PGPORT=5432
 PGUSER=dashboard_user
-PGPASSWORD=changeme123
+PGPASSWORD=$DB_PASSWORD
 PGDATABASE=sales_dashboard
 EOF
-    chmod 600 .env
-fi
+chmod 600 .env
+
+# Run database migrations/schema push
+echo "Initializing database schema..."
+npx drizzle-kit push --force 2>/dev/null || npm run db:push 2>/dev/null || echo "Schema will be created on first run"
 
 # Build the application
 echo "Building application..."
@@ -90,10 +140,12 @@ After=network.target postgresql.service
 Type=simple
 User=$SUDO_USER
 WorkingDirectory=$APP_DIR
-ExecStart=/usr/bin/npm run dev
+ExecStart=/usr/bin/node dist/index.js
 Restart=always
 RestartSec=5
 Environment=NODE_ENV=production
+Environment=PORT=$APP_PORT
+EnvironmentFile=$APP_DIR/.env
 
 [Install]
 WantedBy=multi-user.target
@@ -103,10 +155,11 @@ EOF
 echo "Starting application service..."
 systemctl daemon-reload
 systemctl enable sales-dashboard
+systemctl stop sales-dashboard 2>/dev/null || true
 systemctl start sales-dashboard
 
-# Wait a moment for service to start
-sleep 3
+# Wait for service to start
+sleep 5
 
 # Get server IP
 SERVER_IP=$(hostname -I | awk '{print $1}')
@@ -118,17 +171,22 @@ if systemctl is-active --quiet sales-dashboard; then
     echo "Installation Complete!"
     echo "=================================="
     echo ""
-    echo "✓ Application is running on port 5000"
+    echo "✓ Application is running on port $APP_PORT"
     echo ""
-    echo "Next steps:"
-    echo "1. Open your browser and go to: http://$SERVER_IP:5000"
-    echo "2. You will be redirected to the setup wizard"
-    echo "3. Complete the setup with these database credentials:"
-    echo "   - Host: localhost"
-    echo "   - Port: 5432"
-    echo "   - Database: sales_dashboard"
-    echo "   - User: dashboard_user"
-    echo "   - Password: changeme123"
+    echo "Access your dashboard at:"
+    echo "  http://$SERVER_IP:$APP_PORT"
+    echo ""
+    echo "You will be redirected to the setup wizard."
+    echo "Use these default admin credentials after setup:"
+    echo "  Username: admin"
+    echo "  Password: (set during setup)"
+    echo ""
+    echo "Database credentials (auto-generated):"
+    echo "  Host: localhost"
+    echo "  Port: 5432"
+    echo "  Database: sales_dashboard"
+    echo "  User: dashboard_user"
+    echo "  Password: $DB_PASSWORD"
     echo ""
     echo "Service commands:"
     echo "  - Check status: systemctl status sales-dashboard"
@@ -136,11 +194,11 @@ if systemctl is-active --quiet sales-dashboard; then
     echo "  - Restart: systemctl restart sales-dashboard"
     echo "  - Stop: systemctl stop sales-dashboard"
     echo ""
-    echo "For production with custom domain and SSL, configure Nginx:"
-    echo "  See LINUX_DEPLOYMENT.md for detailed Nginx setup"
-    echo ""
 else
     echo ""
     echo "⚠ Warning: Service failed to start"
     echo "Check logs with: journalctl -u sales-dashboard -xe"
+    echo ""
+    echo "Try starting manually:"
+    echo "  cd $APP_DIR && node dist/index.js"
 fi
