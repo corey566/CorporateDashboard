@@ -1,0 +1,24 @@
+root@srv1026819:/opt/CorporateDashboard# sudo systemctl restart sales-dashboard
+root@srv1026819:/opt/CorporateDashboard# journalctl -u sales-dashboard -f
+Dec 12 12:52:09 srv1026819 node[921292]:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Dec 12 12:52:09 srv1026819 node[921292]:     at async file:///opt/CorporateDashboard/node_modules/drizzle-orm/node-postgres/session.js:83:22
+Dec 12 12:52:09 srv1026819 node[921292]:     at async DatabaseStorage.initializeTargetCycles (file:///opt/CorporateDashboard/dist/index.js:1079:25)
+Dec 12 12:52:09 srv1026819 node[921292]:     at async file:///opt/CorporateDashboard/dist/index.js:3212:3 {
+Dec 12 12:52:09 srv1026819 node[921292]:   code: 'DEPTH_ZERO_SELF_SIGNED_CERT'
+Dec 12 12:52:09 srv1026819 node[921292]: }
+Dec 12 12:52:09 srv1026819 node[921292]: 12:52:09 PM [express] Server running on port 5000
+Dec 12 12:52:09 srv1026819 node[921292]: 12:52:09 PM [express] Local: http://localhost:5000
+Dec 12 12:52:09 srv1026819 node[921292]: 12:52:09 PM [express] Network: http://0.0.0.0:5000
+Dec 12 12:52:09 srv1026819 node[921292]: 12:52:09 PM [express] Domain: https://csg.odoolanka.com
+^[[A^C
+root@srv1026819:/opt/CorporateDashboard# journalctl -u sales-dashboard -f
+Dec 12 12:52:09 srv1026819 node[921292]:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+Dec 12 12:52:09 srv1026819 node[921292]:     at async file:///opt/CorporateDashboard/node_modules/drizzle-orm/node-postgres/session.js:83:22
+Dec 12 12:52:09 srv1026819 node[921292]:     at async DatabaseStorage.initializeTargetCycles (file:///opt/CorporateDashboard/dist/index.js:1079:25)
+Dec 12 12:52:09 srv1026819 node[921292]:     at async file:///opt/CorporateDashboard/dist/index.js:3212:3 {
+Dec 12 12:52:09 srv1026819 node[921292]:   code: 'DEPTH_ZERO_SELF_SIGNED_CERT'
+Dec 12 12:52:09 srv1026819 node[921292]: }
+Dec 12 12:52:09 srv1026819 node[921292]: 12:52:09 PM [express] Server running on port 5000
+Dec 12 12:52:09 srv1026819 node[921292]: 12:52:09 PM [express] Local: http://localhost:5000
+Dec 12 12:52:09 srv1026819 node[921292]: 12:52:09 PM [express] Network: http://0.0.0.0:5000
+Dec 12 12:52:09 srv1026819 node[921292]: 12:52:09 PM [express] Domain: https://csg.odoolanka.com
