@@ -23,7 +23,7 @@ apt-get update -qq
 
 # Install Node.js if not installed
 if ! command -v node &> /dev/null; then
-    echo "Installing Node.js..."
+    echo "Installing Node.js 20..."
     curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
     apt-get install -y nodejs
 fi
@@ -36,52 +36,52 @@ if ! command -v psql &> /dev/null; then
     systemctl enable postgresql
 fi
 
-# Install PM2 globally
-if ! command -v pm2 &> /dev/null; then
-    echo "Installing PM2..."
-    npm install -g pm2
-fi
-
-# Create application directory
-APP_DIR="/opt/sales-dashboard"
-echo "Creating application directory at $APP_DIR..."
-mkdir -p $APP_DIR
-
-# Set permissions
-echo "Setting permissions..."
-chown -R $SUDO_USER:$SUDO_USER $APP_DIR
-
-# Copy application files (assuming script is run from app directory)
-echo "Copying application files..."
-cp -r . $APP_DIR/
-cd $APP_DIR
-
-# Install dependencies
-echo "Installing application dependencies..."
-sudo -u $SUDO_USER npm install
-
-# Build application
-echo "Building application..."
-sudo -u $SUDO_USER npm run build
-
-# Create database
+# Create database and user
 echo "Setting up PostgreSQL database..."
 sudo -u postgres psql -c "CREATE DATABASE sales_dashboard;" 2>/dev/null || echo "Database already exists"
 sudo -u postgres psql -c "CREATE USER dashboard_user WITH PASSWORD 'changeme123';" 2>/dev/null || echo "User already exists"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE sales_dashboard TO dashboard_user;" 2>/dev/null
-sudo -u postgres psql -c "ALTER USER dashboard_user CREATEDB;" 2>/dev/null
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE sales_dashboard TO dashboard_user;"
+sudo -u postgres psql -c "ALTER USER dashboard_user CREATEDB;"
 
 # Configure PostgreSQL to allow local connections
-echo "Configuring PostgreSQL..."
-PG_HBA="/etc/postgresql/*/main/pg_hba.conf"
-if ! grep -q "local.*sales_dashboard.*dashboard_user.*md5" $PG_HBA; then
-    echo "local   sales_dashboard   dashboard_user                    md5" >> $PG_HBA
+echo "Configuring PostgreSQL access..."
+PG_HBA=$(sudo -u postgres psql -t -P format=unaligned -c 'SHOW hba_file')
+if ! grep -q "sales_dashboard.*dashboard_user.*md5" "$PG_HBA"; then
+    echo "local   sales_dashboard   dashboard_user                    md5" | sudo tee -a "$PG_HBA"
     systemctl restart postgresql
 fi
 
+# Get current directory (should be /opt/sales-dashboard)
+APP_DIR=$(pwd)
+echo "Application directory: $APP_DIR"
+
+# Install dependencies
+echo "Installing Node.js dependencies..."
+npm install
+
+# Create .env file if it doesn't exist
+if [ ! -f .env ]; then
+    echo "Creating .env file..."
+    cat > .env << EOF
+NODE_ENV=production
+DATABASE_URL=postgresql://dashboard_user:changeme123@localhost:5432/sales_dashboard
+SESSION_SECRET=$(openssl rand -base64 32)
+PGHOST=localhost
+PGPORT=5432
+PGUSER=dashboard_user
+PGPASSWORD=changeme123
+PGDATABASE=sales_dashboard
+EOF
+    chmod 600 .env
+fi
+
+# Build the application
+echo "Building application..."
+npm run build
+
 # Create systemd service
 echo "Creating systemd service..."
-cat > /etc/systemd/system/sales-dashboard.service <<EOF
+cat > /etc/systemd/system/sales-dashboard.service << EOF
 [Unit]
 Description=Sales Dashboard Application
 After=network.target postgresql.service
@@ -90,23 +90,14 @@ After=network.target postgresql.service
 Type=simple
 User=$SUDO_USER
 WorkingDirectory=$APP_DIR
-ExecStart=/usr/bin/npm start
+ExecStart=/usr/bin/npm run dev
 Restart=always
 RestartSec=5
 Environment=NODE_ENV=production
-Environment=PORT=5000
 
 [Install]
 WantedBy=multi-user.target
 EOF
-
-# Configure firewall
-if command -v ufw &> /dev/null; then
-    echo "Configuring firewall..."
-    ufw allow 5000/tcp
-    ufw allow 80/tcp
-    ufw allow 443/tcp
-fi
 
 # Enable and start service
 echo "Starting application service..."
@@ -114,30 +105,42 @@ systemctl daemon-reload
 systemctl enable sales-dashboard
 systemctl start sales-dashboard
 
+# Wait a moment for service to start
+sleep 3
+
 # Get server IP
 SERVER_IP=$(hostname -I | awk '{print $1}')
 
-echo ""
-echo "=================================="
-echo "Installation Complete!"
-echo "=================================="
-echo ""
-echo "The application is now running on port 5000"
-echo ""
-echo "Next steps:"
-echo "1. Open your browser and go to: http://$SERVER_IP:5000"
-echo "2. You will be redirected to the setup wizard"
-echo "3. Complete the setup with these database credentials:"
-echo "   - Host: localhost"
-echo "   - Port: 5432"
-echo "   - Database: sales_dashboard"
-echo "   - User: dashboard_user"
-echo "   - Password: changeme123"
-echo ""
-echo "Service commands:"
-echo "  - Check status: systemctl status sales-dashboard"
-echo "  - View logs: journalctl -u sales-dashboard -f"
-echo "  - Restart: systemctl restart sales-dashboard"
-echo ""
-echo "For production, configure Nginx as reverse proxy for SSL/domain support"
-echo ""
+# Check service status
+if systemctl is-active --quiet sales-dashboard; then
+    echo ""
+    echo "=================================="
+    echo "Installation Complete!"
+    echo "=================================="
+    echo ""
+    echo "✓ Application is running on port 5000"
+    echo ""
+    echo "Next steps:"
+    echo "1. Open your browser and go to: http://$SERVER_IP:5000"
+    echo "2. You will be redirected to the setup wizard"
+    echo "3. Complete the setup with these database credentials:"
+    echo "   - Host: localhost"
+    echo "   - Port: 5432"
+    echo "   - Database: sales_dashboard"
+    echo "   - User: dashboard_user"
+    echo "   - Password: changeme123"
+    echo ""
+    echo "Service commands:"
+    echo "  - Check status: systemctl status sales-dashboard"
+    echo "  - View logs: journalctl -u sales-dashboard -f"
+    echo "  - Restart: systemctl restart sales-dashboard"
+    echo "  - Stop: systemctl stop sales-dashboard"
+    echo ""
+    echo "For production with custom domain and SSL, configure Nginx:"
+    echo "  See LINUX_DEPLOYMENT.md for detailed Nginx setup"
+    echo ""
+else
+    echo ""
+    echo "⚠ Warning: Service failed to start"
+    echo "Check logs with: journalctl -u sales-dashboard -xe"
+fi
