@@ -12,8 +12,32 @@ import AuthPage from "@/pages/auth-page";
 import MobileAuthPage from "@/pages/mobile-auth-page";
 import MobileDashboardPage from "@/pages/mobile-dashboard-page";
 import NotFound from "@/pages/not-found";
+import SetupPage from "@/pages/setup-page";
+import { useEffect, useState } from "react";
 
 function Router() {
+  const [setupComplete, setSetupComplete] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    fetch('/api/setup/status')
+      .then(res => res.json())
+      .then(data => setSetupComplete(data.complete))
+      .catch(() => setSetupComplete(false));
+  }, []);
+
+  if (setupComplete === null) {
+    return <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+        <p>Loading...</p>
+      </div>
+    </div>;
+  }
+
+  if (!setupComplete) {
+    return <SetupPage />;
+  }
+
   return (
     <Switch>
       <Route path="/" component={DashboardPage} />
