@@ -1,4 +1,4 @@
-import { 
+import {
   users, agents, teams, sales, cashOffers, mediaSlides, announcements, newsTicker, fileUploads, systemSettings, soundEffects,
   agentTargetHistory, teamTargetHistory, categories, agentCategoryTargets, teamCategoryTargets,
   type User, type InsertUser, type Agent, type InsertAgent, type Team, type InsertTeam,
@@ -44,7 +44,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Agent methods
   getAgents(): Promise<Agent[]>;
   getAgent(id: number): Promise<Agent | undefined>;
@@ -52,67 +52,67 @@ export interface IStorage {
   createAgent(agent: InsertAgent): Promise<Agent>;
   updateAgent(id: number, agent: Partial<InsertAgent>): Promise<Agent>;
   deleteAgent(id: number): Promise<void>;
-  
+
   // Team methods
   getTeams(): Promise<Team[]>;
   getTeam(id: number): Promise<Team | undefined>;
   createTeam(team: InsertTeam): Promise<Team>;
   updateTeam(id: number, team: Partial<InsertTeam>): Promise<Team>;
   deleteTeam(id: number): Promise<void>;
-  
+
   // Category methods
   getCategories(): Promise<Category[]>;
   getCategory(id: number): Promise<Category | undefined>;
   createCategory(category: InsertCategory): Promise<Category>;
   updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category>;
   deleteCategory(id: number): Promise<void>;
-  
+
   // Sales methods
   getSales(): Promise<Sale[]>;
   getSalesByAgent(agentId: number): Promise<Sale[]>;
   createSale(sale: InsertSale): Promise<Sale>;
   updateSale(id: number, sale: Partial<InsertSale>): Promise<Sale>;
   deleteSale(id: number): Promise<void>;
-  
+
   // Cash offers methods
   getActiveCashOffers(): Promise<CashOffer[]>;
   createCashOffer(offer: InsertCashOffer): Promise<CashOffer>;
   updateCashOffer(id: number, offer: Partial<InsertCashOffer>): Promise<CashOffer>;
   deleteCashOffer(id: number): Promise<void>;
-  
+
   // Media slides methods
   getActiveMediaSlides(): Promise<MediaSlide[]>;
   createMediaSlide(slide: InsertMediaSlide): Promise<MediaSlide>;
   updateMediaSlide(id: number, slide: Partial<InsertMediaSlide>): Promise<MediaSlide>;
   deleteMediaSlide(id: number): Promise<void>;
-  
+
   // Announcements methods
   getActiveAnnouncements(): Promise<Announcement[]>;
   createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement>;
   updateAnnouncement(id: number, announcement: Partial<InsertAnnouncement>): Promise<Announcement>;
   deleteAnnouncement(id: number): Promise<void>;
-  
+
   // News ticker methods
   getActiveNewsTicker(): Promise<NewsTicker[]>;
   createNewsTicker(ticker: InsertNewsTicker): Promise<NewsTicker>;
   updateNewsTicker(id: number, ticker: Partial<InsertNewsTicker>): Promise<NewsTicker>;
   deleteNewsTicker(id: number): Promise<void>;
-  
+
   // Dashboard data
   getDashboardData(): Promise<any>;
-  
+
   // File upload methods
   getFileUploads(): Promise<FileUpload[]>;
   createFileUpload(upload: InsertFileUpload): Promise<FileUpload>;
   deleteFileUpload(id: number): Promise<void>;
-  
+
   // System settings methods
   getSystemSettings(): Promise<SystemSetting[]>;
   getSystemSetting(key: string): Promise<SystemSetting | undefined>;
   createSystemSetting(setting: InsertSystemSetting): Promise<SystemSetting>;
   updateSystemSetting(key: string, value: string): Promise<SystemSetting>;
   deleteSystemSetting(key: string): Promise<void>;
-  
+
   // Sound effects methods
   getSoundEffects(): Promise<SoundEffect[]>;
   getSoundEffect(id: number): Promise<SoundEffect | undefined>;
@@ -120,16 +120,16 @@ export interface IStorage {
   createSoundEffect(effect: InsertSoundEffect): Promise<SoundEffect>;
   updateSoundEffect(id: number, effect: Partial<InsertSoundEffect>): Promise<SoundEffect>;
   deleteSoundEffect(id: number): Promise<void>;
-  
+
   // Reports methods
   generateReport(filters: ReportFilters): Promise<ReportData>;
   exportReportAsCSV(reportData: ReportData): Promise<string>;
   exportReportAsExcel(reportData: ReportData): Promise<Buffer>;
   exportReportAsPDF(reportData: ReportData): Promise<Buffer>;
-  
+
   // Currency settings
   getCurrencySettings(): Promise<any>;
-  
+
   // Target cycle management
   initializeTargetCycles(): Promise<void>;
   checkAndResetTargetCycles(): Promise<void>;
@@ -152,32 +152,32 @@ export interface IStorage {
   getTeamCategoryTargets(teamId: number): Promise<TeamCategoryTarget[]>;
   setTeamCategoryTargets(teamId: number, targets: InsertTeamCategoryTarget[]): Promise<void>;
   deleteTeamCategoryTargets(teamId: number): Promise<void>;
-  
+
   sessionStore: any;
 }
 
 export class DatabaseStorage implements IStorage {
   public sessionStore: any;
-  
+
   constructor() {
     this.sessionStore = new PostgresSessionStore({ pool, createTableIfMissing: true });
   }
-  
+
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
   }
-  
+
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
     return user || undefined;
   }
-  
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
-  
+
   async getAgents(): Promise<Agent[]> {
     console.log("Fetching agents from database...");
     try {
@@ -189,23 +189,23 @@ export class DatabaseStorage implements IStorage {
         console.log("First agent isActive type:", typeof result[0].isActive);
         console.log("First agent isActive value:", result[0].isActive);
       }
-      
+
       // Get category targets for all agents
       const categoryTargetsData = await db
         .select({
           agentId: agentCategoryTargets.agentId,
-          categoryId: agentCategoryTargets.categoryId, 
+          categoryId: agentCategoryTargets.categoryId,
           volumeTarget: agentCategoryTargets.volumeTarget,
           unitsTarget: agentCategoryTargets.unitsTarget,
         })
         .from(agentCategoryTargets);
-      
+
       // Combine agents with their category targets
       const agentsWithTargets = result.map(agent => ({
         ...agent,
         categoryTargets: categoryTargetsData.filter(target => target.agentId === agent.id)
       }));
-      
+
       const activeAgents = agentsWithTargets.filter(agent => agent.isActive);
       console.log("Active agents:", activeAgents);
       return activeAgents;
@@ -214,7 +214,7 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
   }
-  
+
   async getAgent(id: number): Promise<Agent | undefined> {
     const [agent] = await db.select().from(agents).where(eq(agents.id, id));
     return agent || undefined;
@@ -224,43 +224,43 @@ export class DatabaseStorage implements IStorage {
     const [agent] = await db.select().from(agents).where(eq(agents.username, username));
     return agent || undefined;
   }
-  
+
   async createAgent(agent: InsertAgent): Promise<Agent> {
     const [newAgent] = await db.insert(agents).values(agent).returning();
     return newAgent;
   }
-  
+
   async updateAgent(id: number, agent: Partial<InsertAgent>): Promise<Agent> {
     const [updatedAgent] = await db.update(agents).set(agent).where(eq(agents.id, id)).returning();
     return updatedAgent;
   }
-  
+
   async deleteAgent(id: number): Promise<void> {
     await db.update(agents).set({ isActive: false }).where(eq(agents.id, id));
   }
-  
+
   async getTeams(): Promise<Team[]> {
     console.log("Fetching teams from database...");
     const result = await db.select().from(teams);
     console.log("Teams result:", result);
     return result;
   }
-  
+
   async getTeam(id: number): Promise<Team | undefined> {
     const [team] = await db.select().from(teams).where(eq(teams.id, id));
     return team || undefined;
   }
-  
+
   async createTeam(team: InsertTeam): Promise<Team> {
     const [newTeam] = await db.insert(teams).values(team).returning();
     return newTeam;
   }
-  
+
   async updateTeam(id: number, team: Partial<InsertTeam>): Promise<Team> {
     const [updatedTeam] = await db.update(teams).set(team).where(eq(teams.id, id)).returning();
     return updatedTeam;
   }
-  
+
   async deleteTeam(id: number): Promise<void> {
     await db.delete(teams).where(eq(teams.id, id));
   }
@@ -288,41 +288,41 @@ export class DatabaseStorage implements IStorage {
   async deleteCategory(id: number): Promise<void> {
     await db.update(categories).set({ isActive: false }).where(eq(categories.id, id));
   }
-  
+
   async getSales(): Promise<Sale[]> {
     return await db.select().from(sales).orderBy(desc(sales.createdAt));
   }
-  
+
   async getSalesByAgent(agentId: number): Promise<Sale[]> {
     return await db.select().from(sales).where(eq(sales.agentId, agentId)).orderBy(desc(sales.createdAt));
   }
-  
+
   async createSale(sale: InsertSale): Promise<Sale> {
     // Get current agent target cycle
     const currentAgentCycle = await this.getCurrentAgentTargetCycle(sale.agentId);
-    
+
     // Add cycle information to sale
     const saleWithCycle = {
       ...sale,
       cycleStartDate: currentAgentCycle?.cycleStartDate || new Date(),
       cycleEndDate: currentAgentCycle?.cycleEndDate || new Date(),
     };
-    
+
     const [newSale] = await db.insert(sales).values(saleWithCycle).returning();
-    
+
     // Update agent target cycle achievements
     if (currentAgentCycle) {
       const newVolumeAchieved = parseFloat(currentAgentCycle.volumeAchieved) + parseFloat(sale.amount);
       const newUnitsAchieved = currentAgentCycle.unitsAchieved + (sale.units || 1);
       const newTotalSales = currentAgentCycle.totalSales + 1;
-      
+
       await this.updateAgentTargetHistory(currentAgentCycle.id, {
         volumeAchieved: newVolumeAchieved.toString(),
         unitsAchieved: newUnitsAchieved,
         totalSales: newTotalSales
       });
     }
-    
+
     // Update team target cycle achievements
     const agent = await this.getAgent(sale.agentId);
     if (agent) {
@@ -331,7 +331,7 @@ export class DatabaseStorage implements IStorage {
         const newVolumeAchieved = parseFloat(currentTeamCycle.volumeAchieved) + parseFloat(sale.amount);
         const newUnitsAchieved = currentTeamCycle.unitsAchieved + (sale.units || 1);
         const newTotalSales = currentTeamCycle.totalSales + 1;
-        
+
         await this.updateTeamTargetHistory(currentTeamCycle.id, {
           volumeAchieved: newVolumeAchieved.toString(),
           unitsAchieved: newUnitsAchieved,
@@ -339,7 +339,7 @@ export class DatabaseStorage implements IStorage {
         });
       }
     }
-    
+
     return newSale;
   }
 
@@ -351,7 +351,7 @@ export class DatabaseStorage implements IStorage {
   async deleteSale(id: number): Promise<void> {
     await db.delete(sales).where(eq(sales.id, id));
   }
-  
+
   async getActiveCashOffers(): Promise<CashOffer[]> {
     return await db.select().from(cashOffers).where(
       and(
@@ -360,75 +360,75 @@ export class DatabaseStorage implements IStorage {
       )
     );
   }
-  
+
   async createCashOffer(offer: InsertCashOffer): Promise<CashOffer> {
     const [newOffer] = await db.insert(cashOffers).values(offer).returning();
     return newOffer;
   }
-  
+
   async updateCashOffer(id: number, offer: Partial<InsertCashOffer>): Promise<CashOffer> {
     const [updatedOffer] = await db.update(cashOffers).set(offer).where(eq(cashOffers.id, id)).returning();
     return updatedOffer;
   }
-  
+
   async deleteCashOffer(id: number): Promise<void> {
     await db.update(cashOffers).set({ isActive: false }).where(eq(cashOffers.id, id));
   }
-  
+
   async getActiveMediaSlides(): Promise<MediaSlide[]> {
     return await db.select().from(mediaSlides).where(eq(mediaSlides.isActive, true)).orderBy(mediaSlides.order);
   }
-  
+
   async createMediaSlide(slide: InsertMediaSlide): Promise<MediaSlide> {
     const [newSlide] = await db.insert(mediaSlides).values(slide).returning();
     return newSlide;
   }
-  
+
   async updateMediaSlide(id: number, slide: Partial<InsertMediaSlide>): Promise<MediaSlide> {
     const [updatedSlide] = await db.update(mediaSlides).set(slide).where(eq(mediaSlides.id, id)).returning();
     return updatedSlide;
   }
-  
+
   async deleteMediaSlide(id: number): Promise<void> {
     await db.update(mediaSlides).set({ isActive: false }).where(eq(mediaSlides.id, id));
   }
-  
+
   async getActiveAnnouncements(): Promise<Announcement[]> {
     return await db.select().from(announcements).where(eq(announcements.isActive, true)).orderBy(desc(announcements.createdAt));
   }
-  
+
   async createAnnouncement(announcement: InsertAnnouncement): Promise<Announcement> {
     const [newAnnouncement] = await db.insert(announcements).values(announcement).returning();
     return newAnnouncement;
   }
-  
+
   async updateAnnouncement(id: number, announcement: Partial<InsertAnnouncement>): Promise<Announcement> {
     const [updatedAnnouncement] = await db.update(announcements).set(announcement).where(eq(announcements.id, id)).returning();
     return updatedAnnouncement;
   }
-  
+
   async deleteAnnouncement(id: number): Promise<void> {
     await db.update(announcements).set({ isActive: false }).where(eq(announcements.id, id));
   }
-  
+
   async getActiveNewsTicker(): Promise<NewsTicker[]> {
     return await db.select().from(newsTicker).where(eq(newsTicker.isActive, true)).orderBy(desc(newsTicker.createdAt));
   }
-  
+
   async createNewsTicker(ticker: InsertNewsTicker): Promise<NewsTicker> {
     const [newTicker] = await db.insert(newsTicker).values(ticker).returning();
     return newTicker;
   }
-  
+
   async updateNewsTicker(id: number, ticker: Partial<InsertNewsTicker>): Promise<NewsTicker> {
     const [updatedTicker] = await db.update(newsTicker).set(ticker).where(eq(newsTicker.id, id)).returning();
     return updatedTicker;
   }
-  
+
   async deleteNewsTicker(id: number): Promise<void> {
     await db.update(newsTicker).set({ isActive: false }).where(eq(newsTicker.id, id));
   }
-  
+
   async getDashboardData(): Promise<any> {
     const [agentsData, teamsData, salesData, offersData, slidesData, tickerData, announcementsData] = await Promise.all([
       db.select().from(agents).where(eq(agents.isActive, true)),
@@ -439,14 +439,14 @@ export class DatabaseStorage implements IStorage {
       this.getActiveNewsTicker(),
       this.getActiveAnnouncements()
     ]);
-    
+
     // Calculate current sales performance for each agent
     const agentSalesQuery = await db.select({
       agentId: sales.agentId,
       totalVolume: sql<string>`SUM(${sales.amount})`,
       totalUnits: sql<number>`COUNT(*)`
     }).from(sales).groupBy(sales.agentId);
-    
+
     // Create a map for quick lookup
     const agentSalesMap = new Map();
     agentSalesQuery.forEach(item => {
@@ -455,7 +455,7 @@ export class DatabaseStorage implements IStorage {
         currentUnits: item.totalUnits || 0
       });
     });
-    
+
     // Enhance agents data with current performance
     const enhancedAgents = agentsData.map(agent => {
       const salesData = agentSalesMap.get(agent.id);
@@ -466,13 +466,13 @@ export class DatabaseStorage implements IStorage {
         team: teamsData.find(team => team.id === agent.teamId)
       };
     });
-    
+
     // Calculate team performance
     const enhancedTeams = teamsData.map(team => {
       const teamAgents = enhancedAgents.filter(agent => agent.teamId === team.id);
       const totalVolume = teamAgents.reduce((sum, agent) => sum + (agent.currentVolume || 0), 0);
       const totalUnits = teamAgents.reduce((sum, agent) => sum + (agent.currentUnits || 0), 0);
-      
+
       return {
         ...team,
         currentVolume: totalVolume,
@@ -480,7 +480,7 @@ export class DatabaseStorage implements IStorage {
         memberCount: teamAgents.length
       };
     });
-    
+
     return {
       agents: enhancedAgents,
       teams: enhancedTeams,
@@ -523,16 +523,16 @@ export class DatabaseStorage implements IStorage {
     console.log(`Updating system setting: ${key} = ${value}`);
     try {
       // First try to update existing setting
-      const [updatedSetting] = await db.update(systemSettings).set({ 
-        value, 
-        updatedAt: new Date() 
+      const [updatedSetting] = await db.update(systemSettings).set({
+        value,
+        updatedAt: new Date()
       }).where(eq(systemSettings.key, key)).returning();
-      
+
       if (updatedSetting) {
         console.log(`Successfully updated setting:`, updatedSetting);
         return updatedSetting;
       }
-      
+
       // If no existing setting found, create a new one
       console.log(`Setting ${key} not found, creating new setting`);
       const [newSetting] = await db.insert(systemSettings).values({
@@ -543,7 +543,7 @@ export class DatabaseStorage implements IStorage {
         createdAt: new Date(),
         updatedAt: new Date()
       }).returning();
-      
+
       console.log(`Successfully created setting:`, newSetting);
       return newSetting;
     } catch (error) {
@@ -561,13 +561,13 @@ export class DatabaseStorage implements IStorage {
           eq(systemSettings.key, 'currencyName')
         )
       );
-      
+
       const currencyData = {
         currencySymbol: settings.find(s => s.key === 'currencySymbol')?.value || '$',
         currencyCode: settings.find(s => s.key === 'currencyCode')?.value || 'USD',
         currencyName: settings.find(s => s.key === 'currencyName')?.value || 'US Dollar'
       };
-      
+
       return currencyData;
     } catch (error) {
       console.error("Error fetching currency settings:", error);
@@ -580,80 +580,46 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Target cycle management methods
-  async initializeTargetCycles(): Promise<void> {
+  async initializeTargetCycles() {
     try {
-      // Initialize cycles for all agents
-      const allAgents = await db.select().from(agents);
-      for (const agent of allAgents) {
-        const existingCycle = await this.getCurrentAgentTargetCycle(agent.id);
-        if (!existingCycle) {
-          const now = new Date();
-          const cycleEnd = this.calculateNextCycleDate(
-            agent.targetCycle || 'monthly',
-            agent.resetDay || 1,
-            agent.resetMonth || 1
-          );
-          
-          await this.createAgentTargetHistory({
-            agentId: agent.id,
-            cycleStartDate: now,
-            cycleEndDate: cycleEnd,
-            targetCycle: agent.targetCycle || 'monthly',
-            volumeTarget: agent.volumeTarget || '0',
-            unitsTarget: agent.unitsTarget || 0,
-            volumeAchieved: '0',
-            unitsAchieved: 0,
-            totalSales: 0,
-            isCompleted: false
-          });
-        }
+      const now = new Date();
+
+      // Get all teams
+      const teams = await db.select().from(teams);
+
+      for (const team of teams) {
+        await this.checkAndResetTeamTarget(team.id, now);
       }
 
-      // Initialize cycles for all teams
-      const allTeams = await db.select().from(teams);
-      for (const team of allTeams) {
-        const existingCycle = await this.getCurrentTeamTargetCycle(team.id);
-        if (!existingCycle) {
-          const now = new Date();
-          const cycleEnd = this.calculateNextCycleDate(
-            team.targetCycle || 'monthly',
-            team.resetDay || 1,
-            team.resetMonth || 1
-          );
-          
-          await this.createTeamTargetHistory({
-            teamId: team.id,
-            cycleStartDate: now,
-            cycleEndDate: cycleEnd,
-            targetCycle: team.targetCycle || 'monthly',
-            volumeTarget: team.volumeTarget || '0',
-            unitsTarget: team.unitsTarget || 0,
-            volumeAchieved: '0',
-            unitsAchieved: 0,
-            totalSales: 0,
-            isCompleted: false
-          });
-        }
+      // Get all agents
+      const agents = await db.select().from(agents);
+
+      for (const agent of agents) {
+        await this.checkAndResetAgentTarget(agent.id, now);
       }
+
+      console.log('Target cycles initialized successfully');
     } catch (error) {
-      console.error("Error initializing target cycles:", error);
+      console.error('Error initializing target cycles:', error);
+      // Don't throw, allow server to start even if this fails
+      console.log('Server will continue without target cycle initialization');
     }
   }
 
   async checkAndResetTargetCycles(): Promise<void> {
     try {
       const now = new Date();
-      
+
       // Check agent cycles
       const activeAgentCycles = await db.select()
         .from(agentTargetHistory)
         .where(eq(agentTargetHistory.isCompleted, false));
-      
+
       for (const cycle of activeAgentCycles) {
         if (now >= cycle.cycleEndDate) {
           // Mark current cycle as completed
           await this.updateAgentTargetHistory(cycle.id, { isCompleted: true });
-          
+
           // Get agent details for new cycle
           const agent = await this.getAgent(cycle.agentId);
           if (agent) {
@@ -662,7 +628,7 @@ export class DatabaseStorage implements IStorage {
               agent.resetDay || 1,
               agent.resetMonth || 1
             );
-            
+
             // Create new cycle
             await this.createAgentTargetHistory({
               agentId: agent.id,
@@ -679,17 +645,17 @@ export class DatabaseStorage implements IStorage {
           }
         }
       }
-      
+
       // Check team cycles
       const activeTeamCycles = await db.select()
         .from(teamTargetHistory)
         .where(eq(teamTargetHistory.isCompleted, false));
-      
+
       for (const cycle of activeTeamCycles) {
         if (now >= cycle.cycleEndDate) {
           // Mark current cycle as completed
           await this.updateTeamTargetHistory(cycle.id, { isCompleted: true });
-          
+
           // Get team details for new cycle
           const team = await this.getTeam(cycle.teamId);
           if (team) {
@@ -698,7 +664,7 @@ export class DatabaseStorage implements IStorage {
               team.resetDay || 1,
               team.resetMonth || 1
             );
-            
+
             // Create new cycle
             await this.createTeamTargetHistory({
               teamId: team.id,
@@ -723,11 +689,11 @@ export class DatabaseStorage implements IStorage {
   calculateNextCycleDate(targetCycle: string, resetDay: number, resetMonth?: number): Date {
     const now = new Date();
     let nextDate: Date;
-    
+
     if (targetCycle === 'monthly') {
       // Monthly cycle: next reset is on the specified day of next month
       nextDate = new Date(now.getFullYear(), now.getMonth() + 1, resetDay);
-      
+
       // If reset day is today or has passed this month, set to next month
       if (now.getDate() >= resetDay) {
         nextDate = new Date(now.getFullYear(), now.getMonth() + 1, resetDay);
@@ -738,13 +704,13 @@ export class DatabaseStorage implements IStorage {
       // Yearly cycle: next reset is on the specified day and month of next year
       const month = (resetMonth || 1) - 1; // Convert to 0-indexed
       nextDate = new Date(now.getFullYear(), month, resetDay);
-      
+
       // If the date has passed this year, set to next year
       if (now > nextDate) {
         nextDate = new Date(now.getFullYear() + 1, month, resetDay);
       }
     }
-    
+
     return nextDate;
   }
 
@@ -771,7 +737,7 @@ export class DatabaseStorage implements IStorage {
       ))
       .orderBy(desc(agentTargetHistory.cycleStartDate))
       .limit(1);
-    
+
     return currentCycle || null;
   }
 
@@ -784,7 +750,7 @@ export class DatabaseStorage implements IStorage {
       ))
       .orderBy(desc(teamTargetHistory.cycleStartDate))
       .limit(1);
-    
+
     return currentCycle || null;
   }
 
@@ -851,21 +817,21 @@ export class DatabaseStorage implements IStorage {
   // Reports methods
   async generateReport(filters: ReportFilters): Promise<ReportData> {
     const { startDate, endDate, agentId, teamId, reportType } = filters;
-    
+
     // Base query conditions
     const conditions = [
       sql`${sales.createdAt} >= ${startDate}`,
       sql`${sales.createdAt} <= ${endDate}`
     ];
-    
+
     if (agentId) {
       conditions.push(eq(sales.agentId, agentId));
     }
-    
+
     if (teamId) {
       conditions.push(eq(agents.teamId, teamId));
     }
-    
+
     // Get all sales with agent and team info
     const salesData = await db
       .select({
@@ -885,12 +851,12 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(teams, eq(agents.teamId, teams.id))
       .where(and(...conditions))
       .orderBy(desc(sales.createdAt));
-    
+
     // Calculate totals
     const totalVolume = salesData.reduce((sum, sale) => sum + parseFloat(sale.amount), 0);
     const totalSales = salesData.length;
     const averageValue = totalSales > 0 ? totalVolume / totalSales : 0;
-    
+
     // Group by agent
     const agentSales = new Map();
     salesData.forEach(sale => {
@@ -908,7 +874,7 @@ export class DatabaseStorage implements IStorage {
       agent.totalVolume += parseFloat(sale.amount);
       agent.salesCount += 1;
     });
-    
+
     const salesByAgent = Array.from(agentSales.values())
       .sort((a, b) => b.totalVolume - a.totalVolume)
       .map((agent, index) => ({
@@ -916,7 +882,7 @@ export class DatabaseStorage implements IStorage {
         rank: index + 1,
         conversionRate: Math.random() * 0.3 + 0.7, // Placeholder conversion rate
       }));
-    
+
     // Group by team
     const teamSales = new Map();
     salesData.forEach(sale => {
@@ -934,7 +900,7 @@ export class DatabaseStorage implements IStorage {
       team.salesCount += 1;
       team.agentCount.add(sale.agentId);
     });
-    
+
     const salesByTeam = Array.from(teamSales.values())
       .map(team => ({
         ...team,
@@ -942,7 +908,7 @@ export class DatabaseStorage implements IStorage {
         averagePerAgent: team.totalVolume / team.agentCount.size,
       }))
       .sort((a, b) => b.totalVolume - a.totalVolume);
-    
+
     // Group by date
     const dateSales = new Map();
     salesData.forEach(sale => {
@@ -958,16 +924,16 @@ export class DatabaseStorage implements IStorage {
       day.totalVolume += parseFloat(sale.amount);
       day.salesCount += 1;
     });
-    
+
     const salesByDate = Array.from(dateSales.values())
       .map(day => ({
         ...day,
         averageValue: day.totalVolume / day.salesCount,
       }))
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
+
     const topPerformer = salesByAgent.length > 0 ? salesByAgent[0].name : "N/A";
-    
+
     return {
       totalSales,
       totalVolume,
@@ -986,7 +952,7 @@ export class DatabaseStorage implements IStorage {
     // Get current currency settings
     const currencySettings = await this.getCurrencySettings();
     const symbol = currencySettings.currencySymbol || '$';
-    
+
     const headers = ['Agent', 'Team', 'Total Sales', 'Sales Count', 'Average Sale'];
     const rows = reportData.salesByAgent.map(agent => [
       agent.name,
@@ -995,11 +961,11 @@ export class DatabaseStorage implements IStorage {
       agent.salesCount.toString(),
       `${symbol}${(agent.totalVolume / agent.salesCount).toFixed(2)}`
     ]);
-    
+
     const csvContent = [headers, ...rows]
       .map(row => row.map(cell => `"${cell}"`).join(','))
       .join('\n');
-    
+
     return csvContent;
   }
 
@@ -1023,12 +989,12 @@ export class DatabaseStorage implements IStorage {
   async setAgentCategoryTargets(agentId: number, targets: InsertAgentCategoryTarget[]): Promise<void> {
     // Delete existing targets
     await db.delete(agentCategoryTargets).where(eq(agentCategoryTargets.agentId, agentId));
-    
+
     // Insert new targets
     if (targets.length > 0) {
       await db.insert(agentCategoryTargets).values(targets);
     }
-    
+
     // Auto-calculate and update team targets based on agent targets
     await this.recalculateTeamTargets(agentId);
   }
@@ -1039,7 +1005,7 @@ export class DatabaseStorage implements IStorage {
     await this.recalculateTeamTargets(agentId);
   }
 
-  // Team category targets methods  
+  // Team category targets methods
   async getTeamCategoryTargets(teamId: number): Promise<TeamCategoryTarget[]> {
     return await db.select().from(teamCategoryTargets).where(eq(teamCategoryTargets.teamId, teamId));
   }
@@ -1047,7 +1013,7 @@ export class DatabaseStorage implements IStorage {
   async setTeamCategoryTargets(teamId: number, targets: InsertTeamCategoryTarget[]): Promise<void> {
     // Delete existing targets
     await db.delete(teamCategoryTargets).where(eq(teamCategoryTargets.teamId, teamId));
-    
+
     // Insert new targets
     if (targets.length > 0) {
       await db.insert(teamCategoryTargets).values(targets);
@@ -1076,7 +1042,7 @@ export class DatabaseStorage implements IStorage {
       // Get all category targets for these agents
       const agentIds = teamAgents.map(a => a.id);
       let allAgentTargets: AgentCategoryTarget[] = [];
-      
+
       for (const agentId of agentIds) {
         const targets = await this.getAgentCategoryTargets(agentId);
         allAgentTargets = allAgentTargets.concat(targets);
@@ -1084,7 +1050,7 @@ export class DatabaseStorage implements IStorage {
 
       // Group by category and sum the targets
       const categoryTotals = new Map<number, { volumeTarget: number; unitsTarget: number }>();
-      
+
       allAgentTargets.forEach(target => {
         const existing = categoryTotals.get(target.categoryId) || { volumeTarget: 0, unitsTarget: 0 };
         categoryTotals.set(target.categoryId, {

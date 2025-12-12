@@ -113,9 +113,15 @@ async function findAvailablePort(preferredPort: number = 5000): Promise<number> 
     serveStatic(app);
   }
 
-  // Find an available port dynamically
-  const preferredPort = parseInt(process.env.PORT || '5000');
-  const port = await findAvailablePort(preferredPort);
+  // Use configured port or fallback
+  const port = parseInt(process.env.PORT || '5000');
+  
+  // Check if port is available before starting
+  const isAvailable = await isPortAvailable(port);
+  if (!isAvailable) {
+    console.error(`Port ${port} is already in use. Please stop other instances or change PORT in .env`);
+    process.exit(1);
+  }
   
   // Save the actual port to environment for domain configuration
   process.env.ACTUAL_PORT = port.toString();
