@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
-import { registerRoutes as registerAuthRoutes } from "./auth";
+import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertSaleSchema, insertAgentSchema, insertTeamSchema, insertCashOfferSchema, insertMediaSlideSchema, insertAnnouncementSchema, insertNewsTickerSchema, agentLoginSchema, insertAgentCategoryTargetSchema, insertTeamCategoryTargetSchema, insertCategorySchema, insertSystemSettingSchema, insertSoundEffectSchema, insertFileUploadSchema } from "@shared/schema";
 import { z } from "zod";
@@ -85,8 +85,8 @@ const initObjectStorage = async () => {
     const { ObjectStorageService } = await import("./objectStorage");
     objectStorageService = new ObjectStorageService();
     console.log("Object storage initialized successfully");
-  } catch (error) {
-    console.log("Object storage not available, falling back to local uploads:", error.message);
+  } catch (error: any) {
+    console.log("Object storage not available, falling back to local uploads:", error?.message || error);
   }
 };
 
@@ -196,7 +196,7 @@ export function registerRoutes(app: Express): Server {
   app.use(setupCheckMiddleware);
 
   // Setup authentication routes
-  registerAuthRoutes(app);
+  setupAuth(app);
 
   // Serve uploaded files
   app.use('/uploads', (req, res, next) => {
@@ -1045,9 +1045,9 @@ export function registerRoutes(app: Express): Server {
 
       const objectFile = await objectStorageService.getObjectEntityFile(req.path);
       objectStorageService.downloadObject(objectFile, res);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error serving object:", error);
-      if (error.constructor.name === "ObjectNotFoundError") {
+      if (error?.constructor?.name === "ObjectNotFoundError") {
         return res.sendStatus(404);
       }
       return res.sendStatus(500);
@@ -1161,10 +1161,11 @@ export function registerRoutes(app: Express): Server {
 
       // Create or update sound effect
       const soundEffectData = {
+        name: `${eventType} Sound`,
         eventType,
         fileUrl: normalizedPath,
         volume: volume || 0.5,
-        isEnabled: true
+        isActive: true
       };
 
       // Check if sound effect already exists for this event type
